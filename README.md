@@ -1,3 +1,8 @@
+
+# Santa Cruz de la Plazuela
+
+Sistema de gestión para restaurante, con módulos de administración, pedidos, cocina y visualización de menú.
+
 Para trabajar en el proyecto:
 
 1. Clona el repositorio:
