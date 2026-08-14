@@ -1,25 +1,57 @@
+# 🏛️santa cruz de la plazuela- sistema de pedidos 
+aplicacio movil para gestionar el catalogo de productos,usuarios y pedidos de un restaurante, desarrollada con una excelente tecnologia
+##🛠️ stack tecnologico
+El proyecto utiliza una arquitectura moderna basada en un cliente movil, un servidor backend y una base de datos en la nube, integrando las siguientes tecnologias:
+. nodes.js + Express (backend)
+. mongoDB atlas (base de datos)
+. flutter (frontend)
+. JWT para el manejo de sesiones
+. liberia de traduccion multi-idioma
 
-# Santa Cruz de la Plazuela
+## 🚀 caracteristica del proyecto
 
-Sistema de gestión para restaurante, con módulos de administración, pedidos, cocina y visualización de menú.
+### 🌍 1. seleccion e idioma
+. seleccion de idioma: pantalla inicial donde el ususario elige el idioma ante de ingresar.
+. traduccion global: El idioma selecionado aplica a todas la app, incluyendo el contenido dinamico (no solo los textos fijos de la interfaz).
+. cambio de idioma en cualquier momento: El usuario puede cambiar el idioma desde caulquier pantalla y toda la app se traduce por completo.
 
-Para trabajar en el proyecto:
+###💼2. modulo de administracion
+. CRUD de productos: creacion, actualizacion y gestion de productos y categorias.
+. Gestion de categorias: organizacion del menu por categorias (BDcategoria).
+. integracion frontend-Backend: conexion completa entre la interfaz y la api con mongoDB.
 
-1. Clona el repositorio:
-git clone https://github.com/santacruz-wq/santacruz.git
+###🍽️ 3. modulo del usuario
+. visualizacion del menu:
+exploracion del catalogo de productos en el idioma seleccionado.
+. modulo del mesero: Creacion de peididos desde la mesa asignada (BDmesa).
+. favoritos y reseñas: Gestion de productos favoritos (BDfavoritos) y reseñas (BDreseña).
 
-2. Entra a la carpeta del backend:
-cd santacruz/backend
+###🧑‍🍳 4.modulo de cocina
 
-3. Instala las dependencias:
-npm install
+. notificaciones de pedidos: alertas en tiempo real de nuevos pedidos (BDnotificacion, BDcocina_pedido).
+.cambio de estados: actualizacion del estado de los pedidos en cocina.
+. Disponibilidad de productos como agotado o disponible (BDinventario, BDinventario_movimiento).
 
-4. Crea un archivo llamado .env dentro de la carpeta backend, y pega exactamente esto (reemplaza TU_CONTRASEÑA por la contraseña real de MongoDB):
+###📄5.Gestion de pedidos
 
-MONGO_URI=mongodb+srv://santacruzdelaplazuela_db_user:TU_CONTRASEÑA@cluster0.ctxzlqk.mongodb.net/santacruz?appName=Cluster0
-JWT_SECRET=el_secreto_que_uses
-EMAIL_USER=santacruzdelaplazuela@gmail.com
-EMAIL_PASS=la_contraseña_de_aplicacion
+. Detalles de orden: Resgitro detallado de cada pedido (BDorden_detalle, BDordenes).
+. Historial de pedidos: seguimiento del flujo completo de la orden.
 
-5. Levanta el servidor:
-node index.js
+##⚙️ instalacion y configuracion
+
+###🔗 1. clonar el repositorio
+
+. git clone https://github.com/santacruz-wq/santacruz.git
+. instalacion de node 
+. npm install
+.instalar liberia de mongoDB
+.Instalar liberia de traduccion (Flutter)
+
+### 2.Ejecutar el servidor
+. npm run dev
+
+## Estructura del proyecto
+
+santacruz/
+|
+
