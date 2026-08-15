@@ -24,6 +24,12 @@ export const loginUsers = async (req, res) => {
         return res.status(400).json({ message: 'Usuario no encontrado' });
     }
 
+    //VALIDAMOS QUE EL USUARIO ESTÉ ACTIVO
+
+    if (!existeUser.activo) {
+        return res.status(403).json({ message: 'Usuario deshabilitado, contacta al administrador' });
+    }
+
     //VALIDAMOS LA CONTRASEÑA
 
     const esvalida = await bcrypt.compare(password, existeUser.password);
