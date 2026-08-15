@@ -35,6 +35,11 @@ export const solicitarCode=async (req,res)=>{
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
+        // verificar que el usuario esté activo
+        if (!usuario.activo) {
+            return res.status(403).json({ message: "Usuario deshabilitado, contacta al administrador" });
+        }
+
         // generar código de recuperación 
         const codigo = generarCode();
 
