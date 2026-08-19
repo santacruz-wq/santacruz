@@ -6,13 +6,19 @@ import {
     actualizarProducto,
     eliminarProducto
 } from '../controllers/product.js';
+import { verificarToken, soloAdmin } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+//VER PRODUCTOS (PÚBLICO O CUALQUIER USUARIO LOGUEADO)
+
 router.get('/', getProductos);
 router.get('/:id', getProductoPorId);
-router.post('/', crearProducto);
-router.put('/:id', actualizarProducto);
-router.delete('/:id', eliminarProducto);
 
-export default router; 
+//CREAR, EDITAR Y ELIMINAR PRODUCTOS (SOLO ADMIN)
+
+router.post('/', verificarToken, soloAdmin, crearProducto);
+router.put('/:id', verificarToken, soloAdmin, actualizarProducto);
+router.delete('/:id', verificarToken, soloAdmin, eliminarProducto);
+
+export default router;
