@@ -12,6 +12,9 @@ import loginRoutes from './routes/login.js';
 import recuperarRoutes from './routes/recuperar.js';
 import productoRoutes from './routes/product.js';
 import categoriaRoutes from "./routes/categoria.js";
+import mesaRoutes from './routes/mesa.js';
+import ordenesRoutes from './routes/ordenes.js';
+
 
 
 
@@ -36,6 +39,8 @@ app.use('/api/recuperar', recuperarRoutes);
 app.use('/api/productos', productoRoutes);
 app.use("/api/categorias", categoriaRoutes);
 
+app.use('/api/mesas', mesaRoutes);
+app.use('/api/ordenes', ordenesRoutes);
 
 // ============================
 // 🔹 SERVIDOR
