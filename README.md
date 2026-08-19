@@ -1,4 +1,4 @@
-# 🏛️SANTA CRUZ DE LA PLAZUELA- SISTEMA DE PEDIDOS 
+# 🏛️SANTA CRUZ DE LA PLAZUELA- SISTEMA DE PEDIDOS 🏛️
 Aplicacio movil para gestionar el catalogo de productos,usuarios y pedidos de un restaurante, desarrollada con una excelente tecnologia
 
 ##🛠️ stack Tecnologico
@@ -28,7 +28,7 @@ Exploracion del catalogo de productos en el idioma seleccionado.
 . Modulo del Mesero: Creacion de pedidos desde la mesa asignada (BDmesa).
 . favoritos y reseñas: Gestion de productos favoritos (BDfavoritos) y reseñas (BDreseña).
 
-###🧑‍🍳 4.Modulo de cocina
+###🧑‍🍳 4.Modulo de cocina 🍳
 
 . notificaciones de pedidos: Alertas en tiempo real de nuevos pedidos (BDnotificacion, BDcocina_pedido).
 .Cambio de Estados: actualizacion del estado de los pedidos en cocina.
