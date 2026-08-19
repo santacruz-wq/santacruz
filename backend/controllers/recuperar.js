@@ -1,10 +1,11 @@
 import user from "../models/user.js";
 import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-//configurar transporte de correo
+//CONFIGURAR TRANSPORTE DE CORREO
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -13,47 +14,46 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// función para generar código de recuperación
-
-const generarCode=()=>{
+//FUNCION PARA GENERAR CODIGO DE RECUPERACION
+const generarCode = () => {
     return Math.floor(100000 + Math.random() * 900000).toString(); // genera un código de 6 dígitos
 };
 
-// funcion para enviar o solicitar correo de recuperación
-
-export const solicitarCode=async (req,res)=>{
+//FUNCION PARA SOLICITAR CODIGO DE RECUPERACION
+export const solicitarCode = async (req, res) => {
     try {
         const { email } = req.body;
-        // verificar que el campo este presente 
+
+        //VALIDAMOS QUE EL CAMPO ESTE PRESENTE
         if (!email) {
             return res.status(400).json({ message: "El campo email es requerido" });
         }
 
-        // buscar usuario por email
+        //BUSCAMOS USUARIO POR EMAIL
         const usuario = await user.findOne({ email });
         if (!usuario) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        // verificar que el usuario esté activo
+        //VERIFICAMOS QUE EL USUARIO ESTE ACTIVO
         if (!usuario.activo) {
             return res.status(403).json({ message: "Usuario deshabilitado, contacta al administrador" });
         }
 
-        // generar código de recuperación 
+        //GENERAMOS EL CODIGO DE RECUPERACION
         const codigo = generarCode();
 
-        // guardar el codigo en la base de datos  con fecha de expiración de 15 minutos
+        //GUARDAMOS EL CODIGO CON FECHA DE EXPIRACION DE 15 MINUTOS
         usuario.codigoRecuperacion = codigo;
-        usuario.codigoexpiracion = Date.now() + 900000; // 15 minutos en milisegundos
+        usuario.codigoExpiracion = Date.now() + 900000; // 15 minutos en milisegundos
         await usuario.save();
 
-        //creamos o construimos el correo
+        //CONSTRUIMOS EL CORREO
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: usuario.email,
             subject: "Código de recuperación de contraseña - Santa Cruz de la Plazuela",
-            html:`
+            html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333333;">
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h2 style="color: #16a316eb; margin: 0;">🍽️ Santa Cruz de la Plazuela</h2>
@@ -97,8 +97,9 @@ export const solicitarCode=async (req,res)=>{
                 </p>
             </div>
             `
-        }
-        //enviar el correo
+        };
+
+        //ENVIAMOS EL CORREO
         await transporter.sendMail(mailOptions);
         res.status(200).json({ message: "Código de recuperación enviado al correo" });
 
@@ -106,43 +107,49 @@ export const solicitarCode=async (req,res)=>{
         console.error("Error al solicitar código de recuperación:", error);
         res.status(500).json({ message: "Error al solicitar el codigo de recuperacion" });
     }
-}
+};
 
-// funcion para cambiar contraseña 
-
-export const cambiarPassword=async (req,res)=>{
+//FUNCION PARA CAMBIAR CONTRASEÑA
+export const cambiarPassword = async (req, res) => {
     try {
         const { email, codigo, nuevaPassword } = req.body;
 
-        // verificar que los campos estén presentes
+        //VALIDAMOS QUE LOS CAMPOS ESTEN PRESENTES
         if (!email || !codigo || !nuevaPassword) {
             return res.status(400).json({ message: "todos los campos son requeridos" });
         }
 
-        // contarseña debe tener almenos 6 caracteres
+        //VALIDAMOS QUE LA CONTRASEÑA TENGA AL MENOS 6 CARACTERES
         if (nuevaPassword.length < 6) {
             return res.status(400).json({ message: "la contraseña debe tener al menos 6 caracteres" });
         }
 
-        // buscar usuario en la base de datos 
-        const usuario = await user.findOne({ email, 
-                                            codigoRecuperacion: codigo, 
-                                            codigoexpiracion: { $gt: Date.now() } });
+        //BUSCAMOS USUARIO POR EMAIL, CODIGO Y VIGENCIA
+        const usuario = await user.findOne({
+            email,
+            codigoRecuperacion: codigo,
+            codigoExpiracion: { $gt: Date.now() }
+        });
 
         if (!usuario) {
             return res.status(400).json({ message: "Código de recuperación inválido o expirado" });
         }
 
-        //cambiar la contraseña 
-        usuario.password = nuevaPassword;
-        usuario.codigoRecuperacion = null;
-        usuario.codigoexpiracion = null;
+        //HASHEAMOS LA NUEVA CONTRASEÑA
+        const salt = await bcrypt.genSalt(10);
+        const passwordHasheada = await bcrypt.hash(nuevaPassword, salt);
 
-        //guardar los cambios en la base de datos
+        //ACTUALIZAMOS LA CONTRASEÑA Y LIMPIAMOS EL CODIGO
+        usuario.password = passwordHasheada;
+        usuario.codigoRecuperacion = null;
+        usuario.codigoExpiracion = null;
+
+        //GUARDAMOS LOS CAMBIOS
         await usuario.save();
 
+        //CONSTRUIMOS EL CORREO DE CONFIRMACION
         const mailOptions = {
-            from:process.env.EMAIL_USER,
+            from: process.env.EMAIL_USER,
             to: usuario.email,
             subject: "Contraseña cambiada exitosamente - Santa Cruz de la Plazuela",
             html: `
@@ -166,12 +173,14 @@ export const cambiarPassword=async (req,res)=>{
                     </p>
                 </div>
             `
-        }
+        };
+
+        //ENVIAMOS EL CORREO DE CONFIRMACION
         await transporter.sendMail(mailOptions);
         res.status(200).json({ message: "Contraseña cambiada exitosamente" });
 
     } catch (error) {
         console.error("Error al cambiar la contraseña:", error);
-        res.status(500).json({ message: "Error al cambiar la contraseña",error: error.message });
+        res.status(500).json({ message: "Error al cambiar la contraseña", error: error.message });
     }
-}
+};

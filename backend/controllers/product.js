@@ -1,9 +1,15 @@
 import product from "../models/product.js";
 
-// Obtener todos los productos
+//OBTENEMOS TODOS LOS PRODUCTOS
 export const getProductos = async (req, res) => {
     try {
-        const productos = await product.find().populate("categoria");
+        //PERMITIMOS FILTRAR SOLO DISPONIBLES 
+        const filtro = {};
+        if (req.query.disponible !== undefined) {
+            filtro.disponible = req.query.disponible === "true";
+        }
+
+        const productos = await product.find(filtro).populate("categoria");
         res.status(200).json(productos);
     } catch (error) {
         res.status(500).json({
@@ -13,7 +19,7 @@ export const getProductos = async (req, res) => {
     }
 };
 
-// Obtener producto por ID
+//OBTENEMOS PRODUCTO POR ID
 export const getProductoPorId = async (req, res) => {
     try {
         const producto = await product.findById(req.params.id).populate("categoria");
@@ -26,6 +32,10 @@ export const getProductoPorId = async (req, res) => {
 
         res.status(200).json(producto);
     } catch (error) {
+        
+        if (error.name === "CastError") {
+            return res.status(400).json({ message: "ID de producto inválido" });
+        }
         res.status(500).json({
             message: "Error al obtener el producto",
             error: error.message
@@ -33,7 +43,7 @@ export const getProductoPorId = async (req, res) => {
     }
 };
 
-// Crear producto
+//CREAMOS PRODUCTO
 export const crearProducto = async (req, res) => {
     try {
         const {
@@ -46,14 +56,28 @@ export const crearProducto = async (req, res) => {
             stock
         } = req.body;
 
-        // Validar campos obligatorios (usando minúsculas y productId)
+        //VALIDAMOS CAMPOS OBLIGATORIOS
         if (!productId || !nombre || !precio || !categoria) {
             return res.status(400).json({
                 message: "Faltan campos obligatorios"
             });
         }
 
-        // Validar si el producto ya existe
+        //VALIDAMOS QUE EL PRECIO SEA UN NUMERO POSITIVO
+        if (isNaN(precio) || precio <= 0) {
+            return res.status(400).json({
+                message: "El precio debe ser un número mayor a 0"
+            });
+        }
+
+        //VALIDAMOS QUE EL STOCK, SI SE ENVIA, SEA UN NUMERO VALIDO
+        if (stock !== undefined && (isNaN(stock) || stock < 0)) {
+            return res.status(400).json({
+                message: "El stock debe ser un número mayor o igual a 0"
+            });
+        }
+
+        //VALIDAMOS SI EL PRODUCTO YA EXISTE
         const existeProducto = await product.findOne({ productId });
 
         if (existeProducto) {
@@ -64,12 +88,12 @@ export const crearProducto = async (req, res) => {
 
         const nuevoProducto = new product({
             productId,
-            nombre,
-            descripcion,
+            nombre: nombre.trim(),
+            descripcion: descripcion?.trim(),
             precio,
             imagen,
             categoria,
-            stock
+            stock: stock ?? 0
         });
 
         await nuevoProducto.save();
@@ -87,13 +111,30 @@ export const crearProducto = async (req, res) => {
     }
 };
 
-// Actualizar producto
+//ACTUALIZAMOS PRODUCTO
 export const actualizarProducto = async (req, res) => {
     try {
+        //EVITAMOS QUE SE ACTUALICE EL PRODUCTID O SE FUERCE DISPONIBLE DESDE AQUI
+        const { productId, disponible, ...datosActualizar } = req.body;
+
+        //VALIDAMOS EL PRECIO SI VIENE EN EL BODY
+        if (datosActualizar.precio !== undefined && (isNaN(datosActualizar.precio) || datosActualizar.precio <= 0)) {
+            return res.status(400).json({
+                message: "El precio debe ser un número mayor a 0"
+            });
+        }
+
+        //VALIDAMOS EL STOCK SI VIENE EN EL BODY
+        if (datosActualizar.stock !== undefined && (isNaN(datosActualizar.stock) || datosActualizar.stock < 0)) {
+            return res.status(400).json({
+                message: "El stock debe ser un número mayor o igual a 0"
+            });
+        }
+
         const productoActualizado = await product.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            datosActualizar,
+            { new: true, runValidators: true }
         );
 
         if (!productoActualizado) {
@@ -108,6 +149,9 @@ export const actualizarProducto = async (req, res) => {
         });
 
     } catch (error) {
+        if (error.name === "CastError") {
+            return res.status(400).json({ message: "ID de producto inválido" });
+        }
         res.status(500).json({
             message: "Error al actualizar el producto",
             error: error.message
@@ -115,7 +159,7 @@ export const actualizarProducto = async (req, res) => {
     }
 };
 
-// Eliminar producto 
+//ELIMINAMOS PRODUCTO 
 export const eliminarProducto = async (req, res) => {
     try {
         const productoEliminado = await product.findByIdAndUpdate(
@@ -136,6 +180,9 @@ export const eliminarProducto = async (req, res) => {
         });
 
     } catch (error) {
+        if (error.name === "CastError") {
+            return res.status(400).json({ message: "ID de producto inválido" });
+        }
         res.status(500).json({
             message: "Error al eliminar el producto",
             error: error.message
