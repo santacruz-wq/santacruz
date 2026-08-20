@@ -9,6 +9,6 @@ const ordenDetalleSchema = new mongoose.Schema({
     notas: { type: String, trim: true }
 }, { timestamps: true });
 
-const OrdenDetalle = mongoose.models.ordenDetalle || mongoose.model("ordenDetalle", ordenDetalleSchema);
+const OrdenDetalle = mongoose.models.BDordenDetalle || mongoose.model("BDordenDetalle", ordenDetalleSchema, "BDordenDetalle");
 
 export default OrdenDetalle;

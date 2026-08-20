@@ -184,6 +184,17 @@ export const cambiarEstadoOrden = async (req, res) => {
             }
         }
 
+        //SI EL PEDIDO QUEDÓ LISTO, NOTIFICAMOS AL MESERO EN TIEMPO REAL
+
+        if (estado === 'listo') {
+            const io = req.app.get('io');
+            io.to(orden.mesero.toString()).emit('pedidoListo', {
+                ordenId: orden._id,
+                mesa: orden.mesa,
+                mensaje: 'El pedido está listo para servir'
+            });
+        }
+
         res.status(200).json({ message: 'Estado de la orden actualizado', orden });
     } catch (error) {
         res.status(500).json({ message: 'Error del servidor', error: error.message });

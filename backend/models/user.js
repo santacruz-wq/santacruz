@@ -26,6 +26,6 @@ userSchema.methods.compararPassword = async function (passwordIngresada) {
 };  
 
 // crear modelo
-const User = mongoose.models.users || mongoose.model('users', userSchema);
+const User = mongoose.models.BDusurios || mongoose.model('BDusurios', userSchema, 'BDusurios');
 
 export default User;

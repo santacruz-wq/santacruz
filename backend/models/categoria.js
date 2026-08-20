@@ -7,6 +7,6 @@ const categoriaSchema = new mongoose.Schema({
     activo: { type: Boolean, default: true }
 }, { timestamps: true });
 
-const Categoria = mongoose.models.categoria || mongoose.model("categoria", categoriaSchema);
+const Categoria = mongoose.models.BDcategoria || mongoose.model("BDcategoria", categoriaSchema, "BDcategoria");
 
 export default Categoria;

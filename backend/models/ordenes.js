@@ -7,6 +7,6 @@ const ordenSchema = new mongoose.Schema({
     total: { type: Number, default: 0 }
 }, { timestamps: true });
 
-const Orden = mongoose.models.orden || mongoose.model("orden", ordenSchema);
+const Orden = mongoose.models.BDordenes || mongoose.model("BDordenes", ordenSchema, "BDordenes");
 
 export default Orden;
