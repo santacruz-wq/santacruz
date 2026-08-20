@@ -7,6 +7,6 @@ const cocinaPedidoSchema = new mongoose.Schema({
     horaListo: { type: Date }
 }, { timestamps: true });
 
-const CocinaPedido = mongoose.models.cocinaPedido || mongoose.model("cocinaPedido", cocinaPedidoSchema);
+const CocinaPedido = mongoose.models.BDcocinaPedido || mongoose.model("BDcocinaPedido", cocinaPedidoSchema, "BDcocinaPedido");
 
 export default CocinaPedido;

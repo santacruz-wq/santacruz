@@ -7,6 +7,6 @@ const notificacionSchema = new mongoose.Schema({
     leida: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const Notificacion = mongoose.models.notificacion || mongoose.model("notificacion", notificacionSchema);
+const Notificacion = mongoose.models.BDnotificacion || mongoose.model("BDnotificacion", notificacionSchema, "BDnotificacion");
 
 export default Notificacion;

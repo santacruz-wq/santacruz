@@ -8,6 +8,6 @@ const inventarioMovimientoSchema = new mongoose.Schema({
     usuario: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true }
 }, { timestamps: true });
 
-const InventarioMovimiento = mongoose.models.inventarioMovimiento || mongoose.model("inventarioMovimiento", inventarioMovimientoSchema);
+const InventarioMovimiento = mongoose.models.BDinventarioMovimiento || mongoose.model("BDinventarioMovimiento", inventarioMovimientoSchema, "BDinventarioMovimiento");
 
 export default InventarioMovimiento;

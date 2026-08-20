@@ -5,6 +5,6 @@ const favoritosSchema = new mongoose.Schema({
     producto: { type: mongoose.Schema.Types.ObjectId, ref: "product", required: true }
 }, { timestamps: true });
 
-const Favoritos = mongoose.models.favoritos || mongoose.model("favoritos", favoritosSchema);
+const Favoritos = mongoose.models.BDfavoritos || mongoose.model("BDfavoritos", favoritosSchema, "BDfavoritos");
 
 export default Favoritos;

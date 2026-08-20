@@ -11,6 +11,6 @@ const productSchema = new mongoose.Schema({
     disponible: { type: Boolean, default: true }
 }, { timestamps: true });
 
-const Product = mongoose.models.product || mongoose.model("product", productSchema);
+const Product = mongoose.models.BDproduct || mongoose.model("BDproduct", productSchema, "BDproduct" );
 
 export default Product;
