@@ -16,6 +16,7 @@ import productoRoutes from './routes/product.js';
 import categoriaRoutes from "./routes/categoria.js";
 import mesaRoutes from './routes/mesa.js';
 import ordenesRoutes from './routes/ordenes.js';
+import traducirRoutes from './routes/traducir.js';
 
 
 
@@ -68,6 +69,7 @@ app.use("/api/categorias", categoriaRoutes);
 
 app.use('/api/mesas', mesaRoutes);
 app.use('/api/ordenes', ordenesRoutes);
+app.use('/api/traducir', traducirRoutes);
 
 // ============================
 // 🔹 SERVIDOR
