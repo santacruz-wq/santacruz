@@ -7,6 +7,6 @@ const resenaSchema = new mongoose.Schema({
     comentario: { type: String, trim: true }
 }, { timestamps: true });
 
-const Resena = mongoose.models.resena || mongoose.model("resena", resenaSchema);
+const Resena = mongoose.models.BDresena || mongoose.model("BDresena", resenaSchema, "BDresena");
 
 export default Resena;
