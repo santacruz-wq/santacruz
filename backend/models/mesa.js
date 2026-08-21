@@ -7,6 +7,6 @@ const mesaSchema = new mongoose.Schema({
     activo: { type: Boolean, default: true }
 }, { timestamps: true });
 
-const Mesa = mongoose.models.mesa || mongoose.model("mesa", mesaSchema);
+const Mesa = mongoose.models.BDmesa || mongoose.model("BDmesa", mesaSchema, "BDmesa");
 
 export default Mesa;

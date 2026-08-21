@@ -6,6 +6,6 @@ const inventarioSchema = new mongoose.Schema({
     cantidadMinima: { type: Number, default: 5 }
 }, { timestamps: true });
 
-const Inventario = mongoose.models.inventario || mongoose.model("inventario", inventarioSchema);
+const Inventario = mongoose.models.BDinventario || mongoose.model("BDinventario", inventarioSchema, "BDinventario");
 
 export default Inventario;
