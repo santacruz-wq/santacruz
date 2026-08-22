@@ -32,7 +32,7 @@ export const getProductoPorId = async (req, res) => {
 
         res.status(200).json(producto);
     } catch (error) {
-        
+
         if (error.name === "CastError") {
             return res.status(400).json({ message: "ID de producto inválido" });
         }
@@ -46,18 +46,22 @@ export const getProductoPorId = async (req, res) => {
 //CREAMOS PRODUCTO
 export const crearProducto = async (req, res) => {
     try {
-        const {
+        let {
             productId,
             nombre,
             descripcion,
             precio,
-            imagen,
             categoria,
             stock
         } = req.body;
 
+        //GENERAMOS EL PRODUCTID AUTOMATICAMENTE SI NO VIENE
+        if (!productId) {
+            productId = `PROD-${Date.now()}`;
+        }
+
         //VALIDAMOS CAMPOS OBLIGATORIOS
-        if (!productId || !nombre || !precio || !categoria) {
+        if (!nombre || !precio || !categoria) {
             return res.status(400).json({
                 message: "Faltan campos obligatorios"
             });
@@ -85,6 +89,9 @@ export const crearProducto = async (req, res) => {
                 message: "El producto ya existe"
             });
         }
+
+        //TOMAMOS LA IMAGEN DEL ARCHIVO SUBIDO POR MULTER (NO DEL BODY)
+        const imagen = req.file ? `/uploads/${req.file.filename}` : undefined;
 
         const nuevoProducto = new product({
             productId,
@@ -129,6 +136,11 @@ export const actualizarProducto = async (req, res) => {
             return res.status(400).json({
                 message: "El stock debe ser un número mayor o igual a 0"
             });
+        }
+
+        //SI LLEGA UN ARCHIVO NUEVO, ACTUALIZAMOS LA IMAGEN
+        if (req.file) {
+            datosActualizar.imagen = `/uploads/${req.file.filename}`;
         }
 
         const productoActualizado = await product.findByIdAndUpdate(
@@ -185,6 +197,46 @@ export const eliminarProducto = async (req, res) => {
         }
         res.status(500).json({
             message: "Error al eliminar el producto",
+            error: error.message
+        });
+    }
+};
+
+//CAMBIAMOS LA DISPONIBILIDAD DEL PRODUCTO (ADMIN Y COCINA)
+export const cambiarDisponibilidad = async (req, res) => {
+    try {
+        const { disponible } = req.body;
+
+        //VALIDAMOS QUE VENGA EL CAMPO Y QUE SEA BOOLEANO
+        if (typeof disponible !== "boolean") {
+            return res.status(400).json({
+                message: "El campo disponible debe ser true o false"
+            });
+        }
+
+        const productoActualizado = await product.findByIdAndUpdate(
+            req.params.id,
+            { disponible },
+            { new: true }
+        );
+
+        if (!productoActualizado) {
+            return res.status(404).json({
+                message: "Producto no encontrado"
+            });
+        }
+
+        res.status(200).json({
+            message: "Disponibilidad actualizada exitosamente",
+            producto: productoActualizado
+        });
+
+    } catch (error) {
+        if (error.name === "CastError") {
+            return res.status(400).json({ message: "ID de producto inválido" });
+        }
+        res.status(500).json({
+            message: "Error al actualizar la disponibilidad",
             error: error.message
         });
     }

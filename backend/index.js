@@ -28,6 +28,7 @@ import traducirRoutes from './routes/traducir.js';
 const app = express();
 connectDB();
 app.use(express.json());
+app.use('/uploads', express.static('uploads')); // 👈 NUEVO: sirve las imágenes de productos
 
 const PORT = process.env.PORT || 3000;
 
