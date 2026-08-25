@@ -18,6 +18,9 @@ import mesaRoutes from './routes/mesa.js';
 import ordenesRoutes from './routes/ordenes.js';
 import traducirRoutes from './routes/traducir.js';
 import resenaRoutes from "./routes/resena.js";
+import inventarioRoutes from "./routes/inventario.js";
+import notificacionRoutes from "./routes/notificacion.js";
+import favoritosRoutes from "./routes/favoritos.js";
 
 
 
@@ -75,6 +78,9 @@ app.use('/api/ordenes', ordenesRoutes);
 app.use('/api/traducir', traducirRoutes);
 app.use("/api/resenas", resenaRoutes);
 
+app.use("/api/inventario", inventarioRoutes);
+app.use("/api/notificaciones", notificacionRoutes);
+app.use("/api/favoritos", favoritosRoutes);
 // ============================
 // 🔹 SERVIDOR
 // ============================
