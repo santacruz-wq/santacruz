@@ -135,12 +135,9 @@ export const cambiarPassword = async (req, res) => {
             return res.status(400).json({ message: "Código de recuperación inválido o expirado" });
         }
 
-        //HASHEAMOS LA NUEVA CONTRASEÑA
-        const salt = await bcrypt.genSalt(10);
-        const passwordHasheada = await bcrypt.hash(nuevaPassword, salt);
 
         //ACTUALIZAMOS LA CONTRASEÑA Y LIMPIAMOS EL CODIGO
-        usuario.password = passwordHasheada;
+        usuario.password = nuevaPassword;
         usuario.codigoRecuperacion = null;
         usuario.codigoExpiracion = null;
 
