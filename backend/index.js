@@ -79,7 +79,7 @@ app.use('/api/traducir', traducirRoutes);
 app.use("/api/resenas", resenaRoutes);
 
 app.use("/api/inventario", inventarioRoutes);
-app.use("/api/notificaciones", notificacionRoutes);
+app.use("/api/notificacion", notificacionRoutes);
 app.use("/api/favoritos", favoritosRoutes);
 // ============================
 // 🔹 SERVIDOR
