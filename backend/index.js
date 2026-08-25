@@ -76,7 +76,7 @@ app.use('/api/mesas', mesaRoutes);
 app.use('/api/ordenes', ordenesRoutes);
 app.use('/api/traducir', traducirRoutes);
 app.use("/api/inventario", inventarioRoutes);
-app.use("/api/notificaciones", notificacionRoutes);
+app.use("/api/notificacion", notificacionRoutes);
 app.use("/api/favoritos", favoritosRoutes);
 // ============================
 // 🔹 SERVIDOR
