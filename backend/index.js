@@ -7,7 +7,7 @@ import "dotenv/config";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./db/db.js";
-
+import dns from "dns";     
 // Rutas
 import userRoutes from './routes/user.js';
 import loginRoutes from './routes/login.js';
@@ -30,12 +30,16 @@ import favoritosRoutes from "./routes/favoritos.js";
 // 🔹 CONFIGURACIÓN
 // ============================
 const app = express();
+
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
 connectDB();
+
 app.use(express.json());
-app.use('/uploads', express.static('uploads')); // 👈 NUEVO: sirve las imágenes de productos
+
+app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 3000;
-
 // ============================
 // 🔹 SOCKET.IO
 // ============================

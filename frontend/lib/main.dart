@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
 
 void main() {
@@ -24,8 +25,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         useMaterial3: true,
       ),
-      initialRoute: '/login',
+      initialRoute: '/inicio',
       routes: {
+        '/inicio': (context) => const InicioScreen(),
         '/login': (context) => const LoginScreen(),
         '/admin': (context) => const _PlaceholderScreen(titulo: "Panel Admin"),
         '/mesero': (context) => const _PlaceholderScreen(titulo: "Panel Mesero"),
