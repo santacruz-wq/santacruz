@@ -6,8 +6,7 @@ const productSchema = new mongoose.Schema({
     descripcion: { type: String, required: true, trim: true },
     precio: { type: Number, required: true },
     imagen: { type: String, default: "assets/img/fondo.avif" },
-    categoria: { type: mongoose.Schema.Types.ObjectId, ref: "categoria", required: true },
-    stock: { type: Number, default: 0 },
+    categoria: { type: mongoose.Schema.Types.ObjectId, ref: "BDcategoria", required: true },
     disponible: { type: Boolean, default: true }
 }, { timestamps: true });
 

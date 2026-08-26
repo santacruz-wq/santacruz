@@ -65,20 +65,25 @@ export const crearInventario = async (req, res) => {
     }
 };
 
-//FUNCION PARA ACTUALIZAR LA CANTIDAD MINIMA DE UN PRODUCTO
-export const actualizarCantidadMinima = async (req, res) => {
+//FUNCION PARA ACTUALIZAR LA CANTIDAD MINIMA Y/O MAXIMA DE UN PRODUCTO
+export const actualizarCantidadMinMax = async (req, res) => {
     try {
         const { productoId } = req.params;
-        const { cantidadMinima } = req.body;
+        const { cantidadMinima, cantidadMaxima } = req.body;
 
-        //VALIDAMOS EL CAMPO
-        if (cantidadMinima === undefined) {
-            return res.status(400).json({ message: "La cantidadMinima es requerida" });
+        //VALIDAMOS QUE AL MENOS UN CAMPO VENGA
+        if (cantidadMinima === undefined && cantidadMaxima === undefined) {
+            return res.status(400).json({ message: "Debe enviar cantidadMinima y/o cantidadMaxima" });
         }
+
+        //ARMAMOS EL OBJETO DE ACTUALIZACION SOLO CON LO QUE VINO
+        const camposActualizar = {};
+        if (cantidadMinima !== undefined) camposActualizar.cantidadMinima = cantidadMinima;
+        if (cantidadMaxima !== undefined) camposActualizar.cantidadMaxima = cantidadMaxima;
 
         const inventario = await Inventario.findOneAndUpdate(
             { producto: productoId },
-            { cantidadMinima },
+            camposActualizar,
             { new: true }
         );
 
@@ -86,11 +91,16 @@ export const actualizarCantidadMinima = async (req, res) => {
             return res.status(404).json({ message: "No existe registro de inventario para este producto" });
         }
 
-        res.status(200).json({ message: "Cantidad minima actualizada correctamente", inventario });
+        //VALIDAMOS QUE MINIMA NO SEA MAYOR QUE MAXIMA
+        if (inventario.cantidadMinima > inventario.cantidadMaxima) {
+            return res.status(400).json({ message: "La cantidadMinima no puede ser mayor que la cantidadMaxima" });
+        }
+
+        res.status(200).json({ message: "Cantidad minima/maxima actualizada correctamente", inventario });
 
     } catch (error) {
-        console.error("Error al actualizar la cantidad minima:", error);
-        res.status(500).json({ message: "Error al actualizar la cantidad minima", error: error.message });
+        console.error("Error al actualizar la cantidad minima/maxima:", error);
+        res.status(500).json({ message: "Error al actualizar la cantidad minima/maxima", error: error.message });
     }
 };
 

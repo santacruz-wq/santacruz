@@ -7,7 +7,7 @@ import {
     cambiarEstadoMesa,
     eliminarMesa
 } from '../controllers/mesa.js';
-import { verificarToken, soloAdmin } from '../middlewares/auth.js';
+import { verificarToken, soloAdmin, permitirRoles } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -29,7 +29,8 @@ router.put('/:id', verificarToken, soloAdmin, actualizarMesa);
 
 //CAMBIAR ESTADO DE LA MESA (MESERO O ADMIN)
 
-router.patch('/:id/estado', verificarToken, cambiarEstadoMesa);
+//CAMBIAR ESTADO DE LA MESA (MESERO, COCINA O ADMIN)
+router.patch('/:id/estado', verificarToken, permitirRoles('mesero', 'cocina', 'admin'), cambiarEstadoMesa);
 
 //ELIMINAR UNA MESA (SOLO ADMIN)
 
