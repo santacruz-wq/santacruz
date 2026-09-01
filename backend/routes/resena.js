@@ -11,9 +11,9 @@ import { soloAdmin, verificarToken } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.get("/", verificarToken, getResenas);
-router.get("/producto/:productoId", verificarToken, getResenasPorProducto);
-router.get("/:id", verificarToken, getResenaPorId);
+router.get("/", getResenas);
+router.get("/producto/:productoId", getResenasPorProducto);
+router.get("/:id", getResenaPorId);
 router.post("/", verificarToken, crearResena);
 router.put("/:id", verificarToken, actualizarResena);
 router.delete("/:id", verificarToken,soloAdmin, eliminarResena);
