@@ -6,7 +6,13 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
     codigoRecuperacion:String,
-    codigoexpiracion:Date,
+    codigoExpiracion:Date,
+
+    //VERIFICACION DE CUENTA
+    isVerified: { type: Boolean, default: false },
+    codigoVerificacion: String,
+    codigoVerificacionExpiracion: Date,
+
     rol: { type: String, enum: ["admin", "mesero", "cocina", "usuario"], default: "usuario" },
     activo: { type: Boolean, default: true }
 },{ timestamps: true });

@@ -15,6 +15,7 @@ export const loginUsers = async (req, res) => {
     if (!email || !password) {
         return res.status(400).json({ message: 'Por favor, ingrese su correo electrónico y contraseña' });
     }
+    
 
     //BUSCAMOS EL USUARIO EN LA BASE DE DATOS
 
@@ -25,6 +26,11 @@ export const loginUsers = async (req, res) => {
     }
 
     //VALIDAMOS QUE EL USUARIO ESTÉ ACTIVO
+    if (!existeUser.isVerified) {
+    return res.status(403).json({
+        message: 'Tu cuenta no está verificada. Ingresa el código enviado a tu correo antes de iniciar sesión.'
+    });
+}
 
     if (!existeUser.activo) {
         return res.status(403).json({ message: 'Usuario deshabilitado, contacta al administrador' });
