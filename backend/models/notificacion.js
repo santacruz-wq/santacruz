@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 const notificacionSchema = new mongoose.Schema({
-    usuario: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
-    orden: { type: mongoose.Schema.Types.ObjectId, ref: "orden", required: true },
+    usuario: { type: mongoose.Schema.Types.ObjectId, ref: "BDusurios", required: true },
+    orden: { type: mongoose.Schema.Types.ObjectId, ref: "BDordenes", required: true },
     mensaje: { type: String, required: true, trim: true },
     leida: { type: Boolean, default: false }
 }, { timestamps: true });

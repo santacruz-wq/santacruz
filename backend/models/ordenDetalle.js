@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 const ordenDetalleSchema = new mongoose.Schema({
-    orden: { type: mongoose.Schema.Types.ObjectId, ref: "orden", required: true },
-    producto: { type: mongoose.Schema.Types.ObjectId, ref: "product", required: true },
+    orden: { type: mongoose.Schema.Types.ObjectId, ref: "BDordenes", required: true },
+    producto: { type: mongoose.Schema.Types.ObjectId, ref: "BDproduct", required: true },
     cantidad: { type: Number, required: true, default: 1 },
     precioUnitario: { type: Number, required: true },
     subtotal: { type: Number, required: true },

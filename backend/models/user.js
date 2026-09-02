@@ -13,6 +13,8 @@ const userSchema = new mongoose.Schema({
     codigoVerificacion: String,
     codigoVerificacionExpiracion: Date,
 
+    codigoRecuperacion:{type: String, default: null},
+    codigoExpiracion:{type: Date, default: null},
     rol: { type: String, enum: ["admin", "mesero", "cocina", "usuario"], default: "usuario" },
     activo: { type: Boolean, default: true }
 },{ timestamps: true });
