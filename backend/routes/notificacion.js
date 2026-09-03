@@ -7,13 +7,13 @@ import {
     marcarTodasComoLeidas,
     eliminarNotificacion
 } from "../controllers/notificacion.js";
-import { verificarToken } from "../middlewares/auth.js";
+import { verificarToken, permitirRoles } from "../middlewares/auth.js";
 
 const router = express.Router();
 
 router.get("/", verificarToken, getNotificaciones);
 router.get("/:id", verificarToken, getNotificacionPorId);
-router.post("/", verificarToken, crearNotificacion);
+router.post("/", verificarToken, permitirRoles("cocina", "admin"), crearNotificacion);
 router.put("/:id/leida", verificarToken, marcarComoLeida);
 router.put("/leidas/todas", verificarToken, marcarTodasComoLeidas);
 router.delete("/:id", verificarToken, eliminarNotificacion);
