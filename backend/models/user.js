@@ -5,6 +5,14 @@ const userSchema = new mongoose.Schema({
     nombre: { type: String, required: true, uppercase: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
+    codigoRecuperacion:String,
+    codigoExpiracion:Date,
+
+    //VERIFICACION DE CUENTA
+    isVerified: { type: Boolean, default: false },
+    codigoVerificacion: String,
+    codigoVerificacionExpiracion: Date,
+
     codigoRecuperacion:{type: String, default: null},
     codigoExpiracion:{type: Date, default: null},
     rol: { type: String, enum: ["admin", "mesero", "cocina", "usuario"], default: "usuario" },

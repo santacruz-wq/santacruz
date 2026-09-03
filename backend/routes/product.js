@@ -8,7 +8,7 @@ import {
     cambiarDisponibilidad
 } from '../controllers/product.js';
 import { verificarToken, soloAdmin, permitirRoles } from '../middlewares/auth.js';
-import upload from '../middlewares/upload.js';
+import { upload } from '../middlewares/upload.js';
 
 const router = express.Router();
 

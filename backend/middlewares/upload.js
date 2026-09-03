@@ -1,41 +1,27 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+import multer from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary.js';
 
-//CREAMOS LA CARPETA UPLOADS SI NO EXISTE
-const carpetaUploads = "uploads";
-if (!fs.existsSync(carpetaUploads)) {
-    fs.mkdirSync(carpetaUploads);
-}
-
-//CONFIGURAMOS DONDE Y CON QUE NOMBRE SE GUARDA CADA ARCHIVO
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, carpetaUploads);
-    },
-    filename: (req, file, cb) => {
-        const nombreUnico = `${Date.now()}${path.extname(file.originalname)}`;
-        cb(null, nombreUnico);
-    }
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'santacruz-plazuela/productos',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 800, height: 800, crop: 'limit' }],
+  },
 });
 
-//FILTRAMOS SOLO IMAGENES PERMITIDAS
-const filtroArchivo = (req, file, cb) => {
-    const tiposPermitidos = /jpeg|jpg|png|webp/;
-    const extensionValida = tiposPermitidos.test(path.extname(file.originalname).toLowerCase());
-    const mimeValido = tiposPermitidos.test(file.mimetype);
-
-    if (extensionValida && mimeValido) {
-        cb(null, true);
-    } else {
-        cb(new Error("Formato de imagen no soportado. Usa JPG, PNG o WEBP."));
-    }
+const filtroImagenes = (req, file, cb) => {
+  const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+  if (tiposPermitidos.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten imágenes (jpg, jpeg, png, webp)'), false);
+  }
 };
 
-const upload = multer({
-    storage,
-    fileFilter: filtroArchivo,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB máximo
+export const upload = multer({
+  storage,
+  fileFilter: filtroImagenes,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
 });
-
-export default upload;

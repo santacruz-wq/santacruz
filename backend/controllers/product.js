@@ -1,9 +1,9 @@
 import product from "../models/product.js";
+import { borrarImagenCloudinary } from "../utils/cloudinary.js";
 
 //OBTENEMOS TODOS LOS PRODUCTOS
 export const getProductos = async (req, res) => {
     try {
-        //PERMITIMOS FILTRAR SOLO DISPONIBLES 
         const filtro = {};
         if (req.query.disponible !== undefined) {
             filtro.disponible = req.query.disponible === "true";
@@ -25,14 +25,11 @@ export const getProductoPorId = async (req, res) => {
         const producto = await product.findById(req.params.id).populate("categoria");
 
         if (!producto) {
-            return res.status(404).json({
-                message: "Producto no encontrado"
-            });
+            return res.status(404).json({ message: "Producto no encontrado" });
         }
 
         res.status(200).json(producto);
     } catch (error) {
-
         if (error.name === "CastError") {
             return res.status(400).json({ message: "ID de producto inválido" });
         }
@@ -46,59 +43,43 @@ export const getProductoPorId = async (req, res) => {
 //CREAMOS PRODUCTO
 export const crearProducto = async (req, res) => {
     try {
-        let {
-            productId,
-            nombre,
-            descripcion,
-            precio,
-            categoria,
-            stock
-        } = req.body;
+      console.log("BODY RECIBIDO:", req.body);
+        console.log("ARCHIVO RECIBIDO:", req.file);
 
-        //GENERAMOS EL PRODUCTID AUTOMATICAMENTE SI NO VIENE
+        let { productId, nombre, descripcion, precio, categoria, stock } = req.body;
+
         if (!productId) {
             productId = `PROD-${Date.now()}`;
         }
 
-        //VALIDAMOS CAMPOS OBLIGATORIOS
         if (!nombre || !precio || !categoria) {
-            return res.status(400).json({
-                message: "Faltan campos obligatorios"
-            });
+            return res.status(400).json({ message: "Faltan campos obligatorios" });
         }
 
-        //VALIDAMOS QUE EL PRECIO SEA UN NUMERO POSITIVO
         if (isNaN(precio) || precio <= 0) {
-            return res.status(400).json({
-                message: "El precio debe ser un número mayor a 0"
-            });
+            return res.status(400).json({ message: "El precio debe ser un número mayor a 0" });
         }
 
-        //VALIDAMOS QUE EL STOCK, SI SE ENVIA, SEA UN NUMERO VALIDO
         if (stock !== undefined && (isNaN(stock) || stock < 0)) {
-            return res.status(400).json({
-                message: "El stock debe ser un número mayor o igual a 0"
-            });
+            return res.status(400).json({ message: "El stock debe ser un número mayor o igual a 0" });
         }
 
-        //VALIDAMOS SI EL PRODUCTO YA EXISTE
         const existeProducto = await product.findOne({ productId });
-
         if (existeProducto) {
-            return res.status(400).json({
-                message: "El producto ya existe"
-            });
+            return res.status(400).json({ message: "El producto ya existe" });
         }
 
-        //TOMAMOS LA IMAGEN DEL ARCHIVO SUBIDO POR MULTER (NO DEL BODY)
-        const imagen = req.file ? `/uploads/${req.file.filename}` : undefined;
+        //VALIDAMOS QUE SE HAYA SUBIDO UNA IMAGEN
+        if (!req.file) {
+            return res.status(400).json({ message: "Debes subir una imagen del producto" });
+        }
 
         const nuevoProducto = new product({
             productId,
             nombre: nombre.trim(),
             descripcion: descripcion?.trim(),
             precio,
-            imagen,
+            imagen: req.file.path, // URL provista por Cloudinary
             categoria,
             stock: stock ?? 0
         });
@@ -121,26 +102,25 @@ export const crearProducto = async (req, res) => {
 //ACTUALIZAMOS PRODUCTO
 export const actualizarProducto = async (req, res) => {
     try {
-        //EVITAMOS QUE SE ACTUALICE EL PRODUCTID O SE FUERCE DISPONIBLE DESDE AQUI
-        const { productId, disponible, ...datosActualizar } = req.body;
+        const { productId, disponible, imagen, ...datosActualizar } = req.body;
 
-        //VALIDAMOS EL PRECIO SI VIENE EN EL BODY
         if (datosActualizar.precio !== undefined && (isNaN(datosActualizar.precio) || datosActualizar.precio <= 0)) {
-            return res.status(400).json({
-                message: "El precio debe ser un número mayor a 0"
-            });
+            return res.status(400).json({ message: "El precio debe ser un número mayor a 0" });
         }
 
-        //VALIDAMOS EL STOCK SI VIENE EN EL BODY
         if (datosActualizar.stock !== undefined && (isNaN(datosActualizar.stock) || datosActualizar.stock < 0)) {
-            return res.status(400).json({
-                message: "El stock debe ser un número mayor o igual a 0"
-            });
+            return res.status(400).json({ message: "El stock debe ser un número mayor o igual a 0" });
         }
 
-        //SI LLEGA UN ARCHIVO NUEVO, ACTUALIZAMOS LA IMAGEN
+        const producto = await product.findById(req.params.id);
+        if (!producto) {
+            return res.status(404).json({ message: "Producto no encontrado" });
+        }
+
+        //SI SE ENVIA UNA IMAGEN NUEVA, BORRAMOS LA ANTERIOR EN CLOUDINARY
         if (req.file) {
-            datosActualizar.imagen = `/uploads/${req.file.filename}`;
+            await borrarImagenCloudinary(producto.imagen);
+            datosActualizar.imagen = req.file.path;
         }
 
         const productoActualizado = await product.findByIdAndUpdate(
@@ -148,12 +128,6 @@ export const actualizarProducto = async (req, res) => {
             datosActualizar,
             { new: true, runValidators: true }
         );
-
-        if (!productoActualizado) {
-            return res.status(404).json({
-                message: "Producto no encontrado"
-            });
-        }
 
         res.status(200).json({
             message: "Producto actualizado exitosamente",
@@ -171,7 +145,7 @@ export const actualizarProducto = async (req, res) => {
     }
 };
 
-//ELIMINAMOS PRODUCTO 
+//ELIMINAMOS PRODUCTO (SOFT DELETE)
 export const eliminarProducto = async (req, res) => {
     try {
         const productoEliminado = await product.findByIdAndUpdate(
@@ -181,9 +155,7 @@ export const eliminarProducto = async (req, res) => {
         );
 
         if (!productoEliminado) {
-            return res.status(404).json({
-                message: "Producto no encontrado"
-            });
+            return res.status(404).json({ message: "Producto no encontrado" });
         }
 
         res.status(200).json({
@@ -202,16 +174,13 @@ export const eliminarProducto = async (req, res) => {
     }
 };
 
-//CAMBIAMOS LA DISPONIBILIDAD DEL PRODUCTO (ADMIN Y COCINA)
+//CAMBIAMOS SOLO LA DISPONIBILIDAD (ADMIN O COCINA)
 export const cambiarDisponibilidad = async (req, res) => {
     try {
         const { disponible } = req.body;
 
-        //VALIDAMOS QUE VENGA EL CAMPO Y QUE SEA BOOLEANO
-        if (typeof disponible !== "boolean") {
-            return res.status(400).json({
-                message: "El campo disponible debe ser true o false"
-            });
+        if (disponible === undefined) {
+            return res.status(400).json({ message: "El campo disponible es requerido" });
         }
 
         const productoActualizado = await product.findByIdAndUpdate(
@@ -221,13 +190,11 @@ export const cambiarDisponibilidad = async (req, res) => {
         );
 
         if (!productoActualizado) {
-            return res.status(404).json({
-                message: "Producto no encontrado"
-            });
+            return res.status(404).json({ message: "Producto no encontrado" });
         }
 
         res.status(200).json({
-            message: "Disponibilidad actualizada exitosamente",
+            message: "Disponibilidad actualizada correctamente",
             producto: productoActualizado
         });
 
@@ -236,7 +203,7 @@ export const cambiarDisponibilidad = async (req, res) => {
             return res.status(400).json({ message: "ID de producto inválido" });
         }
         res.status(500).json({
-            message: "Error al actualizar la disponibilidad",
+            message: "Error al cambiar la disponibilidad",
             error: error.message
         });
     }
