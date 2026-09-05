@@ -112,7 +112,7 @@ class _InicioScreenState extends State<InicioScreen>
         children: [
           // ===== FONDO (mejor centrado) =====
           Image.asset(
-            'assets/img/imagen version 2.jpeg',
+            'assets/img/imagen_version_2.jpeg',
             fit: BoxFit.cover,
 
             alignment: const Alignment(0, -0.120),
@@ -198,7 +198,7 @@ class _InicioScreenState extends State<InicioScreen>
                         height: 52,
                         child: ElevatedButton(
                           onPressed: () {
-                            // Navigator.pushNamed(context, '/menu');
+                          Navigator.pushNamed(context, '/language-selection');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFF5F0E6),
