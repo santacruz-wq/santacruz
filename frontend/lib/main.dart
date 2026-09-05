@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/inicio',
       routes: {
-        '/inicio': (context) => const InicioScreen(),
+        '/inicio': (context) => InicioScreen(),
         '/login': (context) => const LoginScreen(),
         '/admin': (context) => const _PlaceholderScreen(titulo: "Panel Admin"),
         '/mesero': (context) => const _PlaceholderScreen(titulo: "Panel Mesero"),
