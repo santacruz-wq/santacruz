@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/language_provider.dart';
 import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/language_selection/language_selection.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -28,6 +33,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/inicio',
       routes: {
         '/inicio': (context) => InicioScreen(),
+        '/language-selection': (context) => const LanguageSelectionScreen(),
         '/login': (context) => const LoginScreen(),
         '/admin': (context) => const _PlaceholderScreen(titulo: "Panel Admin"),
         '/mesero': (context) => const _PlaceholderScreen(titulo: "Panel Mesero"),
