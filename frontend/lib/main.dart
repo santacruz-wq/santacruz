@@ -8,13 +8,18 @@ import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/verificar_cuenta_screen.dart';
 import 'screens/language_selection/language_selection.dart';
+import 'screens/menu/menu_screen.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => LanguageProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -28,7 +33,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Santa Cruz de la Plazuela',
+
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         primarySwatch: Colors.green,
         useMaterial3: true,
@@ -37,28 +44,54 @@ class MyApp extends StatelessWidget {
       home: const AppStarter(),
 
       routes: {
+        // Inicio
         '/inicio': (context) => InicioScreen(),
-        '/language-selection': (context) => const LanguageSelectionScreen(),
+
+        // Selección de idioma
+        '/language-selection': (context) =>
+            const LanguageSelectionScreen(),
+
+        // Login
         '/login': (context) => const LoginScreen(),
+
+        // Verificación de cuenta
         '/verificar-cuenta': (context) {
-          final email = ModalRoute.of(context)!.settings.arguments as String;
-          return VerificarCuentaScreen(email: email);
+          final email =
+              ModalRoute.of(context)!.settings.arguments as String;
+
+          return VerificarCuentaScreen(
+            email: email,
+          );
         },
-        '/admin': (context) => const _PlaceholderScreen(titulo: "Panel Admin"),
-        '/mesero': (context) => const _PlaceholderScreen(titulo: "Panel Mesero"),
-        '/cocina': (context) => const _PlaceholderScreen(titulo: "Panel Cocina"),
-        '/menu': (context) => const _PlaceholderScreen(titulo: "Menú"),
-        '/recuperar': (context) => const _PlaceholderScreen(titulo: "Recuperar Contraseña"),
-        '/registro': (context) => const _PlaceholderScreen(titulo: "Registro"),
+
+        // Menú principal
+        '/menu': (context) => const MenuScreen(),
+
+        // Paneles temporales
+        '/admin': (context) => const _PlaceholderScreen(
+              titulo: 'Panel Admin',
+            ),
+
+        '/mesero': (context) => const _PlaceholderScreen(
+              titulo: 'Panel Mesero',
+            ),
+
+        '/cocina': (context) => const _PlaceholderScreen(
+              titulo: 'Panel Cocina',
+            ),
+
+        '/recuperar': (context) => const _PlaceholderScreen(
+              titulo: 'Recuperar Contraseña',
+            ),
+
+        '/registro': (context) => const _PlaceholderScreen(
+              titulo: 'Registro',
+            ),
       },
     );
   }
 }
 
-// =====================================================
-// APP STARTER: carga sesión/idioma en segundo plano
-// y siempre muestra la pantalla de inicio
-// =====================================================
 
 class AppStarter extends StatefulWidget {
   const AppStarter({super.key});
@@ -80,39 +113,51 @@ class _AppStarterState extends State<AppStarter> {
     final authProvider = context.read<AuthProvider>();
     final languageProvider = context.read<LanguageProvider>();
 
-    // Cargamos idioma y sesión guardados en segundo plano
-    // (para que InicioScreen ya sepa si saltar la selección de idioma)
     await Future.wait([
       languageProvider.cargarIdiomaGuardado(),
       authProvider.verificarSesion(),
     ]);
 
     if (!mounted) return;
-    setState(() => _listo = true);
+
+    setState(() {
+      _listo = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     if (!_listo) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
+
     return InicioScreen();
   }
 }
 
-// PANTALLA TEMPORAL MIENTRAS ARMAMOS LAS REALES
+
 class _PlaceholderScreen extends StatelessWidget {
   final String titulo;
 
-  const _PlaceholderScreen({required this.titulo});
+  const _PlaceholderScreen({
+    required this.titulo,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(titulo)),
-      body: Center(child: Text("$titulo — en construcción")),
+      appBar: AppBar(
+        title: Text(titulo),
+      ),
+      body: Center(
+        child: Text(
+          '$titulo — en construcción',
+        ),
+      ),
     );
   }
 }
