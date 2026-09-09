@@ -25,4 +25,12 @@ class ApiClient {
   static Future<http.Response> put(String url, Map<String, dynamic> body, {bool auth = true}) async {
     return http.put(Uri.parse(url), headers: await _headers(auth: auth), body: jsonEncode(body));
   }
+
+  static Future<http.Response> patch(String url, Map<String, dynamic> body, {bool auth = true}) async {
+    return http.patch(Uri.parse(url), headers: await _headers(auth: auth), body: jsonEncode(body));
+  }
+
+  static Future<http.Response> delete(String url, {bool auth = true}) async {
+    return http.delete(Uri.parse(url), headers: await _headers(auth: auth));
+  }
 }
