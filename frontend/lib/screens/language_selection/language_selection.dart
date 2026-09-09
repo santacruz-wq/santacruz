@@ -17,20 +17,20 @@ class LanguageSelectionScreen extends StatefulWidget {
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<PaisIdioma> _resultados = paisesDisponibles;
+  List<Idioma> _resultados = idiomasDisponibles;
 
   void _filtrar(String query) {
     setState(() {
-      _resultados = paisesDisponibles
-          .where((p) => p.pais.toLowerCase().contains(query.toLowerCase()))
+      _resultados = idiomasDisponibles
+          .where((i) => i.nombre.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
 
-  void _elegirIdioma(PaisIdioma seleccion) {
+  void _elegirIdioma(Idioma seleccion) {
     context.read<LanguageProvider>().setIdioma(
-          seleccion.idiomaCodigo,
-          seleccion.idiomaNombre,
+          seleccion.codigo,
+          seleccion.nombre,
         );
     Navigator.pushReplacementNamed(context, '/menu');
   }
@@ -65,7 +65,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Escribe tu país para elegir tu idioma',
+              'Escribe tu idioma de origen',
               style: TextStyle(
                 color: AppColors.textoCafe,
                 fontSize: 15,
@@ -76,12 +76,12 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
             SearchField(
               controller: _searchController,
               onChanged: _filtrar,
-              hintText: 'Buscar país...',
+              hintText: 'Buscar idioma...',
             ),
             const SizedBox(height: 12),
             Expanded(
               child: _resultados.isEmpty
-                  ? const EmptyState(message: 'No se encontró ese país')
+                  ? const EmptyState(message: 'No se encontró ese idioma')
                   : ListView.builder(
                       itemCount: _resultados.length,
                       itemBuilder: (context, index) {

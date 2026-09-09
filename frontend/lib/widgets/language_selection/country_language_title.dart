@@ -3,7 +3,7 @@ import '../../core/config/app_colors.dart';
 import '../../models/pais_idioma.dart';
 
 class CountryLanguageTile extends StatelessWidget {
-  final PaisIdioma item;
+  final Idioma item;
   final VoidCallback onTap;
 
   const CountryLanguageTile({
@@ -22,9 +22,21 @@ class CountryLanguageTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       child: ListTile(
-        leading: Text(item.bandera, style: const TextStyle(fontSize: 28)),
+        leading: Container(
+  width: 45,
+  height: 45,
+  decoration: BoxDecoration(
+    color: AppColors.crema,
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: const Icon(
+    Icons.public,
+    color: AppColors.textoCafe,
+    size: 28,
+  ),
+),
         title: Text(
-          item.pais,
+          item.nombre,
           style: const TextStyle(
             color: AppColors.textoCafe,
             fontSize: 16,
@@ -32,7 +44,7 @@ class CountryLanguageTile extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          item.idiomaNombre,
+          item.nombre,
           style: const TextStyle(
             color: AppColors.caramelo,
             fontSize: 14,
