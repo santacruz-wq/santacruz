@@ -2,8 +2,9 @@ class UserModel {
   final String? id;
   final String nombre;
   final String email;
-  final String rol; // "admin", "mesero", "cocina", "usuario"
+  final String rol; // "admin", "user", "mesero", "cocina"
   final bool activo;
+  final bool isVerified;
 
   UserModel({
     this.id,
@@ -11,6 +12,7 @@ class UserModel {
     required this.email,
     required this.rol,
     required this.activo,
+    this.isVerified = true,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class UserModel {
       email: json['email'],
       rol: json['rol'],
       activo: json['activo'] ?? true,
+      isVerified: json['isVerified'] ?? true,
     );
   }
 
@@ -29,6 +32,7 @@ class UserModel {
       'email': email,
       'rol': rol,
       'activo': activo,
+      'isVerified': isVerified,
     };
   }
 }

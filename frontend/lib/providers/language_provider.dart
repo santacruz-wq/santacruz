@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../core/storage/secure_storage.dart';
 
 class LanguageProvider extends ChangeNotifier {
-  static const _storage = FlutterSecureStorage();
-  static const _storageKey = 'idioma_seleccionado';
-
   String _idiomaCodigo = 'es'; // valor por defecto mientras carga
   String _idiomaNombre = 'Español';
   bool _idiomaElegido = false;
@@ -15,9 +12,10 @@ class LanguageProvider extends ChangeNotifier {
 
   // Se llama al iniciar la app para recuperar el idioma guardado
   Future<void> cargarIdiomaGuardado() async {
-    final guardado = await _storage.read(key: _storageKey);
+    final guardado = await SecureStorage.getIdioma();
     if (guardado != null) {
-      _idiomaCodigo = guardado;
+      _idiomaCodigo = guardado["codigo"]!;
+      _idiomaNombre = guardado["nombre"]!;
       _idiomaElegido = true;
       notifyListeners();
     }
@@ -28,7 +26,7 @@ class LanguageProvider extends ChangeNotifier {
     _idiomaCodigo = codigo;
     _idiomaNombre = nombre;
     _idiomaElegido = true;
-    await _storage.write(key: _storageKey, value: codigo);
+    await SecureStorage.saveIdioma(codigo, nombre);
     notifyListeners();
   }
 }
