@@ -14,7 +14,7 @@ class LanguageButton extends StatelessWidget {
       },
       icon: const Icon(
         Icons.language,
-        color: Colors.black,
+        color: Color.fromARGB(255, 187, 185, 185),
         size: 22,
       ),
       tooltip: 'Cambiar idioma',
