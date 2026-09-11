@@ -1,4 +1,7 @@
+import Traduccion from '../models/traducir.js';
+
 //CONTROLLER PARA TRADUCIR TEXTO USANDO MYMEMORY (GRATIS, SIN API KEY)
+//CON CACHÉ EN MONGO PARA NO REPETIR LLAMADAS A LA API EXTERNA
 
 export const traducirTexto = async (req, res) => {
     try {
@@ -10,9 +13,25 @@ export const traducirTexto = async (req, res) => {
             return res.status(400).json({ message: 'Se requiere el texto y el idioma destino' });
         }
 
-        //LLAMAMOS A LA API DE MYMEMORY
-
         const origen = idiomaOrigen || 'es';
+
+        //BUSCAMOS SI YA EXISTE ESTA TRADUCCIÓN EN CACHÉ
+
+        const existente = await Traduccion.findOne({
+            textoOriginal: texto,
+            idiomaOrigen: origen,
+            idiomaDestino,
+        });
+
+        if (existente) {
+            return res.status(200).json({
+                message: 'Texto traducido correctamente (caché)',
+                textoTraducido: existente.textoTraducido,
+            });
+        }
+
+        //SI NO EXISTE, LLAMAMOS A LA API DE MYMEMORY
+
         const langpair = `${origen}|${idiomaDestino}`;
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=${langpair}`;
 
@@ -23,7 +42,18 @@ export const traducirTexto = async (req, res) => {
             return res.status(500).json({ message: 'Error al traducir el texto', error: data });
         }
 
-        res.status(200).json({ message: 'Texto traducido correctamente', textoTraducido: data.responseData.translatedText });
+        const textoTraducido = data.responseData.translatedText;
+
+        //GUARDAMOS EN CACHÉ PARA LA PRÓXIMA VEZ
+
+        await Traduccion.create({
+            textoOriginal: texto,
+            idiomaOrigen: origen,
+            idiomaDestino,
+            textoTraducido,
+        });
+
+        res.status(200).json({ message: 'Texto traducido correctamente', textoTraducido });
     } catch (error) {
         res.status(500).json({ message: 'Error del servidor', error: error.message });
     }
