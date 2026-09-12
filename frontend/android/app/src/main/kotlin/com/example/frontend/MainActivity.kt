@@ -1,4 +1,4 @@
-package com.example.frontend
+package com.santacruz.plazuela
 
 import io.flutter.embedding.android.FlutterActivity
 
