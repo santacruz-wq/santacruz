@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 const userSchema = new mongoose.Schema({
     nombre: { type: String, required: true, uppercase: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6 },
+    password: { type: String, required: function() { return !this.googleId; }, minlength: 6 },
     codigoRecuperacion:String,
     codigoExpiracion:Date,
 
@@ -16,13 +16,17 @@ const userSchema = new mongoose.Schema({
     codigoRecuperacion:{type: String, default: null},
     codigoExpiracion:{type: Date, default: null},
     rol: { type: String, enum: ["admin", "mesero", "cocina", "usuario"], default: "usuario" },
-    activo: { type: Boolean, default: true }
+    activo: { type: Boolean, default: true },
+
+    // NUEVO: login con Google
+    googleId: { type: String, unique: true, sparse: true },
+    avatar: { type: String, default: "" }
 },{ timestamps: true });
 
 // encriptar contraseña antes de guardar
 userSchema.pre('save', async function () {
 
-    if (!this.isModified('password')) return;
+    if (!this.isModified('password') || !this.password) return;
 
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
