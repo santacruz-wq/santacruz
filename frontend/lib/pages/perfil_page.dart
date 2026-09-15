@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
+
 import '../favoritos_data.dart';
+import '../idioma_data.dart';
+
+import 'configuracion_page.dart';
+import 'mis_pedidos_page.dart';
+import 'direcciones_page.dart';
+
+import '../components/perfil/perfil_header.dart';
+import '../components/perfil/perfil_opcion.dart';
+import '../components/perfil/perfil_footer.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -9,542 +19,229 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
-  // COLORES DEL PERFIL
-  static const Color cafe = Color(0xFF6D4C41);
   static const Color cafeOscuro = Color(0xFF4E342E);
-  static const Color crema = Color(0xFFFFF8E7);
-  static const Color dorado = Color(0xFFC49A3A);
-  static const Color fondo = Color(0xFFF8F3EA);
+  static const Color cafeClaro = Color(0xFF8D6E63);
+  static const Color crema = Color(0xFFF7F1E8);
+  static const Color cremaClara = Color(0xFFFFFBF5);
+  static const Color dorado = Color(0xFFDDB447);
 
-  String nombre = 'Mi usuario';
-  String correo = 'usuario@santacruz.com';
-  String telefono = '300 000 0000';
+  String t(String clave) {
+    return IdiomaData.texto(clave);
+  }
 
-  // ==========================================
-  // EDITAR PERFIL
-  // ==========================================
-  void editarPerfil() {
-    final nombreController = TextEditingController(text: nombre);
+  void misPedidos() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MisPedidosPage()),
+    );
+  }
 
-    final correoController = TextEditingController(text: correo);
+  void misFavoritos() {
+    final bool es = IdiomaData.idioma.value.languageCode == 'es';
 
-    final telefonoController = TextEditingController(text: telefono);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text(
-            'Editar perfil',
-            style: TextStyle(fontWeight: FontWeight.bold, color: cafeOscuro),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: cafeOscuro,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        content: Text(
+          es
+              ? 'Tienes ${FavoritosData.favoritos.length} productos guardados.'
+              : 'You have ${FavoritosData.favoritos.length} saved products.',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
-          content: SingleChildScrollView(
-            child: Column(
+  void misDirecciones() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DireccionesPage()),
+    );
+  }
+
+  void configuracion() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ConfiguracionPage()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Locale>(
+      valueListenable: IdiomaData.idioma,
+      builder: (context, locale, child) {
+        final bool es = locale.languageCode == 'es';
+
+        final int cantidadFavoritos = FavoritosData.favoritos.length;
+
+        final bool oscuro = Theme.of(context).brightness == Brightness.dark;
+
+        final Color fondoPagina = oscuro ? const Color(0xFF1E1714) : crema;
+
+        final Color fondoTarjeta = oscuro
+            ? const Color(0xFF2B211D)
+            : cremaClara;
+
+        final Color colorSeparador = oscuro
+            ? cafeClaro.withOpacity(0.20)
+            : const Color(0xFFE5D5C8);
+
+        return Scaffold(
+          backgroundColor: fondoPagina,
+
+          // ==========================================================
+          // APP BAR
+          // ==========================================================
+          appBar: AppBar(
+            backgroundColor: fondoPagina,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            title: Row(
               children: [
-                TextField(
-                  controller: nombreController,
-                  decoration: InputDecoration(
-                    labelText: 'Nombre',
-                    prefixIcon: const Icon(Icons.person_outline, color: cafe),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: cafe, width: 2),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: dorado,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 21,
                   ),
                 ),
-
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: correoController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Correo electrónico',
-                    prefixIcon: const Icon(Icons.email_outlined, color: cafe),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: cafe, width: 2),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: telefonoController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Teléfono',
-                    prefixIcon: const Icon(Icons.phone_outlined, color: cafe),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: cafe, width: 2),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                const SizedBox(width: 10),
+                Text(
+                  es ? 'Mi cuenta' : 'My account',
+                  style: TextStyle(
+                    color: oscuro ? Colors.white : cafeOscuro,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
 
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'CANCELAR',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
+          // ==========================================================
+          // CONTENIDO
+          // ==========================================================
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+            child: Column(
+              children: [
+                // CABECERA
+                PerfilHeader(oscuro: oscuro, es: es),
 
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  nombre = nombreController.text.trim();
+                const SizedBox(height: 18),
 
-                  correo = correoController.text.trim();
-
-                  telefono = telefonoController.text.trim();
-                });
-
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Perfil actualizado correctamente'),
-                  ),
-                );
-              },
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cafe,
-                foregroundColor: Colors.white,
-              ),
-
-              child: const Text('GUARDAR'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ==========================================
-  // CERRAR SESIÓN
-  // ==========================================
-  void cerrarSesion() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text(
-            'Cerrar sesión',
-            style: TextStyle(fontWeight: FontWeight.bold, color: cafeOscuro),
-          ),
-
-          content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
-
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'CANCELAR',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
-              },
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-
-              child: const Text('CERRAR SESIÓN'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ==========================================
-  // OPCIÓN DEL PERFIL
-  // ==========================================
-  Widget opcionPerfil({
-    required IconData icono,
-    required String titulo,
-    required String subtitulo,
-    required VoidCallback onTap,
-    Widget? trailing,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-
-      leading: Container(
-        width: 45,
-        height: 45,
-
-        decoration: BoxDecoration(
-          color: crema,
-          borderRadius: BorderRadius.circular(12),
-        ),
-
-        child: Icon(icono, color: cafe),
-      ),
-
-      title: Text(
-        titulo,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          color: cafeOscuro,
-        ),
-      ),
-
-      subtitle: Text(
-        subtitulo,
-        style: const TextStyle(color: Colors.grey, fontSize: 13),
-      ),
-
-      trailing:
-          trailing ??
-          const Icon(Icons.arrow_forward_ios, size: 17, color: Colors.grey),
-
-      onTap: onTap,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cantidadFavoritos = FavoritosData.favoritos.length;
-
-    return Scaffold(
-      backgroundColor: fondo,
-
-      appBar: AppBar(
-        title: const Text(
-          'Mi Perfil',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-
-        centerTitle: true,
-
-        backgroundColor: cafeOscuro,
-
-        foregroundColor: Colors.white,
-      ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(18),
-
-        child: Column(
-          children: [
-            // ======================================
-            // ENCABEZADO
-            // ======================================
-            Container(
-              width: double.infinity,
-
-              padding: const EdgeInsets.all(20),
-
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [cafeOscuro, cafe, Color(0xFF8D6E63)],
-
-                  begin: Alignment.topLeft,
-
-                  end: Alignment.bottomRight,
-                ),
-
-                borderRadius: BorderRadius.circular(22),
-
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-
-                    blurRadius: 12,
-
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-
-              child: Column(
-                children: [
-                  // FOTO
-                  Container(
-                    width: 105,
-                    height: 105,
-
-                    decoration: BoxDecoration(
-                      color: crema,
-                      shape: BoxShape.circle,
-
-                      border: Border.all(color: dorado, width: 4),
+                // ====================================================
+                // OPCIONES
+                // ====================================================
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: fondoTarjeta,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: oscuro
+                          ? cafeClaro.withOpacity(0.22)
+                          : const Color(0xFFF3D27A).withOpacity(0.65),
                     ),
-
-                    child: const Icon(Icons.person, size: 65, color: cafe),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    nombre,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  Text(
-                    correo,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  // EDITAR
-                  OutlinedButton.icon(
-                    onPressed: editarPerfil,
-
-                    icon: const Icon(Icons.edit, size: 18),
-
-                    label: const Text('Editar perfil'),
-
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-
-                      side: const BorderSide(color: Colors.white),
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(oscuro ? 0.20 : 0.07),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                  child: Column(
+                    children: [
+                      // MIS PEDIDOS
+                      PerfilOpcion(
+                        icono: Icons.shopping_bag_outlined,
+                        titulo: t('mis_pedidos'),
+                        subtitulo: es
+                            ? 'Consulta tus pedidos'
+                            : 'View your orders',
+                        onTap: misPedidos,
+                        oscuro: oscuro,
+                      ),
 
-            const SizedBox(height: 20),
+                      Divider(
+                        height: 1,
+                        indent: 14,
+                        endIndent: 14,
+                        color: colorSeparador,
+                      ),
 
-            // ======================================
-            // INFORMACIÓN PERSONAL
-            // ======================================
-            const Align(
-              alignment: Alignment.centerLeft,
+                      // MIS FAVORITOS
+                      PerfilOpcion(
+                        icono: Icons.favorite_outline,
+                        titulo: t('mis_favoritos'),
+                        subtitulo: es
+                            ? '$cantidadFavoritos productos guardados'
+                            : '$cantidadFavoritos saved products',
+                        onTap: misFavoritos,
+                        oscuro: oscuro,
+                      ),
 
-              child: Text(
-                'Información personal',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                  color: cafeOscuro,
-                ),
-              ),
-            ),
+                      Divider(
+                        height: 1,
+                        indent: 14,
+                        endIndent: 14,
+                        color: colorSeparador,
+                      ),
 
-            const SizedBox(height: 10),
+                      // MIS DIRECCIONES
+                      PerfilOpcion(
+                        icono: Icons.location_on_outlined,
+                        titulo: t('mis_direcciones'),
+                        subtitulo: es
+                            ? 'Gestiona tus direcciones'
+                            : 'Manage your addresses',
+                        onTap: misDirecciones,
+                        oscuro: oscuro,
+                      ),
 
-            Card(
-              elevation: 2,
+                      Divider(
+                        height: 1,
+                        indent: 14,
+                        endIndent: 14,
+                        color: colorSeparador,
+                      ),
 
-              color: Colors.white,
-
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-
-              child: Column(
-                children: [
-                  opcionPerfil(
-                    icono: Icons.person_outline,
-                    titulo: 'Nombre',
-                    subtitulo: nombre,
-                    onTap: editarPerfil,
-                  ),
-
-                  const Divider(height: 1),
-
-                  opcionPerfil(
-                    icono: Icons.email_outlined,
-                    titulo: 'Correo electrónico',
-                    subtitulo: correo,
-                    onTap: editarPerfil,
-                  ),
-
-                  const Divider(height: 1),
-
-                  opcionPerfil(
-                    icono: Icons.phone_outlined,
-                    titulo: 'Teléfono',
-                    subtitulo: telefono,
-                    onTap: editarPerfil,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ======================================
-            // MI CUENTA
-            // ======================================
-            const Align(
-              alignment: Alignment.centerLeft,
-
-              child: Text(
-                'Mi cuenta',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                  color: cafeOscuro,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            Card(
-              elevation: 2,
-
-              color: Colors.white,
-
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-
-              child: Column(
-                children: [
-                  opcionPerfil(
-                    icono: Icons.shopping_bag_outlined,
-                    titulo: 'Mis pedidos',
-                    subtitulo: 'Consulta tus pedidos',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Sección de pedidos próximamente'),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const Divider(height: 1),
-
-                  opcionPerfil(
-                    icono: Icons.favorite_outline,
-                    titulo: 'Mis favoritos',
-                    subtitulo: '$cantidadFavoritos productos guardados',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Tienes $cantidadFavoritos favoritos'),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const Divider(height: 1),
-
-                  opcionPerfil(
-                    icono: Icons.location_on_outlined,
-                    titulo: 'Mis direcciones',
-                    subtitulo: 'Gestiona tus direcciones',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Sección de direcciones próximamente'),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const Divider(height: 1),
-
-                  opcionPerfil(
-                    icono: Icons.settings_outlined,
-                    titulo: 'Configuración',
-                    subtitulo: 'Personaliza la aplicación',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Configuración próximamente'),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // ======================================
-            // CERRAR SESIÓN
-            // ======================================
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-
-              child: OutlinedButton.icon(
-                onPressed: cerrarSesion,
-
-                icon: const Icon(Icons.logout, color: Colors.red),
-
-                label: const Text(
-                  'CERRAR SESIÓN',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
+                      // CONFIGURACIÓN
+                      PerfilOpcion(
+                        icono: Icons.settings_outlined,
+                        titulo: t('configuracion'),
+                        subtitulo: es
+                            ? 'Personaliza la aplicación'
+                            : 'Customize the application',
+                        onTap: configuracion,
+                        oscuro: oscuro,
+                      ),
+                    ],
                   ),
                 ),
 
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
+                const SizedBox(height: 18),
 
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-              ),
+                // PIE DE PÁGINA
+                PerfilFooter(oscuro: oscuro),
+              ],
             ),
-
-            const SizedBox(height: 20),
-
-            // ======================================
-            // VERSIÓN
-            // ======================================
-            const Text(
-              'Santa Cruz • Versión 1.0.0',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
