@@ -16,6 +16,8 @@ class ApiConfig {
   static const String mesas = "$baseUrl/mesas";
   static const String ordenes = "$baseUrl/ordenes";
   static const String traducir = "$baseUrl/traducir";
+  static const String favoritos = "$baseUrl/favoritos";
+  static const String favoritosVerificar = "$baseUrl/favoritos/verificar";
   static const String resenas = "$baseUrl/resenas";
   static const String inventario = "$baseUrl/inventario";
   static const String notificaciones = "$baseUrl/notificacion";

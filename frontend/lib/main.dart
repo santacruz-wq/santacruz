@@ -8,6 +8,7 @@ import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/verificar_cuenta_screen.dart';
 import 'screens/language_selection/language_selection.dart';
+import 'screens/user/favoritos_screen.dart';
 import 'screens/menu/menu_screen.dart';
 
 void main() {
@@ -53,6 +54,13 @@ class MyApp extends StatelessWidget {
 
         // Login
         '/login': (context) => const LoginScreen(),
+        '/admin': (context) => const _PlaceholderScreen(titulo: "Panel Admin"),
+        '/mesero': (context) => const _PlaceholderScreen(titulo: "Panel Mesero"),
+        '/cocina': (context) => const _PlaceholderScreen(titulo: "Panel Cocina"),
+        '/menu': (context) => const _PlaceholderScreen(titulo: "Menú"),
+        '/recuperar': (context) => const _PlaceholderScreen(titulo: "Recuperar Contraseña"),
+        '/registro': (context) => const _PlaceholderScreen(titulo: "Registro"),
+        '/favoritos': (context) => const FavoritosScreen(),
 
         // Verificación de cuenta
         '/verificar-cuenta': (context) {
