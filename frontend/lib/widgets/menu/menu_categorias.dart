@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/config/app_colors.dart';
 import '../../services/categoria_service.dart';
 import '../../services/translation_service.dart';
 import '../../models/categoria_model.dart';
@@ -38,7 +39,7 @@ class _MenuCategoriesState extends State<MenuCategories> {
     final lang = context.watch<LanguageProvider>();
 
     return SizedBox(
-      height: 48,
+      height: 44,
       child: FutureBuilder<List<Categoria>>(
         future: _futureCategorias,
         builder: (context, snapshot) {
@@ -47,7 +48,10 @@ class _MenuCategoriesState extends State<MenuCategories> {
               child: SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.caramelo,
+                ),
               ),
             );
           }
@@ -56,10 +60,10 @@ class _MenuCategoriesState extends State<MenuCategories> {
             return const SizedBox.shrink();
           }
 
-          final nombresOriginales = snapshot.data!.map((c) => c.nombre).toList();
+          final nombresOriginales =
+              snapshot.data!.map((c) => c.nombre).toList();
 
           return FutureBuilder<List<String>>(
-            // key fuerza a que se vuelva a traducir cuando cambia el idioma
             key: ValueKey(lang.idiomaCodigo),
             future: TranslationService.traducirLista(
               nombresOriginales,
@@ -69,7 +73,10 @@ class _MenuCategoriesState extends State<MenuCategories> {
               final nombresTraducidos =
                   snapshotTraducido.data ?? nombresOriginales;
 
-              final categorias = [lang.t('destacados'), ...nombresTraducidos];
+              final categorias = [
+                lang.t('destacados'),
+                ...nombresTraducidos
+              ];
 
               return ListView.builder(
                 scrollDirection: Axis.horizontal,
@@ -78,26 +85,53 @@ class _MenuCategoriesState extends State<MenuCategories> {
                 itemBuilder: (context, index) {
                   final bool selected = widget.selectedCategory == index;
 
-                  return GestureDetector(
-                    onTap: () => widget.onCategorySelected(index),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? const Color(0xFFF2D09D)
-                            : const Color(0xFFEADCC5),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Center(
-                        child: Text(
-                          categorias[index],
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: selected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: Colors.black87,
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(right: 10),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => widget.onCategorySelected(index),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? AppColors.caramelo
+                                : AppColors.cremaClaro,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: selected
+                                  ? AppColors.caramelo
+                                  : AppColors.carameloClaro.withOpacity(0.4),
+                              width: 1.2,
+                            ),
+                            boxShadow: selected
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.caramelo.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Center(
+                            child: Text(
+                              categorias[index],
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: selected
+                                    ? FontWeight.bold
+                                    : FontWeight.w600,
+                                color: selected
+                                    ? Colors.white
+                                    : AppColors.textoCafe,
+                              ),
+                            ),
                           ),
                         ),
                       ),

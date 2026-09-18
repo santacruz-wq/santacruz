@@ -18,26 +18,40 @@ class SearchField extends StatelessWidget {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      style: const TextStyle(color: AppColors.textoCafe),
+      style: const TextStyle(
+        color: AppColors.textoCafe,
+        fontWeight: FontWeight.w600,
+      ),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(color: AppColors.cafeMedio),
-        prefixIcon: const Icon(Icons.search, color: AppColors.caramelo),
+        hintStyle: TextStyle(
+          color: AppColors.cafeMedio.withOpacity(0.7),
+          fontSize: 14,
+        ),
+        prefixIcon: const Icon(
+          Icons.search,
+          color: AppColors.caramelo,
+          size: 22,
+        ),
         filled: true,
-        fillColor: AppColors.blanco,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
+        fillColor: AppColors.cremaClaro,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 16,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: AppColors.carameloClaro.withOpacity(0.5),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.caramelo, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: AppColors.caramelo,
+            width: 1.5,
+          ),
         ),
       ),
     );

@@ -46,7 +46,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
     return Scaffold(
       backgroundColor: AppColors.crema,
       appBar: AppBar(
-        backgroundColor: AppColors.crema,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textoCafe,
         elevation: 0,
         centerTitle: true,
@@ -59,41 +59,49 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Escribe tu idioma de origen',
-              style: TextStyle(
-                color: AppColors.textoCafe,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/patron_santacruz.png'),
+            repeat: ImageRepeat.repeat,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Escribe tu idioma de origen',
+                style: TextStyle(
+                  color: AppColors.textoCafe,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            SearchField(
-              controller: _searchController,
-              onChanged: _filtrar,
-              hintText: 'Buscar idioma...',
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: _resultados.isEmpty
-                  ? const EmptyState(message: 'No se encontró ese idioma')
-                  : ListView.builder(
-                      itemCount: _resultados.length,
-                      itemBuilder: (context, index) {
-                        final item = _resultados[index];
-                        return CountryLanguageTile(
-                          item: item,
-                          onTap: () => _elegirIdioma(item),
-                        );
-                      },
-                    ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              SearchField(
+                controller: _searchController,
+                onChanged: _filtrar,
+                hintText: 'Buscar idioma...',
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: _resultados.isEmpty
+                    ? const EmptyState(message: 'No se encontró ese idioma')
+                    : ListView.builder(
+                        itemCount: _resultados.length,
+                        itemBuilder: (context, index) {
+                          final item = _resultados[index];
+                          return CountryLanguageTile(
+                            item: item,
+                            onTap: () => _elegirIdioma(item),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
