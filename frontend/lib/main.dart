@@ -5,6 +5,7 @@ import 'providers/language_provider.dart';
 import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/language_selection/language_selection.dart';
+import 'screens/user/favoritos_screen.dart';
 
 void main() {
   runApp(
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
         '/menu': (context) => const _PlaceholderScreen(titulo: "Menú"),
         '/recuperar': (context) => const _PlaceholderScreen(titulo: "Recuperar Contraseña"),
         '/registro': (context) => const _PlaceholderScreen(titulo: "Registro"),
+        '/favoritos': (context) => const FavoritosScreen(),
       },
     );
   }
