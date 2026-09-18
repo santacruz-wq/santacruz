@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/config/app_colors.dart';
 import '../../providers/language_provider.dart';
 
 class MenuSearch extends StatelessWidget {
@@ -14,30 +15,47 @@ class MenuSearch extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
-        height: 62,
+        height: 56,
         decoration: BoxDecoration(
-          color: const Color(0xFFF2D09D),
-          borderRadius: BorderRadius.circular(35),
+          color: AppColors.cremaClaro,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: AppColors.carameloClaro.withOpacity(0.5),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 12,
+              color: AppColors.textoCafe.withOpacity(0.08),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: TextField(
           onChanged: onChanged,
+          style: const TextStyle(
+            color: AppColors.textoCafe,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          cursorColor: AppColors.caramelo,
           decoration: InputDecoration(
             hintText: lang.t('buscar'),
-            hintStyle: const TextStyle(
-              color: Colors.black,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
+            hintStyle: TextStyle(
+              color: AppColors.textoCafe.withOpacity(0.5),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
-            prefixIcon: const Icon(Icons.search, color: Colors.black, size: 27),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: AppColors.caramelo,
+              size: 24,
+            ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 19),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
           ),
         ),
       ),

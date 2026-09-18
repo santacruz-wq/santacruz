@@ -9,5 +9,6 @@ class AppStrings {
     'cafe': 'Café',
     'agregar': 'Agregar',
     'no_hay_productos': 'No hay productos',
+    'todo_el_menu': 'Todo el menú',
   };
 }
