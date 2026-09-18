@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../widgets/global/primary_button.dart';
+import '../../widgets/global/link_button.dart';
+import '../../widgets/inicio/animate_logo.dart';
+import '../../widgets/inicio/animate_title.dart';
 
 class InicioScreen extends StatefulWidget {
   const InicioScreen({super.key});
@@ -29,7 +33,6 @@ class _InicioScreenState extends State<InicioScreen>
       duration: const Duration(milliseconds: 2400),
     );
 
-    // ===== LOGO =====
     _logoScale = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -43,7 +46,6 @@ class _InicioScreenState extends State<InicioScreen>
       ),
     );
 
-    // ===== TÍTULO =====
     _titleSlide = Tween<Offset>(
       begin: const Offset(0, 0.35),
       end: Offset.zero,
@@ -60,7 +62,6 @@ class _InicioScreenState extends State<InicioScreen>
       ),
     );
 
-    // ===== SUBTÍTULO =====
     _subtitleOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -68,7 +69,6 @@ class _InicioScreenState extends State<InicioScreen>
       ),
     );
 
-    // ===== BOTÓN =====
     _buttonScale = Tween<double>(begin: 0.75, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -82,7 +82,6 @@ class _InicioScreenState extends State<InicioScreen>
       ),
     );
 
-    // ===== REGISTRO =====
     _registerOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -90,11 +89,8 @@ class _InicioScreenState extends State<InicioScreen>
       ),
     );
 
-    // Forzar animación
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _controller.forward(from: 0.0);
-      }
+      if (mounted) _controller.forward(from: 0.0);
     });
   }
 
@@ -110,136 +106,49 @@ class _InicioScreenState extends State<InicioScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ===== FONDO (mejor centrado) =====
           Image.asset(
             'assets/img/imagen_version_2.jpeg',
             fit: BoxFit.cover,
-
             alignment: const Alignment(0, -0.120),
           ),
-
-          // Oscurecimiento
-          Container(
-            color: Colors.black.withOpacity(0.30),
-          ),
-
+          Container(color: Colors.black.withOpacity(0.30)),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-
-                  // ===== LOGO =====
-                  AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _logoOpacity.value.clamp(0.0, 1.0),
-                        child: Transform.scale(
-                          scale: _logoScale.value,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Image.asset(
-                      'assets/img/santacruz_de_la_plazuela-removebg-preview.png',
-                      width: 155,
-                      height: 155,
-                    ),
+                  AnimatedLogo(
+                    assetPath:
+                        'assets/img/santacruz_de_la_plazuela-removebg-preview.png',
+                    scaleAnimation: _logoScale,
+                    opacityAnimation: _logoOpacity,
                   ),
-
                   const SizedBox(height: 30),
-
-                  // ===== TÍTULO =====
-                  SlideTransition(
-                    position: _titleSlide,
-                    child: FadeTransition(
-                      opacity: _titleOpacity,
-                      child: const Text(
-                        'SANTA CRUZ\nDE LA PLAZUELA',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 27,
-                          fontWeight: FontWeight.w700,
-                          height: 1.18,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                    ),
+                  AnimatedTitle(
+                    title: 'SANTA CRUZ\nDE LA PLAZUELA',
+                    subtitle: 'postres y café',
+                    titleSlide: _titleSlide,
+                    titleOpacity: _titleOpacity,
+                    subtitleOpacity: _subtitleOpacity,
                   ),
-
-                  const SizedBox(height: 10),
-
-                  // ===== SUBTÍTULO =====
-                  FadeTransition(
-                    opacity: _subtitleOpacity,
-                    child: const Text(
-                      'postres y café',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-
                   const Spacer(),
-
-                  // ===== BOTÓN =====
-                  ScaleTransition(
-                    scale: _buttonScale,
-                    child: FadeTransition(
-                      opacity: _buttonOpacity,
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: () {
-                          Navigator.pushNamed(context, '/language-selection');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF5F0E6),
-                            foregroundColor: Colors.black87,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Text(
-                            'Ver productos',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  PrimaryButton(
+                    text: 'Ver productos',
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/language-selection');
+                    },
+                    scaleAnimation: _buttonScale,
+                    opacityAnimation: _buttonOpacity,
                   ),
-
                   const SizedBox(height: 16),
-
-                  // ===== REGISTRO =====
-                  FadeTransition(
-                    opacity: _registerOpacity,
-                    child: TextButton(
-                      onPressed: () {
-                        // Navigator.pushNamed(context, '/registro');
-                      },
-                      child: const Text(
-                        '¿No tienes cuenta? Regístrate',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
+                  FadeLinkButton(
+                    text: '¿No tienes cuenta? Regístrate',
+                    onPressed: () {
+                      // Navigator.pushNamed(context, '/registro');
+                    },
+                    opacityAnimation: _registerOpacity,
                   ),
-
                   const SizedBox(height: 28),
                 ],
               ),

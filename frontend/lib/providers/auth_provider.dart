@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -37,16 +38,19 @@ class AuthProvider extends ChangeNotifier {
   //CERRAMOS SESION
   Future<void> logout() async {
     await AuthService.logout();
+    await SecureStorage.deleteUser();
     _usuario = null;
     notifyListeners();
   }
 
-  //VERIFICAMOS SI YA HAY TOKEN GUARDADO AL ABRIR LA APP (SESION PERSISTENTE)
+  //VERIFICAMOS SI YA HAY SESION GUARDADA AL ABRIR LA APP (SESION PERSISTENTE)
   Future<void> verificarSesion() async {
     final token = await SecureStorage.getToken();
-    if (token != null) {
-      // Aquí normalmente decodificarías el token o llamarías a un endpoint "/me"
-      // Por ahora, si hay token, dejamos que el login se haga de nuevo si el token expiró
+    final userJson = await SecureStorage.getUser();
+
+    if (token != null && userJson != null) {
+      _usuario = UserModel.fromJson(jsonDecode(userJson));
+      notifyListeners();
     }
   }
 }

@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
+
 import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/verificar_cuenta_screen.dart';
 import 'screens/language_selection/language_selection.dart';
 import 'screens/user/favoritos_screen.dart';
+import 'screens/menu/menu_screen.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => LanguageProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -26,15 +34,25 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Santa Cruz de la Plazuela',
+
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         primarySwatch: Colors.green,
         useMaterial3: true,
       ),
-      initialRoute: '/inicio',
+
+      home: const AppStarter(),
+
       routes: {
+        // Inicio
         '/inicio': (context) => InicioScreen(),
-        '/language-selection': (context) => const LanguageSelectionScreen(),
+
+        // Selección de idioma
+        '/language-selection': (context) =>
+            const LanguageSelectionScreen(),
+
+        // Login
         '/login': (context) => const LoginScreen(),
         '/admin': (context) => const _PlaceholderScreen(titulo: "Panel Admin"),
         '/mesero': (context) => const _PlaceholderScreen(titulo: "Panel Mesero"),
@@ -43,21 +61,111 @@ class MyApp extends StatelessWidget {
         '/recuperar': (context) => const _PlaceholderScreen(titulo: "Recuperar Contraseña"),
         '/registro': (context) => const _PlaceholderScreen(titulo: "Registro"),
         '/favoritos': (context) => const FavoritosScreen(),
+
+        // Verificación de cuenta
+        '/verificar-cuenta': (context) {
+          final email =
+              ModalRoute.of(context)!.settings.arguments as String;
+
+          return VerificarCuentaScreen(
+            email: email,
+          );
+        },
+
+        // Menú principal
+        '/menu': (context) => const MenuScreen(),
+
+        // Paneles temporales
+        '/admin': (context) => const _PlaceholderScreen(
+              titulo: 'Panel Admin',
+            ),
+
+        '/mesero': (context) => const _PlaceholderScreen(
+              titulo: 'Panel Mesero',
+            ),
+
+        '/cocina': (context) => const _PlaceholderScreen(
+              titulo: 'Panel Cocina',
+            ),
+
+        '/recuperar': (context) => const _PlaceholderScreen(
+              titulo: 'Recuperar Contraseña',
+            ),
+
+        '/registro': (context) => const _PlaceholderScreen(
+              titulo: 'Registro',
+            ),
       },
     );
   }
 }
 
-//PANTALLA TEMPORAL MIENTRAS ARMAMOS LAS REALES
+
+class AppStarter extends StatefulWidget {
+  const AppStarter({super.key});
+
+  @override
+  State<AppStarter> createState() => _AppStarterState();
+}
+
+class _AppStarterState extends State<AppStarter> {
+  bool _listo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    final authProvider = context.read<AuthProvider>();
+    final languageProvider = context.read<LanguageProvider>();
+
+    await Future.wait([
+      languageProvider.cargarIdiomaGuardado(),
+      authProvider.verificarSesion(),
+    ]);
+
+    if (!mounted) return;
+
+    setState(() {
+      _listo = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_listo) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return InicioScreen();
+  }
+}
+
+
 class _PlaceholderScreen extends StatelessWidget {
   final String titulo;
-  const _PlaceholderScreen({required this.titulo});
+
+  const _PlaceholderScreen({
+    required this.titulo,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(titulo)),
-      body: Center(child: Text("$titulo — en construcción")),
+      appBar: AppBar(
+        title: Text(titulo),
+      ),
+      body: Center(
+        child: Text(
+          '$titulo — en construcción',
+        ),
+      ),
     );
   }
 }
