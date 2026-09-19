@@ -28,18 +28,16 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Mis Favoritos"),
-      ),
+      appBar: AppBar(title: const Text("Mis Favoritos")),
       body: FutureBuilder<List<ProductModel>>(
         future: _favoritosFuture,
         builder: (context, snapshot) {
-          //CARGANDO
+          // CARGANDO
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          //ERROR
+          // ERROR
           if (snapshot.hasError) {
             return Center(
               child: Column(
@@ -58,7 +56,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
 
           final favoritos = snapshot.data ?? [];
 
-          //LISTA VACIA
+          // LISTA VACÍA
           if (favoritos.isEmpty) {
             return const Center(
               child: Column(
@@ -75,7 +73,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
             );
           }
 
-          //LISTA DE FAVORITOS
+          // LISTA DE FAVORITOS
           return RefreshIndicator(
             onRefresh: () async => _cargarFavoritos(),
             child: ListView.builder(
@@ -104,10 +102,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text("\$${producto.precio.toStringAsFixed(0)}"),
-                    trailing: FavoritoButton(
-                      productoId: producto.id,
-                      size: 26,
-                    ),
+                    trailing: FavoritoButton(productoId: producto.id, size: 26),
                   ),
                 );
               },
@@ -118,4 +113,3 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     );
   }
 }
-

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../core/config/app_colors.dart';
+import '../global/favorito_button.dart';
 
 class ProductCard extends StatelessWidget {
+  final String id;
   final String name;
   final String price;
   final String image;
 
   const ProductCard({
     super.key,
+    required this.id,
     required this.name,
     required this.price,
     required this.image,
@@ -36,7 +39,9 @@ class ProductCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(22),
+                ),
                 child: SizedBox(
                   height: 110,
                   width: double.infinity,
@@ -66,10 +71,8 @@ class ProductCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.85),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.favorite_border_rounded,
-                    size: 16,
-                    color: AppColors.textoCafe,
+                  child: Center(
+                    child: FavoritoButton(productoId: id, size: 14),
                   ),
                 ),
               ),

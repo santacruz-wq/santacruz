@@ -33,8 +33,9 @@ class MenuProducts extends StatelessWidget {
     }
 
     final nombresOriginales = products.map((p) => p.nombre).toList();
-    final descripcionesOriginales =
-        products.map((p) => p.descripcion ?? '').toList();
+    final descripcionesOriginales = products
+        .map((p) => p.descripcion ?? '')
+        .toList();
     final textosOriginales = [...nombresOriginales, ...descripcionesOriginales];
 
     return SizedBox(
@@ -68,6 +69,7 @@ class MenuProducts extends StatelessWidget {
                   disponible: product.disponible,
                 ),
                 child: ProductCard(
+                  id: product.id,
                   name: nombresTraducidos[index],
                   price: '\$${product.precio.toStringAsFixed(0)}',
                   image: product.imagenUrl,
