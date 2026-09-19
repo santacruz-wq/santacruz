@@ -26,7 +26,7 @@ class _MenuScreenState extends State<MenuScreen> {
   String _busqueda = '';
   List<Categoria> _categorias = [];
 
-  late Future<List<Product>> _futureProductos;
+  late Future<List<ProductModel>> _futureProductos;
 
   @override
   void initState() {
@@ -46,21 +46,21 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  List<Product> _filtrarDestacados(List<Product> productos) {
+  List<ProductModel> _filtrarDestacados(List<ProductModel> productos) {
     var lista = _filtrarPorBusqueda(productos);
 
     if (_selectedCategory != 0 && _categorias.isNotEmpty) {
       final categoriaId = _categorias[_selectedCategory - 1].id;
 
       lista = lista
-          .where((p) => p.categoria == categoriaId)
+          .where((p) => p.categoriaId == categoriaId)
           .toList();
     }
 
     return lista;
   }
 
-  List<Product> _filtrarPorBusqueda(List<Product> productos) {
+  List<ProductModel> _filtrarPorBusqueda(List<ProductModel> productos) {
     if (_busqueda.isEmpty) {
       return productos;
     }
@@ -80,60 +80,75 @@ class _MenuScreenState extends State<MenuScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.crema,
+
       body: Stack(
         children: [
+          // ============================================================
           // FONDO DECORATIVO
+          // ============================================================
           Positioned.fill(
             child: Opacity(
               opacity: 0.35,
               child: Image.asset(
-                'assets/img/patron_santacruz.png',
+                'assets/img/imagen_fondo.png',
                 fit: BoxFit.cover,
               ),
             ),
           ),
 
+          // ============================================================
           // CONTENIDO PRINCIPAL
-          SafeArea(
-            child: Column(
-              children: [
-                // HEADER + BUSCADOR
-                SizedBox(
-                  height: 265,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: MenuHeader(),
+          // ============================================================
+          Column(
+            children: [
+              // ========================================================
+              // HEADER + BUSCADOR
+              // ========================================================
+              SizedBox(
+                height: 320,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // HEADER
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: MenuHeader(),
+                    ),
+
+                    // BUSCADOR
+                    Positioned(
+                      bottom: 0,
+                      left: 15,
+                      right: 15,
+                      child: MenuSearch(
+                        onChanged: (texto) {
+                          setState(() {
+                            _busqueda = texto;
+                          });
+                        },
                       ),
-                      Positioned(
-                        bottom: 0,
-                        left: 15,
-                        right: 15,
-                        child: MenuSearch(
-                          onChanged: (texto) {
-                            setState(() {
-                              _busqueda = texto;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
 
-                const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-                // CONTENIDO SCROLL
-                Expanded(
+              // ========================================================
+              // CONTENIDO SCROLL
+              // ========================================================
+              Expanded(
+                child: SafeArea(
+                  top: false,
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       children: [
+                        // ==================================================
                         // CATEGORÍAS
+                        // ==================================================
                         MenuCategories(
                           selectedCategory: _selectedCategory,
                           onCategorySelected: _cambiarCategoria,
@@ -146,10 +161,15 @@ class _MenuScreenState extends State<MenuScreen> {
 
                         const SizedBox(height: 18),
 
+                        // ==================================================
                         // PRODUCTOS
-                        FutureBuilder<List<Product>>(
+                        // ==================================================
+                        FutureBuilder<List<ProductModel>>(
                           future: _futureProductos,
                           builder: (context, snapshot) {
+                            // ----------------------------------------------
+                            // CARGANDO
+                            // ----------------------------------------------
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const Padding(
@@ -164,6 +184,9 @@ class _MenuScreenState extends State<MenuScreen> {
                               );
                             }
 
+                            // ----------------------------------------------
+                            // ERROR
+                            // ----------------------------------------------
                             if (snapshot.hasError) {
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -183,6 +206,9 @@ class _MenuScreenState extends State<MenuScreen> {
                             final todosLosProductos =
                                 snapshot.data ?? [];
 
+                            // ==================================================
+                            // RESULTADOS DE BÚSQUEDA
+                            // ==================================================
                             if (_busqueda.isNotEmpty) {
                               final resultados =
                                   _filtrarPorBusqueda(
@@ -194,23 +220,32 @@ class _MenuScreenState extends State<MenuScreen> {
                               );
                             }
 
+                            // ==================================================
+                            // PRODUCTOS DESTACADOS
+                            // ==================================================
                             final destacados =
                                 _filtrarDestacados(
                               todosLosProductos,
                             );
 
+                            // ==================================================
+                            // TODO EL MENÚ
+                            // ==================================================
                             final todoElMenu =
                                 todosLosProductos;
 
                             return Column(
                               children: [
+                                // PRODUCTOS DESTACADOS
                                 MenuProducts(
                                   products: destacados,
                                 ),
 
                                 const SizedBox(height: 24),
 
-                                // TÍTULO TODO EL MENU
+                                // ==================================================
+                                // TÍTULO TODO EL MENÚ
+                                // ==================================================
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
@@ -230,6 +265,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
                                 const SizedBox(height: 12),
 
+                                // ==================================================
+                                // GRID TODO EL MENÚ
+                                // ==================================================
                                 MenuGrid(
                                   products: todoElMenu,
                                 ),
@@ -243,13 +281,15 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
 
-      // MENU INFERIOR
+      // ================================================================
+      // MENÚ INFERIOR
+      // ================================================================
       bottomNavigationBar: BottomMenu(
         currentIndex: _selectedBottomItem,
         onItemSelected: _cambiarPagina,

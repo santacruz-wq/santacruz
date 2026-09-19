@@ -20,61 +20,38 @@ class ProductModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    //LA CATEGORIA PUEDE VENIR POBLADA (OBJETO) O SOLO COMO ID (STRING)
+    // La categoría puede venir poblada como objeto
+    // o solamente como ID (String)
     final categoriaRaw = json['categoria'];
+
     final categoriaId = categoriaRaw is Map
-        ? categoriaRaw['_id'] ?? ''
+        ? (categoriaRaw['_id'] ?? '').toString()
         : (categoriaRaw ?? '').toString();
 
     return ProductModel(
-      id: json['_id'] ?? '',
-      productId: json['productId'] ?? '',
-      nombre: json['nombre'] ?? '',
-      descripcion: json['descripcion'],
-      precio: (json['precio'] is int)
-          ? (json['precio'] as int).toDouble()
-          : (json['precio'] ?? 0).toDouble(),
-      imagen: json['imagen'] ?? '',
+      id: (json['_id'] ?? '').toString(),
+      productId: (json['productId'] ?? '').toString(),
+      nombre: (json['nombre'] ?? '').toString(),
+      descripcion: json['descripcion']?.toString(),
+      precio: json['precio'] is num
+          ? (json['precio'] as num).toDouble()
+          : 0.0,
+      imagen: (json['imagen'] ?? '').toString(),
       categoriaId: categoriaId,
       disponible: json['disponible'] ?? true,
     );
   }
-class Product {
-  final String id;
-  final String nombre;
-  final String descripcion;
-  final double precio;
-  final String imagen;
-  final String categoria;
-  final bool disponible;
 
-  Product({
-    required this.id,
-    required this.nombre,
-    required this.descripcion,
-    required this.precio,
-    required this.imagen,
-    required this.categoria,
-    required this.disponible,
-  });
-
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['_id'] ?? '',
-      nombre: json['nombre'] ?? '',
-      descripcion: json['descripcion'] ?? '',
-      precio: (json['precio'] ?? 0).toDouble(),
-      imagen: json['imagen'] ?? '',
-      categoria: json['categoria'] is Map
-          ? (json['categoria']['_id'] ?? '')
-          : (json['categoria'] ?? ''),
-      disponible: json['disponible'] ?? true,
-    );
-  }
-
-  // Construye la URL completa a partir del nombre/ruta que guarda el backend
+  // Construye la URL completa de la imagen
   String get imagenUrl {
-    if (imagen.startsWith('http')) return imagen;
+    if (imagen.isEmpty) {
+      return '';
+    }
+
+    if (imagen.startsWith('http')) {
+      return imagen;
+    }
+
     return 'http://10.0.2.2:3000/uploads/$imagen';
   }
 }

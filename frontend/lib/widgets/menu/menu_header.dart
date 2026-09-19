@@ -23,7 +23,8 @@ class MenuHeader extends StatelessWidget {
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/img/imagen_version_2.jpeg'),
-                  fit: BoxFit.cover,
+                  fit: BoxFit.fitWidth,
+                  alignment: Alignment.topCenter,
                 ),
               ),
               child: Container(

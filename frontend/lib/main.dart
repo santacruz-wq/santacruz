@@ -54,12 +54,11 @@ class MyApp extends StatelessWidget {
 
         // Login
         '/login': (context) => const LoginScreen(),
-        '/admin': (context) => const _PlaceholderScreen(titulo: "Panel Admin"),
-        '/mesero': (context) => const _PlaceholderScreen(titulo: "Panel Mesero"),
-        '/cocina': (context) => const _PlaceholderScreen(titulo: "Panel Cocina"),
-        '/menu': (context) => const _PlaceholderScreen(titulo: "Menú"),
-        '/recuperar': (context) => const _PlaceholderScreen(titulo: "Recuperar Contraseña"),
-        '/registro': (context) => const _PlaceholderScreen(titulo: "Registro"),
+
+        // Menú principal
+        '/menu': (context) => const MenuScreen(),
+
+        // Favoritos
         '/favoritos': (context) => const FavoritosScreen(),
 
         // Verificación de cuenta
@@ -71,9 +70,6 @@ class MyApp extends StatelessWidget {
             email: email,
           );
         },
-
-        // Menú principal
-        '/menu': (context) => const MenuScreen(),
 
         // Paneles temporales
         '/admin': (context) => const _PlaceholderScreen(

@@ -5,9 +5,10 @@ import '../../models/product_model.dart';
 import '../../providers/language_provider.dart';
 import '../../services/translation_service.dart';
 import 'product_grid_card.dart';
+import '../global/product_detail_sheet.dart';
 
 class MenuGrid extends StatelessWidget {
-  final List<Product> products;
+  final List<ProductModel> products;
 
   const MenuGrid({super.key, required this.products});
 
@@ -32,15 +33,20 @@ class MenuGrid extends StatelessWidget {
     }
 
     final nombresOriginales = products.map((p) => p.nombre).toList();
+    final descripcionesOriginales =
+        products.map((p) => p.descripcion ?? '').toList();
+    final textosOriginales = [...nombresOriginales, ...descripcionesOriginales];
 
     return FutureBuilder<List<String>>(
       key: ValueKey(lang.idiomaCodigo),
       future: TranslationService.traducirLista(
-        nombresOriginales,
+        textosOriginales,
         lang.idiomaCodigo,
       ),
       builder: (context, snapshot) {
-        final nombresTraducidos = snapshot.data ?? nombresOriginales;
+        final traducidos = snapshot.data ?? textosOriginales;
+        final nombresTraducidos = traducidos.sublist(0, products.length);
+        final descripcionesTraducidas = traducidos.sublist(products.length);
 
         return GridView.builder(
           shrinkWrap: true,
@@ -55,10 +61,20 @@ class MenuGrid extends StatelessWidget {
           itemCount: products.length,
           itemBuilder: (context, index) {
             final product = products[index];
-            return ProductGridCard(
-              name: nombresTraducidos[index],
-              price: '\$${product.precio.toStringAsFixed(0)}',
-              image: product.imagenUrl,
+            return GestureDetector(
+              onTap: () => mostrarDetalleProducto(
+                context,
+                name: nombresTraducidos[index],
+                price: '\$${product.precio.toStringAsFixed(0)}',
+                image: product.imagenUrl,
+                description: descripcionesTraducidas[index],
+                disponible: product.disponible,
+              ),
+              child: ProductGridCard(
+                name: nombresTraducidos[index],
+                price: '\$${product.precio.toStringAsFixed(0)}',
+                image: product.imagenUrl,
+              ),
             );
           },
         );
