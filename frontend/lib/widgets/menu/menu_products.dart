@@ -5,9 +5,10 @@ import '../../models/product_model.dart';
 import '../../providers/language_provider.dart';
 import '../../services/translation_service.dart';
 import 'product_card.dart';
+import '../global/product_detail_sheet.dart';
 
 class MenuProducts extends StatelessWidget {
-  final List<Product> products;
+  final List<ProductModel> products;
 
   const MenuProducts({super.key, required this.products});
 
@@ -32,17 +33,22 @@ class MenuProducts extends StatelessWidget {
     }
 
     final nombresOriginales = products.map((p) => p.nombre).toList();
+    final descripcionesOriginales =
+        products.map((p) => p.descripcion ?? '').toList();
+    final textosOriginales = [...nombresOriginales, ...descripcionesOriginales];
 
     return SizedBox(
       height: 230,
       child: FutureBuilder<List<String>>(
         key: ValueKey(lang.idiomaCodigo),
         future: TranslationService.traducirLista(
-          nombresOriginales,
+          textosOriginales,
           lang.idiomaCodigo,
         ),
         builder: (context, snapshot) {
-          final nombresTraducidos = snapshot.data ?? nombresOriginales;
+          final traducidos = snapshot.data ?? textosOriginales;
+          final nombresTraducidos = traducidos.sublist(0, products.length);
+          final descripcionesTraducidas = traducidos.sublist(products.length);
 
           return ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -52,10 +58,20 @@ class MenuProducts extends StatelessWidget {
             itemBuilder: (context, index) {
               final product = products[index];
 
-              return ProductCard(
-                name: nombresTraducidos[index],
-                price: '\$${product.precio.toStringAsFixed(0)}',
-                image: product.imagenUrl,
+              return GestureDetector(
+                onTap: () => mostrarDetalleProducto(
+                  context,
+                  name: nombresTraducidos[index],
+                  price: '\$${product.precio.toStringAsFixed(0)}',
+                  image: product.imagenUrl,
+                  description: descripcionesTraducidas[index],
+                  disponible: product.disponible,
+                ),
+                child: ProductCard(
+                  name: nombresTraducidos[index],
+                  price: '\$${product.precio.toStringAsFixed(0)}',
+                  image: product.imagenUrl,
+                ),
               );
             },
           );

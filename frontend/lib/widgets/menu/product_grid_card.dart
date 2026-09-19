@@ -39,15 +39,18 @@ class ProductGridCard extends StatelessWidget {
                   child: SizedBox(
                     width: double.infinity,
                     height: double.infinity,
-                    child: Image.network(
-                      image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: AppColors.cremaClaro,
-                        child: const Icon(
-                          Icons.local_cafe_rounded,
-                          size: 42,
-                          color: AppColors.caramelo,
+                    child: Hero(
+                      tag: image,
+                      child: Image.network(
+                        image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: AppColors.cremaClaro,
+                          child: const Icon(
+                            Icons.local_cafe_rounded,
+                            size: 42,
+                            color: AppColors.caramelo,
+                          ),
                         ),
                       ),
                     ),
