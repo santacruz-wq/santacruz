@@ -20,5 +20,6 @@ class ApiConfig {
   static const String inventario = "$baseUrl/inventario";
   static const String notificaciones = "$baseUrl/notificacion";
   static const String favoritos = "$baseUrl/favoritos";
+  static const String favoritosVerificar = "$baseUrl/favoritos/verificar";
   static const String chat = "$baseUrl/chat";
 }

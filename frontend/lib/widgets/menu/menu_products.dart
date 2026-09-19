@@ -40,6 +40,7 @@ class MenuProducts extends StatelessWidget {
             itemBuilder: (context, index) {
               final product = products[index];
               return ProductCard(
+                id: product.id, // AGREGADO
                 name: nombresTraducidos[index],
                 price: '\$${product.precio.toStringAsFixed(0)}',
                 image: product.imagenUrl,

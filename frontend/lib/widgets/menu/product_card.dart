@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import '../global/favorito_button.dart';
 
 class ProductCard extends StatelessWidget {
+  final String id;
   final String name;
   final String price;
   final String image;
 
   const ProductCard({
     super.key,
+    required this.id,
     required this.name,
     required this.price,
     required this.image,
@@ -83,10 +86,11 @@ class ProductCard extends StatelessWidget {
                     color: Colors.white.withOpacity(0.9),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.favorite_border,
-                    size: 14,
-                    color: Colors.black87,
+                  child: Center(
+                    child: FavoritoButton(
+                      productoId: id,
+                      size: 14,
+                    ),
                   ),
                 ),
               ),
