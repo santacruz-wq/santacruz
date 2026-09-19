@@ -14,27 +14,38 @@ class CountryLanguageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: AppColors.blanco,
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.cremaClaro,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.carameloClaro.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textoCafe.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Container(
-  width: 45,
-  height: 45,
-  decoration: BoxDecoration(
-    color: AppColors.crema,
-    borderRadius: BorderRadius.circular(12),
-  ),
-  child: const Icon(
-    Icons.public,
-    color: AppColors.textoCafe,
-    size: 28,
-  ),
-),
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppColors.cremaOscuro,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.public,
+            color: AppColors.textoCafe,
+            size: 24,
+          ),
+        ),
         title: Text(
           item.nombre,
           style: const TextStyle(
@@ -46,14 +57,14 @@ class CountryLanguageTile extends StatelessWidget {
         subtitle: Text(
           item.nombre,
           style: const TextStyle(
-            color: AppColors.caramelo,
-            fontSize: 14,
+            color: AppColors.cafeMedio,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
         ),
         trailing: const Icon(
           Icons.arrow_forward_ios,
-          size: 16,
+          size: 15,
           color: AppColors.caramelo,
         ),
         onTap: onTap,

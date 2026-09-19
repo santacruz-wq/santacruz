@@ -23,7 +23,8 @@ class MenuHeader extends StatelessWidget {
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/img/imagen_version_2.jpeg'),
-                  fit: BoxFit.cover,
+                  fit: BoxFit.fitWidth,
+                  alignment: Alignment.topCenter,
                 ),
               ),
               child: Container(
@@ -41,23 +42,9 @@ class MenuHeader extends StatelessWidget {
               children: [
                 // ICONOS SUPERIORES
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const LanguageButton(),
-
-                    // Carrito (aún sin pantalla propia)
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.85),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.shopping_cart_outlined,
-                        color: Colors.black87,
-                      ),
-                    ),
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: const [
+                    LanguageButton(),
                   ],
                 ),
 

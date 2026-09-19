@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/config/app_colors.dart';
 import '../../widgets/global/bottom_menu.dart';
 import '../../widgets/menu/menu_header.dart';
 import '../../widgets/menu/menu_search.dart';
 import '../../widgets/menu/menu_categorias.dart';
 import '../../widgets/menu/menu_products.dart';
+import '../../widgets/menu/menu_grid.dart';
 import '../../models/product_model.dart';
 import '../../models/categoria_model.dart';
 import '../../services/product_service.dart';
+import '../../providers/language_provider.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -22,7 +26,7 @@ class _MenuScreenState extends State<MenuScreen> {
   String _busqueda = '';
   List<Categoria> _categorias = [];
 
-  late Future<List<Product>> _futureProductos;
+  late Future<List<ProductModel>> _futureProductos;
 
   @override
   void initState() {
@@ -42,107 +46,250 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  List<Product> _filtrar(List<Product> productos) {
-    var lista = productos;
+  List<ProductModel> _filtrarDestacados(List<ProductModel> productos) {
+    var lista = _filtrarPorBusqueda(productos);
 
-    // Filtro por categoría (index 0 = Destacados = todos)
     if (_selectedCategory != 0 && _categorias.isNotEmpty) {
       final categoriaId = _categorias[_selectedCategory - 1].id;
-      lista = lista.where((p) => p.categoria == categoriaId).toList();
-    }
 
-    // Filtro por texto del buscador
-    if (_busqueda.isNotEmpty) {
       lista = lista
-          .where((p) =>
-              p.nombre.toLowerCase().contains(_busqueda.toLowerCase()))
+          .where((p) => p.categoriaId == categoriaId)
           .toList();
     }
 
     return lista;
   }
 
+  List<ProductModel> _filtrarPorBusqueda(List<ProductModel> productos) {
+    if (_busqueda.isEmpty) {
+      return productos;
+    }
+
+    return productos
+        .where(
+          (p) => p.nombre
+              .toLowerCase()
+              .contains(_busqueda.toLowerCase()),
+        )
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF1DC),
+      backgroundColor: AppColors.crema,
 
-      body: SafeArea(
-        child: Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const MenuHeader(),
-                Positioned(
-                  bottom: -25,
-                  left: 0,
-                  right: 0,
-                  child: MenuSearch(
-                    onChanged: (texto) {
-                      setState(() {
-                        _busqueda = texto;
-                      });
-                    },
-                  ),
-                ),
-              ],
+      body: Stack(
+        children: [
+          // ============================================================
+          // FONDO DECORATIVO
+          // ============================================================
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.35,
+              child: Image.asset(
+                'assets/img/imagen_fondo.png',
+                fit: BoxFit.cover,
+              ),
             ),
+          ),
 
-            const SizedBox(height: 35),
-
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
+          // ============================================================
+          // CONTENIDO PRINCIPAL
+          // ============================================================
+          Column(
+            children: [
+              // ========================================================
+              // HEADER + BUSCADOR
+              // ========================================================
+              SizedBox(
+                height: 320,
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    MenuCategories(
-                      selectedCategory: _selectedCategory,
-                      onCategorySelected: _cambiarCategoria,
-                      onCategoriasLoaded: (lista) {
-                        setState(() {
-                          _categorias = lista;
-                        });
-                      },
+                    // HEADER
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: MenuHeader(),
                     ),
 
-                    const SizedBox(height: 18),
-
-                    FutureBuilder<List<Product>>(
-                      future: _futureProductos,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Center(
-                              child: Text('Error: ${snapshot.error}'),
-                            ),
-                          );
-                        }
-
-                        final productos = _filtrar(snapshot.data ?? []);
-
-                        return MenuProducts(products: productos);
-                      },
+                    // BUSCADOR
+                    Positioned(
+                      bottom: 0,
+                      left: 15,
+                      right: 15,
+                      child: MenuSearch(
+                        onChanged: (texto) {
+                          setState(() {
+                            _busqueda = texto;
+                          });
+                        },
+                      ),
                     ),
-
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
+
+              const SizedBox(height: 15),
+
+              // ========================================================
+              // CONTENIDO SCROLL
+              // ========================================================
+              Expanded(
+                child: SafeArea(
+                  top: false,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        // ==================================================
+                        // CATEGORÍAS
+                        // ==================================================
+                        MenuCategories(
+                          selectedCategory: _selectedCategory,
+                          onCategorySelected: _cambiarCategoria,
+                          onCategoriasLoaded: (lista) {
+                            setState(() {
+                              _categorias = lista;
+                            });
+                          },
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // ==================================================
+                        // PRODUCTOS
+                        // ==================================================
+                        FutureBuilder<List<ProductModel>>(
+                          future: _futureProductos,
+                          builder: (context, snapshot) {
+                            // ----------------------------------------------
+                            // CARGANDO
+                            // ----------------------------------------------
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 40,
+                                ),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.caramelo,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            // ----------------------------------------------
+                            // ERROR
+                            // ----------------------------------------------
+                            if (snapshot.hasError) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 40,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Error: ${snapshot.error}',
+                                    style: const TextStyle(
+                                      color: AppColors.textoCafe,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final todosLosProductos =
+                                snapshot.data ?? [];
+
+                            // ==================================================
+                            // RESULTADOS DE BÚSQUEDA
+                            // ==================================================
+                            if (_busqueda.isNotEmpty) {
+                              final resultados =
+                                  _filtrarPorBusqueda(
+                                todosLosProductos,
+                              );
+
+                              return MenuGrid(
+                                products: resultados,
+                              );
+                            }
+
+                            // ==================================================
+                            // PRODUCTOS DESTACADOS
+                            // ==================================================
+                            final destacados =
+                                _filtrarDestacados(
+                              todosLosProductos,
+                            );
+
+                            // ==================================================
+                            // TODO EL MENÚ
+                            // ==================================================
+                            final todoElMenu =
+                                todosLosProductos;
+
+                            return Column(
+                              children: [
+                                // PRODUCTOS DESTACADOS
+                                MenuProducts(
+                                  products: destacados,
+                                ),
+
+                                const SizedBox(height: 24),
+
+                                // ==================================================
+                                // TÍTULO TODO EL MENÚ
+                                // ==================================================
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      lang.t('todo_el_menu'),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textoCafe,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 12),
+
+                                // ==================================================
+                                // GRID TODO EL MENÚ
+                                // ==================================================
+                                MenuGrid(
+                                  products: todoElMenu,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
 
+      // ================================================================
+      // MENÚ INFERIOR
+      // ================================================================
       bottomNavigationBar: BottomMenu(
         currentIndex: _selectedBottomItem,
         onItemSelected: _cambiarPagina,

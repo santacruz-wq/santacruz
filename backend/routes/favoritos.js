@@ -14,4 +14,5 @@ router.get("/verificar/:productoId", verificarToken, verificarFavorito);
 router.post("/", verificarToken, agregarFavorito);
 router.delete("/:productoId", verificarToken, eliminarFavorito);
 
+
 export default router;

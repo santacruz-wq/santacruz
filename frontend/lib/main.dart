@@ -8,6 +8,7 @@ import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/verificar_cuenta_screen.dart';
 import 'screens/language_selection/language_selection.dart';
+import 'screens/user/favoritos_screen.dart';
 import 'screens/menu/menu_screen.dart';
 
 void main() {
@@ -54,6 +55,12 @@ class MyApp extends StatelessWidget {
         // Login
         '/login': (context) => const LoginScreen(),
 
+        // Menú principal
+        '/menu': (context) => const MenuScreen(),
+
+        // Favoritos
+        '/favoritos': (context) => const FavoritosScreen(),
+
         // Verificación de cuenta
         '/verificar-cuenta': (context) {
           final email =
@@ -63,9 +70,6 @@ class MyApp extends StatelessWidget {
             email: email,
           );
         },
-
-        // Menú principal
-        '/menu': (context) => const MenuScreen(),
 
         // Paneles temporales
         '/admin': (context) => const _PlaceholderScreen(

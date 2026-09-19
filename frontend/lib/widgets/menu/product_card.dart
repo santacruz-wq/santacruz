@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/config/app_colors.dart';
 import '../global/favorito_button.dart';
 
 class ProductCard extends StatelessWidget {
@@ -18,130 +19,97 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 190,
-      margin: const EdgeInsets.only(right: 18),
-      padding: const EdgeInsets.all(10),
+      width: 160,
+      margin: const EdgeInsets.only(right: 14, bottom: 8, top: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8D9A8),
-        borderRadius: BorderRadius.circular(28),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.textoCafe.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Imagen con botón de favoritos
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Image.network(
-                  image,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(22),
+                ),
+                child: SizedBox(
                   height: 110,
-                  width: 168,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      height: 110,
-                      width: 168,
-                      color: const Color(0xFFF8D9A8),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                  width: double.infinity,
+                  child: Hero(
+                    tag: image,
+                    child: Image.network(
+                      image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: AppColors.cremaClaro,
+                        child: const Icon(
+                          Icons.local_cafe_rounded,
+                          size: 40,
+                          color: AppColors.caramelo,
                         ),
                       ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 110,
-                      width: 168,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0997B),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(
-                        Icons.image_outlined,
-                        size: 40,
-                        color: Color(0xFF712B13),
-                      ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
               Positioned(
-                top: 6,
-                right: 6,
+                top: 8,
+                right: 8,
                 child: Container(
-                  width: 26,
-                  height: 26,
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.85),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: FavoritoButton(
-                      productoId: id,
-                      size: 14,
-                    ),
+                    child: FavoritoButton(productoId: id, size: 14),
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 10),
-
-          Text(
-            name,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          Text(
-            price,
-            style: const TextStyle(
-              color: Color(0xFFE79A00),
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          SizedBox(
-            height: 30,
-            width: 105,
-            child: ElevatedButton(
-              onPressed: () {
-                // Después conectaremos el carrito.
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF5B95B),
-                foregroundColor: Colors.black,
-                elevation: 0,
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-              child: const Text(
-                'Agregar',
-                style: TextStyle(fontWeight: FontWeight.bold),
+          // Información del producto (Texto Centrado)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textoCafe,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    price,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.caramelo,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

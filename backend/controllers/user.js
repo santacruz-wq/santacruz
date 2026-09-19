@@ -183,3 +183,51 @@ export const reenviarCodigoVerificacion = async (req, res) => {
         res.status(500).json({ mensaje: 'Error al reenviar el código', error: error.message });
     }
 };
+
+// LOGIN / REGISTRO CON GOOGLE (nuevo)
+export const loginConGoogle = async (req, res) => {
+    try {
+        const { nombre, email, googleId, avatar } = req.body;
+
+        if (!email || !googleId) {
+            return res.status(400).json({ mensaje: 'Faltan datos de Google (email o googleId)' });
+        }
+
+        let usuario = await user.findOne({ email });
+
+        if (usuario) {
+            // Ya existe: si no tenía googleId lo vinculamos
+            if (!usuario.googleId) {
+                usuario.googleId = googleId;
+                if (avatar) usuario.avatar = avatar;
+                await usuario.save();
+            }
+        } else {
+            // No existe: lo creamos ya verificado (Google confirma el correo)
+            usuario = new user({
+                nombre,
+                email,
+                googleId,
+                avatar: avatar || "",
+                rol: "usuario",
+                isVerified: true
+            });
+            await usuario.save();
+        }
+
+        res.status(200).json({
+            mensaje: 'Inicio de sesión con Google exitoso',
+            usuario: {
+                _id: usuario._id,
+                nombre: usuario.nombre,
+                email: usuario.email,
+                rol: usuario.rol,
+                avatar: usuario.avatar
+            }
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ mensaje: 'Error al iniciar sesión con Google', error: error.message });
+    }
+};
