@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AnimatedTitle extends StatelessWidget {
   final String title;
@@ -27,7 +28,7 @@ class AnimatedTitle extends StatelessWidget {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontSize: 27,
                 fontWeight: FontWeight.w700,
@@ -37,7 +38,9 @@ class AnimatedTitle extends StatelessWidget {
             ),
           ),
         ),
+
         const SizedBox(height: 10),
+
         FadeTransition(
           opacity: subtitleOpacity,
           child: Text(
@@ -54,3 +57,4 @@ class AnimatedTitle extends StatelessWidget {
     );
   }
 }
+
