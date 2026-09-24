@@ -11,7 +11,14 @@ class CarritoPage extends StatefulWidget {
   State<CarritoPage> createState() => _CarritoPageState();
 }
 
-class _CarritoPageState extends State<CarritoPage> {
+    class _CarritoPageState extends State<CarritoPage>
+    with SingleTickerProviderStateMixin {
+        // =========================================================
+  // ANIMACIÓN DE LAS TARJETAS DEL CARRITO
+  // =========================================================
+
+  late AnimationController carritoController;
+
   static const Color cafeOscuro = Color(0xFF4E342E);
   static const Color cafe = Color(0xFF6F4E37);
   static const Color cafeClaro = Color(0xFF8D6E63);
@@ -20,6 +27,21 @@ class _CarritoPageState extends State<CarritoPage> {
   static const Color dorado = Color(0xFFD4A017);
   static const Color doradoClaro = Color(0xFFF3D27A);
 
+  // =========================================================
+// INICIAR ANIMACIÓN
+// =========================================================
+
+@override
+void initState() {
+  super.initState();
+
+  carritoController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+
+  carritoController.forward();
+}
   double convertirPrecio(String precio) {
     return double.parse(
       precio.replaceAll('\$', '').replaceAll('.', ''),
@@ -288,57 +310,74 @@ class _CarritoPageState extends State<CarritoPage> {
                     // =================================================
                     // LISTA DE PRODUCTOS
                     // =================================================
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(
-                          16,
-                          16,
-                          16,
-                          10,
-                        ),
-                        itemCount: carrito.length,
-                        itemBuilder: (context, index) {
-                          return CarritoCard(
-                            producto: carrito[index],
-                            index: index,
-                            es: es,
-                            onActualizar: () {
-                              setState(() {});
-                            },
-                            onEliminar: () {
-                              setState(() {
-                                CarritoData.cancelarProducto(index);
-                              });
+                      Expanded(
+  child: ListView.builder(
+    padding: const EdgeInsets.fromLTRB(
+      16,
+      16,
+      16,
+      10,
+    ),
+    itemCount: carrito.length,
+    itemBuilder: (context, index) {
+      final inicio = (index * 0.15).clamp(0.0, 0.7);
+      final fin = (inicio + 0.3).clamp(0.0, 1.0);
 
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(
-                                SnackBar(
-                                  backgroundColor: cafeOscuro,
-                                  behavior:
-                                      SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.all(15),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(14),
-                                  ),
-                                  content: Text(
-                                    IdiomaData.texto(
-                                      'producto_eliminado',
-                                    ),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  duration:
-                                      const Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+      final animacion = CurvedAnimation(
+        parent: carritoController,
+        curve: Interval(
+          inicio,
+          fin,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+
+      return FadeTransition(
+        opacity: animacion,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.12),
+            end: Offset.zero,
+          ).animate(animacion),
+          child: CarritoCard(
+            producto: carrito[index],
+            index: index,
+            es: es,
+            onActualizar: () {
+              setState(() {});
+            },
+            onEliminar: () {
+              setState(() {
+                CarritoData.cancelarProducto(index);
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: cafeOscuro,
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.all(15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  content: Text(
+                    IdiomaData.texto(
+                      'producto_eliminado',
                     ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    },
+  ),
+),
 
                     // =================================================
                     // RESUMEN DEL PEDIDO
@@ -463,47 +502,56 @@ class _CarritoPageState extends State<CarritoPage> {
                           const SizedBox(height: 10),
 
                           // =================================================
-                          // CANCELAR PEDIDO
-                          // =================================================
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: OutlinedButton.icon(
-                              onPressed:
-                                  confirmarCancelarPedido,
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                              ),
-                              label: Text(
-                                IdiomaData.texto(
-                                  'cancelar_pedido',
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(
-                                  color: Colors.red,
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(15),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-        );
+
+// CANCELAR PEDIDO
+
+// =================================================
+
+SizedBox(
+  width: double.infinity,
+  height: 50,
+  child: OutlinedButton.icon(
+    onPressed: confirmarCancelarPedido,
+    icon: const Icon(
+      Icons.delete_outline,
+      size: 20,
+    ),
+    label: Text(
+      IdiomaData.texto(
+        'cancelar_pedido',
+      ),
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    style: OutlinedButton.styleFrom(
+      foregroundColor: Colors.red,
+      side: const BorderSide(
+        color: Colors.red,
+        width: 1.5,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+    ),
+  ),
+),
+
+],
+),
+),
+],
+
+),
+);
       },
     );
+  }
+
+  @override
+  void dispose() {
+    carritoController.dispose();
+    super.dispose();
   }
 }

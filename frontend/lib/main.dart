@@ -93,15 +93,16 @@ class SantaCruzApp extends StatelessWidget {
 // ====================================================================
 // INICIO
 // ====================================================================
-
-class InicioPage extends StatefulWidget {
+    class InicioPage extends StatefulWidget {
   const InicioPage({super.key});
 
   @override
   State<InicioPage> createState() => _InicioPageState();
 }
 
-class _InicioPageState extends State<InicioPage> {
+   class _InicioPageState extends State<InicioPage>
+    with TickerProviderStateMixin {
+
   // ==================================================================
   // COLORES
   // ==================================================================
@@ -125,6 +126,26 @@ class _InicioPageState extends State<InicioPage> {
   String textoBusqueda = '';
 
   int paginaActual = 0;
+
+        // Controlador para la animación de categorías
+late AnimationController categoriasController;
+
+          // ==================================================================
+// ANIMACIÓN DEL TEXTO DE BIENVENIDA
+// ==================================================================
+
+late AnimationController textoBienvenidaController;
+
+String textoBienvenida = '';
+
+   void _cambioIdioma() {
+  if (!mounted) {
+    return;
+  }
+
+  textoBienvenidaController.reset();
+  textoBienvenidaController.repeat();
+}
 
   // ==================================================================
   // CATEGORÍAS
@@ -258,6 +279,65 @@ class _InicioPageState extends State<InicioPage> {
       return nombre.contains(busqueda) || nombreEn.contains(busqueda);
     }).toList();
   }
+
+           // ==================================================================
+// ANIMACIÓN LETRA POR LETRA
+// ==================================================================
+
+@override
+void initState() {
+  super.initState();
+
+  IdiomaData.idioma.addListener(_cambioIdioma);
+   
+    // ================================================================
+  // ANIMACIÓN DE CATEGORÍAS
+  // ================================================================
+
+  categoriasController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1000),
+  );
+
+  categoriasController.forward();
+
+  textoBienvenidaController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 10000),
+  );
+
+  textoBienvenidaController.addListener(() {
+    if (!mounted) {
+      return;
+    }
+
+    final textoCompleto = IdiomaData.texto('bienvenido');
+
+    final progreso = textoBienvenidaController.value;
+
+    int cantidadVisible;
+
+    if (progreso < 0.65) {
+      cantidadVisible =
+          (textoCompleto.length * (progreso / 0.65)).floor();
+    } else {
+      cantidadVisible =
+          (textoCompleto.length *
+                  (1 - ((progreso - 0.65) / 0.35)))
+              .floor();
+    }
+
+    cantidadVisible =
+        cantidadVisible.clamp(0, textoCompleto.length);
+
+    setState(() {
+      textoBienvenida =
+          textoCompleto.substring(0, cantidadVisible);
+    });
+  });
+
+  textoBienvenidaController.repeat();
+}  
 
   // ==================================================================
   // BUILD
@@ -584,16 +664,14 @@ class _InicioPageState extends State<InicioPage> {
 
                             const SizedBox(height: 12),
 
-                            Text(
-                              es
-                                  ? 'Bienvenido a Santa Cruz'
-                                  : 'Welcome to Santa Cruz',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                             Text(
+  textoBienvenida,
+  style: const TextStyle(
+    color: Colors.white,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+  ),
+),
 
                             const SizedBox(height: 7),
 
@@ -669,53 +747,71 @@ class _InicioPageState extends State<InicioPage> {
             // CATEGORÍAS
             // ==========================================================
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+  child: Padding(
+    padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+    child: Text(
+      IdiomaData.texto('categorias'),
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: cafeOscuro,
+        fontFamily: 'Arial',
+      ),
+    ),
+  ),
+),
 
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        es ? 'Categorías' : 'Categories',
-                        style: TextStyle(
-                          fontSize: 21,
-                          fontWeight: FontWeight.bold,
-                          color: textoPrincipal,
-                        ),
-                      ),
-                    ),
+SliverToBoxAdapter(
+  child: SizedBox(
+    height: 132,
 
-                    Text(
-                      es ? 'Explorar' : 'Explore',
-                      style: const TextStyle(
-                        color: cafe,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+
+      itemCount: categorias.length,
+
+      itemBuilder: (context, index) {
+        final inicio = index * 0.2;
+
+        final animacion = CurvedAnimation(
+          parent: categoriasController,
+          curve: Interval(
+            inicio,
+            (inicio + 0.6).clamp(0.0, 1.0),
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
+        return FadeTransition(
+          opacity: animacion,
+
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.15),
+              end: Offset.zero,
+            ).animate(animacion),
+
+            child: ScaleTransition(
+              scale: Tween<double>(
+                begin: 0.92,
+                end: 1.0,
+              ).animate(animacion),
+
+              child: categoria(
+                categorias[index],
+                es,
               ),
             ),
+          ),
+        );
+      },
+    ),
+  ),
+),
 
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 132,
-
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-
-                  itemCount: categorias.length,
-
-                  itemBuilder: (context, index) {
-                    return categoria(categorias[index], es);
-                  },
-                ),
-              ),
-            ),
-
+                 
             // ==========================================================
             // PRODUCTOS DESTACADOS
             // ==========================================================
@@ -1290,6 +1386,8 @@ class _InicioPageState extends State<InicioPage> {
   @override
   void dispose() {
     buscadorController.dispose();
+     IdiomaData.idioma.removeListener(_cambioIdioma);
+    textoBienvenidaController.dispose();
     super.dispose();
   }
 }

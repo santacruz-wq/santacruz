@@ -1,11 +1,14 @@
+
 import 'package:flutter/material.dart';
 
 import '../favoritos_data.dart';
 import '../idioma_data.dart';
+import '../notificaciones_data.dart';
 
 import 'configuracion_page.dart';
 import 'mis_pedidos_page.dart';
 import 'direcciones_page.dart';
+import 'notificaciones_page.dart';
 
 import '../components/perfil/perfil_header.dart';
 import '../components/perfil/perfil_opcion.dart';
@@ -29,12 +32,22 @@ class _PerfilPageState extends State<PerfilPage> {
     return IdiomaData.texto(clave);
   }
 
+  // ================================================================
+  // MIS PEDIDOS
+  // ================================================================
+
   void misPedidos() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MisPedidosPage()),
+      MaterialPageRoute(
+        builder: (context) => const MisPedidosPage(),
+      ),
     );
   }
+
+  // ================================================================
+  // MIS FAVORITOS
+  // ================================================================
 
   void misFavoritos() {
     final bool es = IdiomaData.idioma.value.languageCode == 'es';
@@ -43,7 +56,9 @@ class _PerfilPageState extends State<PerfilPage> {
       SnackBar(
         backgroundColor: cafeOscuro,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
         content: Text(
           es
               ? 'Tienes ${FavoritosData.favoritos.length} productos guardados.'
@@ -58,19 +73,48 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
+  // ================================================================
+  // MIS DIRECCIONES
+  // ================================================================
+
   void misDirecciones() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const DireccionesPage()),
+      MaterialPageRoute(
+        builder: (context) => const DireccionesPage(),
+      ),
     );
   }
+
+  // ================================================================
+  // CONFIGURACIÓN
+  // ================================================================
 
   void configuracion() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ConfiguracionPage()),
+      MaterialPageRoute(
+        builder: (context) => const ConfiguracionPage(),
+      ),
     );
   }
+
+  // ================================================================
+  // NOTIFICACIONES
+  // ================================================================
+
+  void abrirNotificaciones() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificacionesPage(),
+      ),
+    );
+  }
+
+  // ================================================================
+  // BUILD
+  // ================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -79,15 +123,17 @@ class _PerfilPageState extends State<PerfilPage> {
       builder: (context, locale, child) {
         final bool es = locale.languageCode == 'es';
 
-        final int cantidadFavoritos = FavoritosData.favoritos.length;
+        final int cantidadFavoritos =
+            FavoritosData.favoritos.length;
 
-        final bool oscuro = Theme.of(context).brightness == Brightness.dark;
+        final bool oscuro =
+            Theme.of(context).brightness == Brightness.dark;
 
-        final Color fondoPagina = oscuro ? const Color(0xFF1E1714) : crema;
+        final Color fondoPagina =
+            oscuro ? const Color(0xFF1E1714) : crema;
 
-        final Color fondoTarjeta = oscuro
-            ? const Color(0xFF2B211D)
-            : cremaClara;
+        final Color fondoTarjeta =
+            oscuro ? const Color(0xFF2B211D) : cremaClara;
 
         final Color colorSeparador = oscuro
             ? cafeClaro.withOpacity(0.20)
@@ -99,6 +145,7 @@ class _PerfilPageState extends State<PerfilPage> {
           // ==========================================================
           // APP BAR
           // ==========================================================
+
           appBar: AppBar(
             backgroundColor: fondoPagina,
             elevation: 0,
@@ -133,18 +180,26 @@ class _PerfilPageState extends State<PerfilPage> {
           // ==========================================================
           // CONTENIDO
           // ==========================================================
+
           body: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
             child: Column(
               children: [
+                // ====================================================
                 // CABECERA
-                PerfilHeader(oscuro: oscuro, es: es),
+                // ====================================================
+
+                PerfilHeader(
+                  oscuro: oscuro,
+                  es: es,
+                ),
 
                 const SizedBox(height: 18),
 
                 // ====================================================
                 // OPCIONES
                 // ====================================================
+
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -153,19 +208,26 @@ class _PerfilPageState extends State<PerfilPage> {
                     border: Border.all(
                       color: oscuro
                           ? cafeClaro.withOpacity(0.22)
-                          : const Color(0xFFF3D27A).withOpacity(0.65),
+                          : const Color(0xFFF3D27A)
+                              .withOpacity(0.65),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(oscuro ? 0.20 : 0.07),
+                        color: Colors.black.withOpacity(
+                          oscuro ? 0.20 : 0.07,
+                        ),
                         blurRadius: 12,
                         offset: const Offset(0, 5),
                       ),
                     ],
                   ),
+
                   child: Column(
                     children: [
+                      // ==================================================
                       // MIS PEDIDOS
+                      // ==================================================
+
                       PerfilOpcion(
                         icono: Icons.shopping_bag_outlined,
                         titulo: t('mis_pedidos'),
@@ -183,7 +245,10 @@ class _PerfilPageState extends State<PerfilPage> {
                         color: colorSeparador,
                       ),
 
+                      // ==================================================
                       // MIS FAVORITOS
+                      // ==================================================
+
                       PerfilOpcion(
                         icono: Icons.favorite_outline,
                         titulo: t('mis_favoritos'),
@@ -201,7 +266,92 @@ class _PerfilPageState extends State<PerfilPage> {
                         color: colorSeparador,
                       ),
 
+                      // ==================================================
+                      // NOTIFICACIONES
+                      // ==================================================
+
+                      ValueListenableBuilder<List<Notificacion>>(
+                        valueListenable:
+                            NotificacionesData.notificaciones,
+                        builder: (
+                          context,
+                          listaNotificaciones,
+                          child,
+                        ) {
+                          final int cantidadNoLeidas =
+                              NotificacionesData.cantidadNoLeidas;
+
+                          return Stack(
+                            children: [
+                              PerfilOpcion(
+                                icono:
+                                    Icons.notifications_outlined,
+                                titulo: es
+                                    ? 'Notificaciones'
+                                    : 'Notifications',
+                                subtitulo: cantidadNoLeidas > 0
+                                    ? es
+                                        ? '$cantidadNoLeidas nuevas'
+                                        : '$cantidadNoLeidas new'
+                                    : es
+                                        ? 'No tienes novedades'
+                                        : 'No new notifications',
+                                onTap: abrirNotificaciones,
+                                oscuro: oscuro,
+                              ),
+
+                              // ==================================================
+                              // CONTADOR
+                              // ==================================================
+
+                              if (cantidadNoLeidas > 0)
+                                Positioned(
+                                  right: 22,
+                                  top: 14,
+                                  child: Container(
+                                    constraints:
+                                        const BoxConstraints(
+                                      minWidth: 22,
+                                      minHeight: 22,
+                                    ),
+                                    padding:
+                                        const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                    ),
+                                    decoration:
+                                        const BoxDecoration(
+                                      color: Color(0xFFDDB447),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      cantidadNoLeidas > 99
+                                          ? '99+'
+                                          : '$cantidadNoLeidas',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      Divider(
+                        height: 1,
+                        indent: 14,
+                        endIndent: 14,
+                        color: colorSeparador,
+                      ),
+
+                      // ==================================================
                       // MIS DIRECCIONES
+                      // ==================================================
+
                       PerfilOpcion(
                         icono: Icons.location_on_outlined,
                         titulo: t('mis_direcciones'),
@@ -219,7 +369,10 @@ class _PerfilPageState extends State<PerfilPage> {
                         color: colorSeparador,
                       ),
 
+                      // ==================================================
                       // CONFIGURACIÓN
+                      // ==================================================
+
                       PerfilOpcion(
                         icono: Icons.settings_outlined,
                         titulo: t('configuracion'),
@@ -235,8 +388,13 @@ class _PerfilPageState extends State<PerfilPage> {
 
                 const SizedBox(height: 18),
 
+                // ====================================================
                 // PIE DE PÁGINA
-                PerfilFooter(oscuro: oscuro),
+                // ====================================================
+
+                PerfilFooter(
+                  oscuro: oscuro,
+                ),
               ],
             ),
           ),
@@ -245,3 +403,5 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 }
+
+

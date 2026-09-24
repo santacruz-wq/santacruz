@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import '../carrito_data.dart';
 import '../idioma_data.dart';
-
+import '../notificaciones_data.dart';
+import '../components/confirmar_pedido/confirmar_datos.dart';
+import '../components/confirmar_pedido/confirmar_pago.dart';
+import '../components/confirmar_pedido/confirmar_productos.dart';
+import '../components/confirmar_pedido/confirmar_total.dart';
+import '../components/confirmar_pedido/confirmar_botones.dart';
 class ConfirmarPedidoPage extends StatefulWidget {
   const ConfirmarPedidoPage({super.key});
 
@@ -227,7 +232,20 @@ class _ConfirmarPedidoPageState extends State<ConfirmarPedidoPage> {
 
   void mostrarPedidoConfirmado() {
     final total = calcularTotal();
+    // ==============================================================
+  // CREAR NOTIFICACIÓN
+  // ==============================================================
 
+  final bool es =
+      IdiomaData.idioma.value.languageCode == 'es';
+NotificacionesData.agregarNotificacion(
+    
+  mensaje: es
+      ? 'Tu pedido ha sido confirmado y está siendo preparado.'
+      : 'Your order has been confirmed and is being prepared.',
+  estado: 'confirmado',
+  minutos: 25,
+);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -427,393 +445,122 @@ class _ConfirmarPedidoPageState extends State<ConfirmarPedidoPage> {
 
                 const SizedBox(height: 20),
 
-                // ==================================================
-                // DATOS DEL CLIENTE
-                // ==================================================
-                Container(
-                  padding: const EdgeInsets.all(16),
+                    // ==================================================
+// DATOS DEL CLIENTE
+// ==================================================
+ConfirmarDatos(
+  nombreController: nombreController,
+  telefonoController: telefonoController,
+  direccionController: direccionController,
+  observacionesController: observacionesController,
 
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+  titulo: IdiomaData.texto('datos_entrega'),
 
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
+  nombre: IdiomaData.texto('nombre_completo'),
+  ejemploNombre: IdiomaData.texto('ej_nombre'),
 
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+  telefono: IdiomaData.texto('telefono'),
+  ejemploTelefono: IdiomaData.texto('ej_telefono'),
 
-                    children: [
-                      Text(
-                        IdiomaData.texto('datos_entrega'),
-                        style: const TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.bold,
-                          color: cafeOscuro,
-                        ),
-                      ),
+  direccion: IdiomaData.texto('direccion'),
+  ejemploDireccion: IdiomaData.texto('ej_direccion'),
 
-                      const SizedBox(height: 15),
+  observaciones: IdiomaData.texto('observaciones'),
+  ejemploObservaciones: IdiomaData.texto('ej_observaciones'),
 
-                      campoTexto(
-                        etiqueta: IdiomaData.texto('nombre_completo'),
-                        hint: IdiomaData.texto('ej_nombre'),
-                        icono: Icons.person,
-                        controller: nombreController,
-                      ),
+  cafe: cafe,
+  cafeOscuro: cafeOscuro,
+  dorado: dorado,
+  textoGris: textoGris,
+  fondoCampo: Colors.white,
+),
 
-                      const SizedBox(height: 12),
-
-                      campoTexto(
-                        etiqueta: IdiomaData.texto('telefono'),
-                        hint: IdiomaData.texto('ej_telefono'),
-                        icono: Icons.phone,
-                        controller: telefonoController,
-                        tipoTeclado: TextInputType.phone,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      campoTexto(
-                        etiqueta: IdiomaData.texto('direccion'),
-                        hint: IdiomaData.texto('ej_direccion'),
-                        icono: Icons.location_on,
-                        controller: direccionController,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      campoTexto(
-                        etiqueta: IdiomaData.texto('observaciones'),
-                        hint: IdiomaData.texto('ej_observaciones'),
-                        icono: Icons.notes,
-                        controller: observacionesController,
-                        maxLineas: 3,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
+const SizedBox(height: 20),
                 // ==================================================
                 // MÉTODO DE PAGO
                 // ==================================================
-                Container(
-                  padding: const EdgeInsets.all(16),
+                  ConfirmarPago(
+  metodoPago: metodoPago,
+  es: es,
 
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+  titulo: es ? 'Método de pago' : 'Payment method',
 
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
+  cafe: cafe,
+  cafeOscuro: cafeOscuro,
+  crema: crema,
 
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+  onChanged: (valor) {
+    if (valor != null) {
+      setState(() {
+        metodoPago = valor;
+      });
+    }
+  },
+),
 
-                    children: [
-                      Text(
-                        es ? 'Método de pago' : 'Payment method',
-
-                        style: const TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.bold,
-                          color: cafeOscuro,
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      DropdownButtonFormField<String>(
-                        value: metodoPago,
-
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.payment, color: cafe),
-
-                          filled: true,
-                          fillColor: crema,
-
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-
-                        items: [
-                          DropdownMenuItem(
-                            value: 'Efectivo',
-                            child: Text(es ? 'Efectivo' : 'Cash'),
-                          ),
-
-                          DropdownMenuItem(
-                            value: 'Tarjeta',
-                            child: Text(es ? 'Tarjeta' : 'Card'),
-                          ),
-
-                          DropdownMenuItem(
-                            value: 'Nequi',
-                            child: const Text('Nequi'),
-                          ),
-
-                          DropdownMenuItem(
-                            value: 'Daviplata',
-                            child: const Text('Daviplata'),
-                          ),
-                        ],
-
-                        onChanged: (valor) {
-                          if (valor != null) {
-                            setState(() {
-                              metodoPago = valor;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
+const SizedBox(height: 20),
 
                 // ==================================================
                 // PRODUCTOS
                 // ==================================================
-                Text(
-                  IdiomaData.texto('resumen_pedido'),
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: cafeOscuro,
-                  ),
-                ),
+                    ConfirmarProductos(
+  carrito: carrito,
+  es: es,
 
-                const SizedBox(height: 10),
+  titulo: IdiomaData.texto('resumen_pedido'),
+  textoCantidad: IdiomaData.texto('cantidad'),
 
-                ...carrito.map((producto) {
-                  final nombre = nombreProducto(producto, es);
+  nombreProducto: nombreProducto,
+  convertirPrecio: convertirPrecio,
+  formatoPrecio: formatoPrecio,
 
-                  final precio = convertirPrecio(producto['precio'] as String);
+  cafe: cafe,
+  cafeOscuro: cafeOscuro,
+  crema: crema,
+  dorado: dorado,
+  textoGris: textoGris,
+),
 
-                  final cantidad = producto['cantidad'] as int;
-
-                  final subtotal = precio * cantidad;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-
-                    padding: const EdgeInsets.all(14),
-
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-
-                    child: Row(
-                      children: [
-                        // ICONO
-                        Container(
-                          width: 55,
-                          height: 55,
-
-                          decoration: BoxDecoration(
-                            color: crema,
-                            borderRadius: BorderRadius.circular(12),
-
-                            border: Border.all(color: dorado.withOpacity(0.25)),
-                          ),
-
-                          child: Icon(
-                            producto['icono'] as IconData,
-                            color: cafe,
-                            size: 30,
-                          ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        // INFORMACIÓN
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-
-                            children: [
-                              Text(
-                                nombre,
-
-                                maxLines: 2,
-
-                                overflow: TextOverflow.ellipsis,
-
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: cafeOscuro,
-                                ),
-                              ),
-
-                              const SizedBox(height: 4),
-
-                              Text(
-                                '${IdiomaData.texto('cantidad')}: $cantidad',
-
-                                style: const TextStyle(color: textoGris),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        Text(
-                          formatoPrecio(subtotal),
-
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: dorado,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-
-                const SizedBox(height: 10),
+const SizedBox(height: 10),
 
                 // ==================================================
                 // TOTAL
                 // ==================================================
-                Container(
-                  width: double.infinity,
+                    ConfirmarTotal(
+  total: total,
 
-                  padding: const EdgeInsets.all(20),
+  titulo: IdiomaData.texto('total_pedido'),
 
-                  decoration: BoxDecoration(
-                    color: crema,
-                    borderRadius: BorderRadius.circular(18),
+  formatoPrecio: formatoPrecio,
 
-                    border: Border.all(color: dorado.withOpacity(0.45)),
-                  ),
-
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                    children: [
-                      Text(
-                        IdiomaData.texto('total_pedido'),
-
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: cafeOscuro,
-                        ),
-                      ),
-
-                      Text(
-                        formatoPrecio(total),
-
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: dorado,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
+  cafeOscuro: cafeOscuro,
+  crema: crema,
+  dorado: dorado,
+),
                 const SizedBox(height: 20),
 
                 // ==================================================
-                // CONFIRMAR
+                //   BOTONES
                 // ==================================================
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
+                      ConfirmarBotones(
+  onConfirmar: confirmarPedido,
 
-                  child: ElevatedButton.icon(
-                    onPressed: confirmarPedido,
+  onVolver: () {
+    Navigator.pop(context);
+  },
 
-                    icon: const Icon(Icons.check_circle),
+  textoConfirmar:
+      IdiomaData.texto('confirmar_pedido_boton'),
 
-                    label: Text(
-                      IdiomaData.texto('confirmar_pedido_boton'),
+  textoVolver:
+      IdiomaData.texto('volver_carrito'),
 
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+  cafe: cafe,
+),
 
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: cafe,
-                      foregroundColor: Colors.white,
+const SizedBox(height: 20),      
 
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // ==================================================
-                // VOLVER AL CARRITO
-                // ==================================================
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-
-                    icon: const Icon(Icons.arrow_back),
-
-                    label: Text(
-                      IdiomaData.texto('volver_carrito'),
-
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: cafe,
-
-                      side: const BorderSide(color: cafe),
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
+                
               ],
             ),
           ),

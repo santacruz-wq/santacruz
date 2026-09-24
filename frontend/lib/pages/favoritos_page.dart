@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../favoritos_data.dart';
 import '../idioma_data.dart';
@@ -11,10 +10,17 @@ class FavoritosPage extends StatefulWidget {
   State<FavoritosPage> createState() => _FavoritosPageState();
 }
 
-class _FavoritosPageState extends State<FavoritosPage> {
-  // ================================================================
+class _FavoritosPageState extends State<FavoritosPage>
+    with SingleTickerProviderStateMixin {
+  // =========================================================
+  // ANIMACIÓN DE LAS TARJETAS DE FAVORITOS
+  // =========================================================
+
+  late AnimationController favoritosController;
+
+  // ===============================================================
   // COLORES DEL DISEÑO
-  // ================================================================
+  // ===============================================================
 
   static const Color cafeOscuro = Color(0xFF4E342E);
   static const Color cafe = Color(0xFF6F4E37);
@@ -45,6 +51,26 @@ class _FavoritosPageState extends State<FavoritosPage> {
       return producto['nombreEn'] ?? producto['nombre'] ?? 'Product';
     }
   }
+
+  // =========================================================
+  // INICIAR ANIMACIÓN
+  // =========================================================
+
+  @override
+  void initState() {
+    super.initState();
+
+    favoritosController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    favoritosController.forward();
+  }
+
+  // ================================================================
+  // BUILD
+  // ================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -86,9 +112,7 @@ class _FavoritosPageState extends State<FavoritosPage> {
                     size: 21,
                   ),
                 ),
-
                 const SizedBox(width: 10),
-
                 Text(
                   t('favoritos'),
                   style: const TextStyle(
@@ -153,9 +177,7 @@ class _FavoritosPageState extends State<FavoritosPage> {
                             color: dorado,
                           ),
                         ),
-
                         const SizedBox(height: 20),
-
                         Text(
                           t('no_favoritos'),
                           textAlign: TextAlign.center,
@@ -166,9 +188,7 @@ class _FavoritosPageState extends State<FavoritosPage> {
                                 oscuro ? Colors.white : cafeOscuro,
                           ),
                         ),
-
                         const SizedBox(height: 9),
-
                         Text(
                           t('agrega_favoritos'),
                           textAlign: TextAlign.center,
@@ -203,35 +223,69 @@ class _FavoritosPageState extends State<FavoritosPage> {
                     final String nombreProducto =
                         obtenerNombre(producto, es);
 
-                    return FavoritoCard(
-                      producto: producto,
-                      nombreProducto: nombreProducto,
-                      textoFavorito: t('producto_favorito'),
-                      textoEliminar: t('favorito_eliminado'),
-                      onEliminar: () {
-                        setState(() {
-                          FavoritosData.favoritos.removeAt(index);
-                        });
+                    // ==================================================
+                    // ANIMACIÓN ESCALONADA
+                    // ==================================================
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            backgroundColor: cafeOscuro,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            content: Text(
+                    final inicio =
+                        (index * 0.15).clamp(0.0, 0.7);
+
+                    final fin =
+                        (inicio + 0.3).clamp(0.0, 1.0);
+
+                    final animacion = CurvedAnimation(
+                      parent: favoritosController,
+                      curve: Interval(
+                        inicio,
+                        fin,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    );
+
+                    return FadeTransition(
+                      opacity: animacion,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.12),
+                          end: Offset.zero,
+                        ).animate(animacion),
+                        child: FavoritoCard(
+                          producto: producto,
+                          nombreProducto: nombreProducto,
+                          textoFavorito:
+                              t('producto_favorito'),
+                          textoEliminar:
                               t('favorito_eliminado'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                          onEliminar: () {
+                            setState(() {
+                              FavoritosData.favoritos
+                                  .removeAt(index);
+                            });
+
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              SnackBar(
+                                backgroundColor: cafeOscuro,
+                                behavior:
+                                    SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(14),
+                                ),
+                                content: Text(
+                                  t('favorito_eliminado'),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                duration:
+                                    const Duration(seconds: 1),
                               ),
-                            ),
-                            duration:
-                                const Duration(seconds: 1),
-                          ),
-                        );
-                      },
+                            );
+                          },
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -239,5 +293,14 @@ class _FavoritosPageState extends State<FavoritosPage> {
       },
     );
   }
-}
 
+  // ================================================================
+  // DISPOSE
+  // ================================================================
+
+  @override
+  void dispose() {
+    favoritosController.dispose();
+    super.dispose();
+  }
+}
