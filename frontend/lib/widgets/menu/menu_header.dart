@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import '../global/language_button.dart';
 import '../../providers/language_provider.dart';
 
@@ -50,16 +52,17 @@ class MenuHeader extends StatelessWidget {
 
                 const SizedBox(height: 45),
 
+                // TÍTULO
                 Text(
                   lang.t('titulo'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    height: 1.15,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: 1,
+                  style: GoogleFonts.poppins(
                     color: Colors.white,
-                    shadows: [
+                    fontSize: 27,
+                    fontWeight: FontWeight.w700,
+                    height: 1.18,
+                    letterSpacing: 1.1,
+                    shadows: const [
                       Shadow(
                         color: Colors.black45,
                         blurRadius: 6,
@@ -69,13 +72,17 @@ class MenuHeader extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 5),
+                const SizedBox(height: 10),
 
+                // SUBTÍTULO
                 Text(
                   lang.t('subtitulo'),
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
+                    color: Colors.white70,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.8,
                     shadows: [
                       Shadow(
                         color: Colors.black45,
@@ -99,18 +106,23 @@ class _HeaderCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
+
     path.lineTo(0, size.height - 40);
+
     path.quadraticBezierTo(
       size.width / 2,
       size.height + 30,
       size.width,
       size.height - 40,
     );
+
     path.lineTo(size.width, 0);
     path.close();
+
     return path;
   }
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
+

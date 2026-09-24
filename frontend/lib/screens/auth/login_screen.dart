@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/favorito_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,10 +15,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
+    final favoritoProvider = context.read<FavoritoProvider>();
+
     final exito = await authProvider.login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
@@ -26,6 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (exito) {
+      //CARGAMOS LOS FAVORITOS DEL USUARIO QUE ACABA DE ENTRAR (EL TOKEN YA ESTA GUARDADO)
+      await favoritoProvider.cargarFavoritos();
+
+      if (!mounted) return;
+
       final rol = authProvider.usuario?.rol;
       //REDIRIGIMOS SEGUN EL ROL DEL USUARIO
       switch (rol) {
@@ -39,7 +54,12 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacementNamed(context, "/cocina");
           break;
         default:
-          Navigator.pushReplacementNamed(context, "/menu");
+          //LIMPIAMOS LA PILA PARA NO DUPLICAR EL MENU SI VENIAMOS DE TOCAR UN CORAZON
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            "/menu",
+            (route) => false,
+          );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

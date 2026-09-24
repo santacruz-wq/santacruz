@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
+import 'providers/favorito_provider.dart';
 
 import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -20,6 +21,9 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => LanguageProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FavoritoProvider(),
         ),
       ],
       child: const MyApp(),
@@ -96,7 +100,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
 class AppStarter extends StatefulWidget {
   const AppStarter({super.key});
 
@@ -116,11 +119,17 @@ class _AppStarterState extends State<AppStarter> {
   Future<void> _cargarDatos() async {
     final authProvider = context.read<AuthProvider>();
     final languageProvider = context.read<LanguageProvider>();
+    final favoritoProvider = context.read<FavoritoProvider>();
 
     await Future.wait([
       languageProvider.cargarIdiomaGuardado(),
       authProvider.verificarSesion(),
     ]);
+
+    //SI HAY SESION GUARDADA, CARGAMOS SUS FAVORITOS PARA PINTAR LOS CORAZONES
+    if (authProvider.usuario != null) {
+      await favoritoProvider.cargarFavoritos();
+    }
 
     if (!mounted) return;
 
@@ -142,7 +151,6 @@ class _AppStarterState extends State<AppStarter> {
     return InicioScreen();
   }
 }
-
 
 class _PlaceholderScreen extends StatelessWidget {
   final String titulo;
