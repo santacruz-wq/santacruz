@@ -6,6 +6,10 @@ import 'pages/carrito_page.dart';
 import 'pages/perfil_page.dart';
 import 'pages/ofertas_page.dart';
 import 'pages/detalle_producto_page.dart';
+import 'pages/tortas_page.dart';
+import 'pages/postres_page.dart';
+import 'pages/brownies_page.dart';
+import 'pages/cafe_page.dart';
 import 'idioma_data.dart';
 import 'carrito_data.dart';
 
@@ -1003,21 +1007,60 @@ SliverToBoxAdapter(
       bottomNavigationBar: _barraNavegacion(context, es, esOscuro),
     );
   }
+    // ==================================================================
+// CATEGORÍA
+// ==================================================================
+ Widget categoria(Map<String, dynamic> categoria, bool es) {
+  final esOscuro =
+      Theme.of(context).brightness == Brightness.dark;
 
-  // ==================================================================
-  // CATEGORÍA
-  // ==================================================================
+  final superficie = esOscuro
+      ? const Color(0xFF2B211D)
+      : Colors.white;
 
-  Widget categoria(Map<String, dynamic> categoria, bool es) {
-    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+  final superficieIcono = esOscuro
+      ? const Color(0xFF3A2B25)
+      : crema;
 
-    final superficie = esOscuro ? const Color(0xFF2B211D) : Colors.white;
+  final textoPrincipal = esOscuro
+      ? const Color(0xFFFFF8E7)
+      : cafeOscuro;
 
-    final superficieIcono = esOscuro ? const Color(0xFF3A2B25) : crema;
+  return GestureDetector(
+   onTap: () {
+  if (categoria['nombre'] == 'Tortas') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const TortasPage(),
+      ),
+    );
+  } else if (categoria['nombre'] == 'Postres') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PostresPage(),
+      ),
+    );
+  } else if (categoria['nombre'] == 'Brownies') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const BrowniesPage(),
+      ),
+    );
+  }
+  else if (categoria['nombre'] == 'Café') {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const CafePage(),
+    ),
+  );
+}
+},
 
-    final textoPrincipal = esOscuro ? const Color(0xFFFFF8E7) : cafeOscuro;
-
-    return Container(
+    child: Container(
       width: 105,
 
       margin: const EdgeInsets.only(right: 12),
@@ -1035,7 +1078,9 @@ SliverToBoxAdapter(
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: esOscuro ? 0.18 : 0.05),
+            color: Colors.black.withValues(
+              alpha: esOscuro ? 0.18 : 0.05,
+            ),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1055,13 +1100,19 @@ SliverToBoxAdapter(
               shape: BoxShape.circle,
             ),
 
-            child: Icon(categoria['icono'], color: cafe, size: 27),
+            child: Icon(
+              categoria['icono'],
+              color: cafe,
+              size: 27,
+            ),
           ),
 
           const SizedBox(height: 9),
 
           Text(
-            es ? categoria['nombre'] : categoria['nombreEn'],
+            es
+                ? categoria['nombre']
+                : categoria['nombreEn'],
 
             textAlign: TextAlign.center,
 
@@ -1073,8 +1124,11 @@ SliverToBoxAdapter(
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+ 
+    
 
   // ==================================================================
   // PRODUCTO
