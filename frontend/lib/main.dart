@@ -11,6 +11,10 @@ import 'screens/auth/verificar_cuenta_screen.dart';
 import 'screens/language_selection/language_selection.dart';
 import 'screens/user/favoritos_screen.dart';
 import 'screens/menu/menu_screen.dart';
+import 'screens/mesero/mesas_screen.dart';
+import 'screens/auth/registro_screen.dart';
+
+
 
 void main() {
   runApp(
@@ -80,9 +84,7 @@ class MyApp extends StatelessWidget {
               titulo: 'Panel Admin',
             ),
 
-        '/mesero': (context) => const _PlaceholderScreen(
-              titulo: 'Panel Mesero',
-            ),
+        '/mesero': (context) => const MesasScreen(),
 
         '/cocina': (context) => const _PlaceholderScreen(
               titulo: 'Panel Cocina',
@@ -92,9 +94,7 @@ class MyApp extends StatelessWidget {
               titulo: 'Recuperar Contraseña',
             ),
 
-        '/registro': (context) => const _PlaceholderScreen(
-              titulo: 'Registro',
-            ),
+        '/registro': (context) => const RegistroScreen(),
       },
     );
   }
