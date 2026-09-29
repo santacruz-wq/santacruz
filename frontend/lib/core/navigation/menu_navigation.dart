@@ -23,14 +23,12 @@ void navegarDesdeMenu(BuildContext context, int index, int currentIndex) {
       break;
 
     case 2:
-      //EL PERFIL SOLO SE MUESTRA CON SESION; TODAVIA NO EXISTE LA PANTALLA
+      //EL PERFIL SOLO SE MUESTRA CON SESION
       if (!haySesion) {
         _pedirLogin(context, 'Inicia sesión para continuar');
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Próximamente')),
-      );
+      Navigator.pushNamed(context, '/perfil');
       break;
   }
 }

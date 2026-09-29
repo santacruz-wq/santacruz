@@ -5,6 +5,7 @@ class UserModel {
   final String rol; // "admin", "user", "mesero", "cocina"
   final bool activo;
   final bool isVerified;
+  final String? avatar;
 
   UserModel({
     this.id,
@@ -13,6 +14,7 @@ class UserModel {
     required this.rol,
     required this.activo,
     this.isVerified = true,
+    this.avatar,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class UserModel {
       rol: json['rol'],
       activo: json['activo'] ?? true,
       isVerified: json['isVerified'] ?? true,
+      avatar: json['avatar'],
     );
   }
 
@@ -33,6 +36,7 @@ class UserModel {
       'rol': rol,
       'activo': activo,
       'isVerified': isVerified,
+      'avatar': avatar,
     };
   }
 }
