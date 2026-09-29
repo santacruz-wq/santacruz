@@ -145,7 +145,7 @@ class _InicioScreenState extends State<InicioScreen>
                   FadeLinkButton(
                     text: '¿No tienes cuenta? Regístrate',
                     onPressed: () {
-                      // Navigator.pushNamed(context, '/registro');
+                      Navigator.pushNamed(context, '/registro');
                     },
                     opacityAnimation: _registerOpacity,
                   ),
