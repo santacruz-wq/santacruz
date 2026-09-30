@@ -1,8 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../../../providers/auth_provider.dart';
 import '../../../providers/language_provider.dart';
 import '../../../services/auth_service.dart';
+import '../utils/auth_navigation.dart';
 
 class RegistroController {
   final nombre = TextEditingController();
@@ -96,7 +98,9 @@ class RegistroController {
     return null;
   }
 
-  Future<bool> registrar(BuildContext context) async {
+  Future<bool> registrar(
+    BuildContext context,
+  ) async {
     if (cargando) return false;
 
     if (!formKey.currentState!.validate()) {
@@ -106,7 +110,8 @@ class RegistroController {
     cargando = true;
 
     try {
-      final resultado = await AuthService.registrar(
+      final resultado =
+          await AuthService.registrar(
         nombre.text.trim(),
         correo.text.trim(),
         contrasena.text,
@@ -164,6 +169,55 @@ class RegistroController {
       );
 
       return false;
+    } finally {
+      cargando = false;
+    }
+  }
+
+  Future<void> registroConGoogle(
+    BuildContext context,
+  ) async {
+    if (cargando) return;
+
+    cargando = true;
+
+    try {
+      final auth =
+          context.read<AuthProvider>();
+
+      final exitoso =
+          await auth.loginConGoogle();
+
+      if (!context.mounted) return;
+
+      if (exitoso) {
+        AuthNavigation.irSegunRol(
+          context,
+          auth.usuario?.rol,
+        );
+        return;
+      }
+
+      if (auth.error != null &&
+          auth.error!.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.error!),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo iniciar con Google. Intenta nuevamente.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } finally {
       cargando = false;
     }

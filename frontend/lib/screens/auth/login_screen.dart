@@ -1,10 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../core/config/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-
 import 'controllers/login_controller.dart';
 import 'widgets/auth_button.dart';
 import 'widgets/auth_footer.dart';
@@ -50,12 +49,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
+                // CORREO
                 AuthTextField(
                   controller: controller.email,
                   hintText: lang.t('correo'),
                   icon: Icons.email_outlined,
-                  keyboardType:
-                      TextInputType.emailAddress,
+                  keyboardType: TextInputType.emailAddress,
                   validator: (value) =>
                       controller.validarCorreo(
                     value,
@@ -65,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 18),
 
+                // CONTRASEÑA
                 AuthTextField(
                   controller: controller.password,
                   hintText: lang.t('contrasena'),
@@ -91,6 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
+                // RECUPERAR CONTRASEÑA
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -112,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 10),
 
+                // LOGIN NORMAL
                 AuthButton(
                   texto: lang.t('iniciar_sesion'),
                   cargando: auth.cargando,
@@ -121,6 +123,92 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 20),
 
+                // SEPARADOR
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: AppColors.cafeMedio
+                            .withOpacity(0.35),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                      ),
+                      child: Text(
+                        'o',
+                        style: TextStyle(
+                          color: AppColors.cafeMedio,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: AppColors.cafeMedio
+                            .withOpacity(0.35),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // GOOGLE
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton(
+                    onPressed: auth.cargando
+                        ? null
+                        : () => controller
+                            .loginConGoogle(context),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: AppColors.cafeMedio
+                            .withOpacity(0.35),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'G',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF4285F4),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Continuar con Google',
+                          style: TextStyle(
+                            color: Color(0xFF3C4043),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // REGISTRO
                 AuthFooter(
                   texto: lang.t('no_tienes_cuenta'),
                   accion: lang.t('registrarse'),
