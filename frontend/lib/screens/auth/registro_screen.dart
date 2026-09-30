@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/config/app_colors.dart';
+import '../../providers/language_provider.dart';
+
+import 'controllers/registro_controller.dart';
+import 'widgets/auth_button.dart';
+import 'widgets/auth_footer.dart';
+import 'widgets/auth_header.dart';
+import 'widgets/auth_text_field.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -9,141 +18,154 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
-  final _nombreController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmarController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
-  bool _cargando = false;
+  final controller = RegistroController();
 
   @override
   void dispose() {
-    _nombreController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmarController.dispose();
+    controller.dispose();
     super.dispose();
-  }
-
-  Future<void> _handleRegistro() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _cargando = true);
-
-    final resultado = await AuthService.registrar(
-      _nombreController.text.trim(),
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
-
-    if (!mounted) return;
-    setState(() => _cargando = false);
-
-    if (resultado["success"]) {
-      //VAMOS A LA PANTALLA DE VERIFICAR CUENTA, PASANDO EL CORREO
-      Navigator.pushReplacementNamed(
-        context,
-        "/verificar-cuenta",
-        arguments: _emailController.text.trim(),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(resultado["message"] ?? "Error al registrar usuario")),
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
+
     return Scaffold(
+      backgroundColor: AppColors.crema,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Crea tu cuenta",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
+            key: controller.formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+
+                AuthHeader(
+                  titulo: lang.t('crear_cuenta'),
+                  subtitulo: lang.t('bienvenido'),
+                ),
+
+                const SizedBox(height: 30),
+
+                // NOMBRE
+                AuthTextField(
+                  controller: controller.nombre,
+                  hintText: lang.t('nombre'),
+                  icon: Icons.person_outline,
+                  validator: (value) =>
+                      controller.validarRequerido(
+                    value,
+                    context,
                   ),
-                  const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _nombreController,
-                    decoration: const InputDecoration(
-                      labelText: "Nombre completo",
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) return "Ingresa tu nombre";
-                      return null;
+                ),
+
+                const SizedBox(height: 18),
+
+                // CORREO
+                AuthTextField(
+                  controller: controller.correo,
+                  hintText: lang.t('correo'),
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) =>
+                      controller.validarCorreo(
+                    value,
+                    context,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // CONTRASEÑA
+                AuthTextField(
+                  controller: controller.contrasena,
+                  hintText: lang.t('contrasena'),
+                  icon: Icons.lock_outline,
+                  obscureText:
+                      controller.ocultarContrasena,
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(
+                        controller.cambiarContrasena,
+                      );
                     },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: "Correo electrónico",
-                      border: OutlineInputBorder(),
+                    icon: Icon(
+                      controller.ocultarContrasena
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: AppColors.cafeMedio,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return "Ingresa tu correo";
-                      if (!value.contains("@")) return "Correo inválido";
-                      return null;
-                    },
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Contraseña",
-                      border: OutlineInputBorder(),
+                  validator: (value) =>
+                      controller.validarContrasena(
+                    value,
+                    context,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // CONFIRMAR CONTRASEÑA
+                AuthTextField(
+                  controller:
+                      controller.confirmarContrasena,
+                  hintText:
+                      lang.t('confirmar_contrasena'),
+                  icon: Icons.lock_outline,
+                  obscureText:
+                      controller
+                          .ocultarConfirmarContrasena,
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(
+                        controller
+                            .cambiarConfirmarContrasena,
+                      );
+                    },
+                    icon: Icon(
+                      controller
+                              .ocultarConfirmarContrasena
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: AppColors.cafeMedio,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return "Ingresa una contraseña";
-                      if (value.length < 6) return "Debe tener al menos 6 caracteres";
-                      return null;
-                    },
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _confirmarController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Confirmar contraseña",
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value != _passwordController.text) return "Las contraseñas no coinciden";
-                      return null;
-                    },
+                  validator: (value) =>
+                      controller.validarConfirmacion(
+                    value,
+                    context,
                   ),
-                  const SizedBox(height: 24),
-                  _cargando
-                      ? const CircularProgressIndicator()
-                      : SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _handleRegistro,
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              child: Text("Registrarme"),
-                            ),
-                          ),
-                        ),
-                  TextButton(
-                    onPressed: () => Navigator.pushReplacementNamed(context, "/login"),
-                    child: const Text("¿Ya tienes cuenta? Inicia sesión"),
-                  ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // REGISTRARSE
+                AuthButton(
+                  texto: lang.t('registrarse'),
+                  cargando: controller.cargando,
+                  onPressed: () async {
+                    setState(() {});
+
+                    await controller.registrar(context);
+
+                    if (!mounted) return;
+
+                    setState(() {});
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // YA TIENE CUENTA
+                AuthFooter(
+                  texto: lang.t('ya_tienes_cuenta'),
+                  accion: lang.t('iniciar_sesion'),
+                  ruta: '/login',
+                ),
+
+                const SizedBox(height: 20),
+              ],
             ),
           ),
         ),

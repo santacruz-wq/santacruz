@@ -3,15 +3,17 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorito_provider.dart';
 import '../../core/config/app_colors.dart';
+import '../../widgets/global/bottom_menu.dart';
+import '../../core/navigation/menu_navigation.dart';
 
 class PerfilScreen extends StatelessWidget {
-  const PerfilScreen({super.key});
+  final bool showBottomBar;
+  const PerfilScreen({super.key, this.showBottomBar = true});
 
   Future<void> _cerrarSesion(BuildContext context) async {
     final authProvider = context.read<AuthProvider>();
     final favoritoProvider = context.read<FavoritoProvider>();
 
-    //MOSTRAMOS UNA CONFIRMACION ANTES DE CERRAR SESION
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -66,8 +68,6 @@ class PerfilScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 12),
-
-              //FOTO DE PERFIL
               CircleAvatar(
                 radius: 55,
                 backgroundColor: AppColors.caramelo.withOpacity(0.15),
@@ -78,9 +78,7 @@ class PerfilScreen extends StatelessWidget {
                     ? Icon(Icons.person, size: 55, color: AppColors.cafeMedio)
                     : null,
               ),
-
               const SizedBox(height: 20),
-
               Text(
                 usuario.nombre,
                 style: TextStyle(
@@ -89,17 +87,12 @@ class PerfilScreen extends StatelessWidget {
                   color: AppColors.textoCafe,
                 ),
               ),
-
               const SizedBox(height: 6),
-
               Text(
                 usuario.email,
                 style: TextStyle(fontSize: 15, color: AppColors.cafeMedio),
               ),
-
               const SizedBox(height: 30),
-
-              //INFORMACION EN TARJETA
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
@@ -141,10 +134,7 @@ class PerfilScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              //BOTON CERRAR SESION
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -167,6 +157,12 @@ class PerfilScreen extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: showBottomBar
+          ? BottomMenu(
+              currentIndex: 2,
+              onItemSelected: (i) => navegarDesdeMenu(context, i, 2),
+            )
+          : null,
     );
   }
 }

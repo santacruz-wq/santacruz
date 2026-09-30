@@ -13,6 +13,7 @@ import 'screens/user/favoritos_screen.dart';
 import 'screens/menu/menu_screen.dart';
 import 'screens/auth/registro_screen.dart';
 import 'screens/main_shell.dart';
+import 'screens/mesero/mesas_screen.dart';
 
 void main() {
   runApp(
@@ -54,8 +55,9 @@ class MyApp extends StatelessWidget {
         // Login
         '/login': (context) => const LoginScreen(),
 
-        // Menú principal
-        '/menu': (context) => const MenuScreen(),
+        // Menú principal (envuelto en MainShell con la barra inferior)
+        '/menu': (context) => const MainShell(),
+        '/main-shell': (context) => const MainShell(),
 
         // Favoritos
         '/favoritos': (context) => const FavoritosScreen(),
@@ -70,18 +72,13 @@ class MyApp extends StatelessWidget {
         // Paneles temporales
         '/admin': (context) => const _PlaceholderScreen(titulo: 'Panel Admin'),
 
-        '/mesero': (context) =>
-            const _PlaceholderScreen(titulo: 'Panel Mesero'),
+        '/mesero': (context) => const MesasScreen(),
 
         '/cocina': (context) =>
             const _PlaceholderScreen(titulo: 'Panel Cocina'),
 
         '/recuperar': (context) =>
             const _PlaceholderScreen(titulo: 'Recuperar Contraseña'),
-
-      
-        '/main-shell': (context) => const MainShell(),
-        '/menu': (context) => const MainShell(),
       },
     );
   }

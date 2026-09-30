@@ -11,59 +11,73 @@ class FavoritoProvider extends ChangeNotifier {
   bool get cargando => _cargando;
   int get total => _ids.length;
 
-  //RESPONDE DESDE MEMORIA, SIN IR AL BACKEND
-  bool esFavorito(String productoId) => _ids.contains(productoId);
+  // VERIFICA DESDE MEMORIA SI ES FAVORITO
+  bool esFavorito(String productoId) {
+    return _ids.contains(productoId);
+  }
 
-  //SE LLAMA AL INICIAR SESION
+  // CARGA LOS FAVORITOS DESDE EL BACKEND
   Future<void> cargarFavoritos() async {
     _cargando = true;
     notifyListeners();
 
     try {
-      //AJUSTAR: debe devolver List<ProductModel>
       final lista = await FavoritoService.getFavoritos();
+
       _productos = lista;
+
       _ids
         ..clear()
-        ..addAll(lista.map((p) => p.id));
-    } catch (_) {
-      //SI FALLA DEJAMOS LO QUE HABIA
+        ..addAll(lista.map((producto) => producto.id));
+    } catch (error) {
+      debugPrint('Error cargando favoritos: $error');
     }
 
     _cargando = false;
     notifyListeners();
   }
 
-  //MARCA O DESMARCA. DEVUELVE false SI FALLO EL BACKEND
+  // AGREGA O ELIMINA UN FAVORITO
   Future<bool> toggle(String productoId) async {
     final eraFavorito = _ids.contains(productoId);
 
-    //ACTUALIZAMOS LA UI DE INMEDIATO (OPTIMISTA)
+    // ACTUALIZAMOS TEMPORALMENTE LA INTERFAZ
     if (eraFavorito) {
       _ids.remove(productoId);
-      _productos = _productos.where((p) => p.id != productoId).toList();
+
+      _productos = _productos
+          .where((producto) => producto.id != productoId)
+          .toList();
     } else {
       _ids.add(productoId);
     }
+
     notifyListeners();
 
-    final exito = eraFavorito
-        ? await FavoritoService.quitarFavorito(productoId)
-        : await FavoritoService.agregarFavorito(productoId);
+    bool exito;
 
-    //SI FALLA REVERTIMOS RECARGANDO DESDE EL BACKEND
+    if (eraFavorito) {
+      exito = await FavoritoService.quitarFavorito(productoId);
+    } else {
+      exito = await FavoritoService.agregarFavorito(productoId);
+    }
+
+    // SI EL BACKEND FALLA, RECARGAMOS EL ESTADO REAL
     if (!exito) {
       await cargarFavoritos();
       return false;
     }
 
-    //AL AGREGAR RECARGAMOS PARA QUE LA LISTA TRAIGA EL PRODUCTO COMPLETO
-    if (!eraFavorito) await cargarFavoritos();
+    // DESPUÉS DE AGREGAR:
+    // RECARGAMOS PARA OBTENER EL PRODUCTO COMPLETO
+    if (!eraFavorito) {
+      await cargarFavoritos();
+    }
 
     return true;
   }
 
-  //SE LLAMA AL CERRAR SESION
+  // LIMPIAR AL CERRAR SESIÓN
   void limpiar() {
     _ids.clear();
     _productos = [];
