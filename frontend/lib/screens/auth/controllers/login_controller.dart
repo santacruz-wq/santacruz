@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/favorito_provider.dart';
 import '../../../providers/language_provider.dart';
+import '../utils/auth_navigation.dart';
 
 class LoginController {
   final email = TextEditingController();
@@ -52,11 +53,18 @@ class LoginController {
     return null;
   }
 
-  Future<void> login(BuildContext context) async {
-    if (!formKey.currentState!.validate()) return;
+  Future<void> login(
+    BuildContext context,
+  ) async {
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
 
-    final auth = context.read<AuthProvider>();
-    final favoritos = context.read<FavoritoProvider>();
+    final auth =
+        context.read<AuthProvider>();
+
+    final favoritos =
+        context.read<FavoritoProvider>();
 
     final ok = await auth.login(
       email.text.trim(),
@@ -69,7 +77,8 @@ class LoginController {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            auth.error ?? "Error al iniciar sesión",
+            auth.error ??
+                "Error al iniciar sesión",
           ),
         ),
       );
@@ -80,34 +89,46 @@ class LoginController {
 
     if (!context.mounted) return;
 
-    switch (auth.usuario?.rol) {
-      case "admin":
-        Navigator.pushReplacementNamed(
-          context,
-          "/admin",
-        );
-        break;
+    AuthNavigation.irSegunRol(
+      context,
+      auth.usuario?.rol,
+    );
+  }
 
-      case "mesero":
-        Navigator.pushReplacementNamed(
-          context,
-          "/mesero",
-        );
-        break;
+  Future<void> loginConGoogle(
+    BuildContext context,
+  ) async {
+    final auth =
+        context.read<AuthProvider>();
 
-      case "cocina":
-        Navigator.pushReplacementNamed(
-          context,
-          "/cocina",
-        );
-        break;
+    final favoritos =
+        context.read<FavoritoProvider>();
 
-      default:
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          "/menu",
-          (route) => false,
+    final ok =
+        await auth.loginConGoogle();
+
+    if (!context.mounted) return;
+
+    if (!ok) {
+      if (auth.error != null &&
+          auth.error!.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.error!),
+          ),
         );
+      }
+
+      return;
     }
+
+    await favoritos.cargarFavoritos();
+
+    if (!context.mounted) return;
+
+    AuthNavigation.irSegunRol(
+      context,
+      auth.usuario?.rol,
+    );
   }
 }

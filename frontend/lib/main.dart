@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/favorito_provider.dart';
-
 import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/verificar_cuenta_screen.dart';
@@ -13,10 +11,18 @@ import 'screens/user/favoritos_screen.dart';
 import 'screens/menu/menu_screen.dart';
 import 'screens/mesero/mesas_screen.dart';
 import 'screens/auth/registro_screen.dart';
+import 'screens/auth/recuperar_screen.dart';
+import 'services/google_auth_service.dart';
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
+  // Inicializar Google Sign-In
+  await GoogleAuthService.inicializar(
+    serverClientId:
+        '610032994651-dvbn9h7p0o10dj1k6isql0bi76i2vo35.apps.googleusercontent.com',
+  );
 
-void main() {
   runApp(
     MultiProvider(
       providers: [
@@ -42,7 +48,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Santa Cruz de la Plazuela',
-
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
@@ -53,23 +58,18 @@ class MyApp extends StatelessWidget {
       home: const AppStarter(),
 
       routes: {
-        // Inicio
         '/inicio': (context) => InicioScreen(),
 
-        // Selección de idioma
         '/language-selection': (context) =>
             const LanguageSelectionScreen(),
 
-        // Login
         '/login': (context) => const LoginScreen(),
 
-        // Menú principal
         '/menu': (context) => const MenuScreen(),
 
-        // Favoritos
-        '/favoritos': (context) => const FavoritosScreen(),
+        '/favoritos': (context) =>
+            const FavoritosScreen(),
 
-        // Verificación de cuenta
         '/verificar-cuenta': (context) {
           final email =
               ModalRoute.of(context)!.settings.arguments as String;
@@ -79,7 +79,6 @@ class MyApp extends StatelessWidget {
           );
         },
 
-        // Paneles temporales
         '/admin': (context) => const _PlaceholderScreen(
               titulo: 'Panel Admin',
             ),
@@ -90,11 +89,11 @@ class MyApp extends StatelessWidget {
               titulo: 'Panel Cocina',
             ),
 
-        '/recuperar': (context) => const _PlaceholderScreen(
-              titulo: 'Recuperar Contraseña',
-            ),
+        '/recuperar': (context) =>
+            const RecuperarScreen(),
 
-        '/registro': (context) => const RegistroScreen(),
+        '/registro': (context) =>
+            const RegistroScreen(),
       },
     );
   }
@@ -117,16 +116,20 @@ class _AppStarterState extends State<AppStarter> {
   }
 
   Future<void> _cargarDatos() async {
-    final authProvider = context.read<AuthProvider>();
-    final languageProvider = context.read<LanguageProvider>();
-    final favoritoProvider = context.read<FavoritoProvider>();
+    final authProvider =
+        context.read<AuthProvider>();
+
+    final languageProvider =
+        context.read<LanguageProvider>();
+
+    final favoritoProvider =
+        context.read<FavoritoProvider>();
 
     await Future.wait([
       languageProvider.cargarIdiomaGuardado(),
       authProvider.verificarSesion(),
     ]);
 
-    //SI HAY SESION GUARDADA, CARGAMOS SUS FAVORITOS PARA PINTAR LOS CORAZONES
     if (authProvider.usuario != null) {
       await favoritoProvider.cargarFavoritos();
     }

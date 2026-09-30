@@ -1,12 +1,16 @@
 import 'dart:convert';
-
 import '../core/config/api_config.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/secure_storage.dart';
 import '../models/user_model.dart';
+import 'google_auth_service.dart';
 
 class AuthService {
-  // INICIAR SESIÓN
+
+  // =========================================================
+  // INICIAR SESIÓN NORMAL
+  // =========================================================
+
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
@@ -23,26 +27,98 @@ class AuthService {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      // GUARDAMOS EL TOKEN Y LOS DATOS DEL USUARIO
-      await SecureStorage.saveToken(data["token"]);
+      await SecureStorage.saveToken(
+        data["token"],
+      );
+
       await SecureStorage.saveUser(
         jsonEncode(data["usuario"]),
       );
 
       return {
         "success": true,
-        "user": UserModel.fromJson(data["usuario"]),
+        "user": UserModel.fromJson(
+          data["usuario"],
+        ),
       };
     } else {
       return {
         "success": false,
-        "message": data["message"] ??
-            "Error al iniciar sesión",
+        "message": data["mensaje"] ??
+            data["message"] ??
+            "Correo o contraseña incorrectos",
       };
     }
   }
 
+  // =========================================================
+  // INICIAR SESIÓN / REGISTRARSE CON GOOGLE
+  // =========================================================
+
+  static Future<Map<String, dynamic>> loginConGoogle() async {
+    try {
+      // 1. Abrir Google
+      final idToken =
+          await GoogleAuthService.iniciarSesion();
+
+      // Usuario canceló
+      if (idToken == null) {
+        return {
+          "success": false,
+          "cancelado": true,
+          "message": "Inicio de sesión cancelado",
+        };
+      }
+
+      // 2. Enviar token al backend
+      final response = await ApiClient.post(
+        ApiConfig.loginGoogle,
+        {
+          "idToken": idToken,
+        },
+        auth: false,
+      );
+
+      final data = jsonDecode(response.body);
+
+      // 3. Login exitoso
+      if (response.statusCode == 200) {
+        await SecureStorage.saveToken(
+          data["token"],
+        );
+
+        await SecureStorage.saveUser(
+          jsonEncode(data["usuario"]),
+        );
+
+        return {
+          "success": true,
+          "user": UserModel.fromJson(
+            data["usuario"],
+          ),
+        };
+      }
+
+      return {
+        "success": false,
+        "cancelado": false,
+        "message": data["mensaje"] ??
+            data["message"] ??
+            "No fue posible iniciar sesión con Google",
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "cancelado": false,
+        "message": e.toString(),
+      };
+    }
+  }
+
+  // =========================================================
   // REGISTRAR NUEVO USUARIO
+  // =========================================================
+
   static Future<Map<String, dynamic>> registrar(
     String nombre,
     String email,
@@ -63,18 +139,23 @@ class AuthService {
     if (response.statusCode == 201) {
       return {
         "success": true,
-        "message": data["message"],
+        "message": data["mensaje"] ??
+            data["message"],
       };
     } else {
       return {
         "success": false,
-        "message": data["message"] ??
+        "message": data["mensaje"] ??
+            data["message"] ??
             "Error al registrar usuario",
       };
     }
   }
 
+  // =========================================================
   // VERIFICAR CUENTA
+  // =========================================================
+
   static Future<Map<String, dynamic>> verificarCuenta(
     String email,
     String codigo,
@@ -93,11 +174,15 @@ class AuthService {
     return {
       "success": response.statusCode == 200,
       "message": data["message"] ??
+          data["mensaje"] ??
           "Error al verificar la cuenta",
     };
   }
 
-  // REENVIAR CÓDIGO DE VERIFICACIÓN
+  // =========================================================
+  // REENVIAR CÓDIGO
+  // =========================================================
+
   static Future<Map<String, dynamic>> reenviarCodigo(
     String email,
   ) async {
@@ -114,11 +199,15 @@ class AuthService {
     return {
       "success": response.statusCode == 200,
       "message": data["message"] ??
+          data["mensaje"] ??
           "Error al reenviar el código",
     };
   }
 
-  // SOLICITAR CÓDIGO DE RECUPERACIÓN
+  // =========================================================
+  // RECUPERAR CONTRASEÑA
+  // =========================================================
+
   static Future<Map<String, dynamic>> solicitarCodigo(
     String email,
   ) async {
@@ -138,7 +227,10 @@ class AuthService {
     };
   }
 
-  // CAMBIAR CONTRASEÑA CON CÓDIGO
+  // =========================================================
+  // CAMBIAR CONTRASEÑA
+  // =========================================================
+
   static Future<Map<String, dynamic>> cambiarPassword(
     String email,
     String codigo,
@@ -162,8 +254,13 @@ class AuthService {
     };
   }
 
+  // =========================================================
   // CERRAR SESIÓN
+  // =========================================================
+
   static Future<void> logout() async {
+    await GoogleAuthService.cerrarSesion();
+
     await SecureStorage.deleteToken();
     await SecureStorage.deleteUser();
   }
