@@ -30,11 +30,13 @@ class _MenuScreenState extends State<MenuScreen> {
   int _selectedCategory = 0;
   String _busqueda = '';
   List<Categoria> _categorias = [];
+
   late Future<List<ProductModel>> _futureProductos;
 
   @override
   void initState() {
     super.initState();
+
     _futureProductos = ProductService.getProductos();
   }
 
@@ -49,11 +51,15 @@ class _MenuScreenState extends State<MenuScreen> {
   ) {
     var lista = _filtrarPorBusqueda(productos);
 
-    if (_selectedCategory != 0 && _categorias.isNotEmpty) {
-      final categoriaId = _categorias[_selectedCategory - 1].id;
+    if (_selectedCategory != 0 &&
+        _categorias.isNotEmpty) {
+      final categoriaId =
+          _categorias[_selectedCategory - 1].id;
 
       lista = lista
-          .where((p) => p.categoriaId == categoriaId)
+          .where(
+            (p) => p.categoriaId == categoriaId,
+          )
           .toList();
     }
 
@@ -93,7 +99,6 @@ class _MenuScreenState extends State<MenuScreen> {
               ),
             ),
           ),
-
           Column(
             children: [
               SizedBox(
@@ -122,40 +127,46 @@ class _MenuScreenState extends State<MenuScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 15),
-
               Expanded(
                 child: SafeArea(
                   top: false,
                   child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                    physics:
+                        const BouncingScrollPhysics(),
                     child: Column(
                       children: [
                         MenuCategories(
-                          selectedCategory: _selectedCategory,
-                          onCategorySelected: _cambiarCategoria,
-                          onCategoriasLoaded: (lista) {
+                          selectedCategory:
+                              _selectedCategory,
+                          onCategorySelected:
+                              _cambiarCategoria,
+                          onCategoriasLoaded:
+                              (lista) {
                             setState(() {
                               _categorias = lista;
                             });
                           },
                         ),
-
                         const SizedBox(height: 18),
-
-                        FutureBuilder<List<ProductModel>>(
+                        FutureBuilder<
+                            List<ProductModel>>(
                           future: _futureProductos,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
+                          builder:
+                              (context, snapshot) {
+                            if (snapshot
+                                    .connectionState ==
                                 ConnectionState.waiting) {
                               return const Padding(
-                                padding: EdgeInsets.symmetric(
+                                padding:
+                                    EdgeInsets.symmetric(
                                   vertical: 40,
                                 ),
                                 child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.caramelo,
+                                  child:
+                                      CircularProgressIndicator(
+                                    color:
+                                        AppColors.caramelo,
                                   ),
                                 ),
                               );
@@ -163,7 +174,9 @@ class _MenuScreenState extends State<MenuScreen> {
 
                             if (snapshot.hasError) {
                               return Padding(
-                                padding: const EdgeInsets.symmetric(
+                                padding:
+                                    const EdgeInsets
+                                        .symmetric(
                                   vertical: 40,
                                 ),
                                 child: Center(
@@ -174,12 +187,15 @@ class _MenuScreenState extends State<MenuScreen> {
                               );
                             }
 
-                            final todos = snapshot.data ?? [];
+                            final todos =
+                                snapshot.data ?? [];
 
                             if (_busqueda.isNotEmpty) {
                               return MenuGrid(
                                 products:
-                                    _filtrarPorBusqueda(todos),
+                                    _filtrarPorBusqueda(
+                                  todos,
+                                ),
                               );
                             }
 
@@ -187,30 +203,43 @@ class _MenuScreenState extends State<MenuScreen> {
                               children: [
                                 MenuProducts(
                                   products:
-                                      _filtrarDestacados(todos),
+                                      _filtrarDestacados(
+                                    todos,
+                                  ),
                                 ),
-
-                                const SizedBox(height: 24),
-
+                                const SizedBox(
+                                  height: 24,
+                                ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
+                                  padding:
+                                      const EdgeInsets
+                                          .symmetric(
                                     horizontal: 20,
                                   ),
                                   child: Align(
-                                    alignment: Alignment.centerLeft,
+                                    alignment:
+                                        Alignment
+                                            .centerLeft,
                                     child: Text(
-                                      lang.t('todo_el_menu'),
-                                      style: const TextStyle(
+                                      lang.t(
+                                        'todo_el_menu',
+                                      ),
+                                      style:
+                                          const TextStyle(
                                         fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textoCafe,
+                                        fontWeight:
+                                            FontWeight
+                                                .bold,
+                                        color:
+                                            AppColors
+                                                .textoCafe,
                                       ),
                                     ),
                                   ),
                                 ),
-
-                                const SizedBox(height: 12),
-
+                                const SizedBox(
+                                  height: 12,
+                                ),
                                 MenuGrid(
                                   products: todos,
                                 ),
@@ -218,7 +247,6 @@ class _MenuScreenState extends State<MenuScreen> {
                             );
                           },
                         ),
-
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -229,16 +257,19 @@ class _MenuScreenState extends State<MenuScreen> {
           ),
         ],
       ),
-
-      // Menú inferior
-      bottomNavigationBar: widget.showBottomBar
-          ? BottomMenu(
-              currentIndex: 0,
-              onItemSelected: (i) {
-                navegarDesdeMenu(context, i, 0);
-              },
-            )
-          : null,
+      // MENÚ INFERIOR
+      bottomNavigationBar:
+          widget.showBottomBar
+              ? BottomMenu(
+                  currentIndex: 0,
+                  onItemSelected: (i) =>
+                      navegarDesdeMenu(
+                    context,
+                    i,
+                    0,
+                  ),
+                )
+              : null,
     );
   }
 }

@@ -1,7 +1,13 @@
+
 import 'package:flutter/material.dart';
+
 import '../../models/mesa_model.dart';
+import '../../models/orden_model.dart';
 import '../../services/mesa_service.dart';
+import '../../services/orden_service.dart';
 import '../../widgets/mesero/mesa_card.dart';
+import 'crear_orden_screen.dart';
+import 'orden_screen.dart';
 
 class MesasScreen extends StatefulWidget {
   const MesasScreen({super.key});
@@ -19,22 +25,90 @@ class _MesasScreenState extends State<MesasScreen> {
     _mesasFuture = MesaService.getMesas();
   }
 
-  // RECARGAMOS LAS MESAS (PULL TO REFRESH Y BOTON DE ACTUALIZAR)
+  // RECARGAMOS LAS MESAS
   Future<void> _recargar() async {
     setState(() {
       _mesasFuture = MesaService.getMesas();
     });
+
     await _mesasFuture;
   }
 
-  // ACCION AL TOCAR UNA MESA (POR AHORA SOLO MUESTRA UN AVISO)
-  void _onMesaTap(MesaModel mesa) {
+  // ACCION AL TOCAR UNA MESA
+  Future<void> _onMesaTap(MesaModel mesa) async {
+    // MESA LIBRE
+    if (mesa.estaLibre) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CrearOrdenScreen(
+            mesa: mesa,
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    // MESA OCUPADA
+    if (mesa.estaOcupada) {
+      try {
+        final ordenes = await OrdenService.getOrdenes();
+
+        if (!mounted) return;
+
+        final ordenesMesa = ordenes.where(
+          (orden) =>
+              orden.mesaId == mesa.id &&
+              orden.estado != 'pagado' &&
+              orden.estado != 'cancelado',
+        ).toList();
+
+        if (ordenesMesa.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No se encontró una orden activa para esta mesa.',
+              ),
+            ),
+          );
+
+          return;
+        }
+
+        final OrdenModel orden = ordenesMesa.first;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrdenScreen(
+              ordenId: orden.id,
+            ),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString().replaceFirst(
+                    'Exception: ',
+                    '',
+                  ),
+            ),
+          ),
+        );
+      }
+
+      return;
+    }
+
+    // MESA RESERVADA U OTRO ESTADO
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          mesa.estaLibre
-              ? 'Nueva orden para ${mesa.nombre} (próximamente)'
-              : 'Orden activa de ${mesa.nombre} (próximamente)',
+          '${mesa.nombre} está ${mesa.estado}.',
         ),
       ),
     );
@@ -56,8 +130,11 @@ class _MesasScreenState extends State<MesasScreen> {
         future: _mesasFuture,
         builder: (context, snapshot) {
           // CARGANDO
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           // ERROR
@@ -66,7 +143,9 @@ class _MesasScreenState extends State<MesasScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('No se pudieron cargar las mesas'),
+                  const Text(
+                    'No se pudieron cargar las mesas',
+                  ),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _recargar,
@@ -81,7 +160,11 @@ class _MesasScreenState extends State<MesasScreen> {
 
           // SIN MESAS
           if (mesas.isEmpty) {
-            return const Center(child: Text('No hay mesas registradas'));
+            return const Center(
+              child: Text(
+                'No hay mesas registradas',
+              ),
+            );
           }
 
           // CUADRICULA DE MESAS
@@ -89,8 +172,10 @@ class _MesasScreenState extends State<MesasScreen> {
             onRefresh: _recargar,
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
-              physics: const AlwaysScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              physics:
+                  const AlwaysScrollableScrollPhysics(),
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
@@ -99,7 +184,11 @@ class _MesasScreenState extends State<MesasScreen> {
               itemCount: mesas.length,
               itemBuilder: (context, index) {
                 final mesa = mesas[index];
-                return MesaCard(mesa: mesa, onTap: () => _onMesaTap(mesa));
+
+                return MesaCard(
+                  mesa: mesa,
+                  onTap: () => _onMesaTap(mesa),
+                );
               },
             ),
           );
