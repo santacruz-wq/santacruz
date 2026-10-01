@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/config/app_colors.dart';
+import '../../core/navigation/menu_navigation.dart';
 import '../../widgets/global/bottom_menu.dart';
 import '../../widgets/menu/menu_header.dart';
 import '../../widgets/menu/menu_search.dart';
@@ -22,7 +23,6 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
   int _selectedCategory = 0;
-  int _selectedBottomItem = 0;
   String _busqueda = '';
   List<Categoria> _categorias = [];
   late Future<List<ProductModel>> _futureProductos;
@@ -35,12 +35,6 @@ class _MenuScreenState extends State<MenuScreen> {
 
   void _cambiarCategoria(int index) {
     setState(() => _selectedCategory = index);
-  }
-
-  void _cambiarPagina(int index) {
-    setState(() {
-      _selectedBottomItem = index;
-    });
   }
 
   List<ProductModel> _filtrarDestacados(List<ProductModel> productos) {
@@ -132,7 +126,7 @@ class _MenuScreenState extends State<MenuScreen> {
         ],
       ),
       // ================================================================
-      // MENÚ INFERIOR
+      // MENÚ INFERIOR (0 = INICIO; LOS DEMAS ICONOS NAVEGAN)
       // ================================================================
       bottomNavigationBar: widget.showBottomBar
           ? BottomMenu(
@@ -140,6 +134,10 @@ class _MenuScreenState extends State<MenuScreen> {
               onItemSelected: _cambiarPagina,
             )
           : null,
+      bottomNavigationBar: BottomMenu(
+        currentIndex: 0,
+        onItemSelected: (i) => navegarDesdeMenu(context, i, 0),
+      ),
     );
   }
 }

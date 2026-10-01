@@ -7,6 +7,7 @@ class ProductCard extends StatelessWidget {
   final String name;
   final String price;
   final String image;
+  final EdgeInsetsGeometry margin;
 
   const ProductCard({
     super.key,
@@ -14,6 +15,7 @@ class ProductCard extends StatelessWidget {
     required this.name,
     required this.price,
     required this.image,
+    this.margin = const EdgeInsets.only(right: 14, bottom: 8, top: 4),
   });
 
   @override

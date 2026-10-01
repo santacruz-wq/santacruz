@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
-
+import 'providers/favorito_provider.dart';
 import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/verificar_cuenta_screen.dart';
@@ -12,8 +11,20 @@ import 'screens/user/favoritos_screen.dart';
 import 'screens/menu/menu_screen.dart';
 import 'screens/auth/registro_screen.dart';
 import 'screens/main_shell.dart';
+import 'screens/mesero/mesas_screen.dart';
+import 'screens/auth/registro_screen.dart';
+import 'screens/auth/recuperar_screen.dart';
+import 'services/google_auth_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar Google Sign-In
+  await GoogleAuthService.inicializar(
+    serverClientId:
+        '610032994651-dvbn9h7p0o10dj1k6isql0bi76i2vo35.apps.googleusercontent.com',
+  );
+
   runApp(
     MultiProvider(
       providers: [
@@ -30,6 +41,9 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => LanguageProvider()),
        
+        ChangeNotifierProvider(
+          create: (_) => FavoritoProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -43,7 +57,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Santa Cruz de la Plazuela',
-
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
@@ -51,7 +64,6 @@ class MyApp extends StatelessWidget {
       home: const AppStarter(),
 
       routes: {
-        // Inicio
         '/inicio': (context) => InicioScreen(),
 
         // Registro
@@ -59,17 +71,16 @@ class MyApp extends StatelessWidget {
 
         // Selección de idioma
         '/language-selection': (context) => const LanguageSelectionScreen(),
+        '/language-selection': (context) =>
+            const LanguageSelectionScreen(),
 
-        // Login
         '/login': (context) => const LoginScreen(),
 
-        // Menú principal
         '/menu': (context) => const MenuScreen(),
 
-        // Favoritos
-        '/favoritos': (context) => const FavoritosScreen(),
+        '/favoritos': (context) =>
+            const FavoritosScreen(),
 
-        // Verificación de cuenta
         '/verificar-cuenta': (context) {
           final email = ModalRoute.of(context)!.settings.arguments as String;
 
@@ -81,6 +92,11 @@ class MyApp extends StatelessWidget {
 
         '/mesero': (context) =>
             const _PlaceholderScreen(titulo: 'Panel Mesero'),
+        '/admin': (context) => const _PlaceholderScreen(
+              titulo: 'Panel Admin',
+            ),
+
+        '/mesero': (context) => const MesasScreen(),
 
         '/cocina': (context) =>
             const _PlaceholderScreen(titulo: 'Panel Cocina'),
@@ -91,11 +107,14 @@ class MyApp extends StatelessWidget {
       
         '/main-shell': (context) => const MainShell(),
         '/menu': (context) => const MainShell(),
+            const RecuperarScreen(),
+
+        '/registro': (context) =>
+            const RegistroScreen(),
       },
     );
   }
 }
-
 
 class AppStarter extends StatefulWidget {
   const AppStarter({super.key});
@@ -114,13 +133,23 @@ class _AppStarterState extends State<AppStarter> {
   }
 
   Future<void> _cargarDatos() async {
-    final authProvider = context.read<AuthProvider>();
-    final languageProvider = context.read<LanguageProvider>();
+    final authProvider =
+        context.read<AuthProvider>();
+
+    final languageProvider =
+        context.read<LanguageProvider>();
+
+    final favoritoProvider =
+        context.read<FavoritoProvider>();
 
     await Future.wait([
       languageProvider.cargarIdiomaGuardado(),
       authProvider.verificarSesion(),
     ]);
+
+    if (authProvider.usuario != null) {
+      await favoritoProvider.cargarFavoritos();
+    }
 
     if (!mounted) return;
 
@@ -138,7 +167,6 @@ class _AppStarterState extends State<AppStarter> {
     return InicioScreen();
   }
 }
-
 
 class _PlaceholderScreen extends StatelessWidget {
   final String titulo;

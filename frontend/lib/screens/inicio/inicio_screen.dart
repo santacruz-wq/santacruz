@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/global/primary_button.dart';
-import '../../widgets/global/link_button.dart';
+
+import '../../widgets/global/fade_link_button.dart'; 
 import '../../widgets/inicio/animate_logo.dart';
 import '../../widgets/inicio/animate_title.dart';
 
@@ -141,11 +142,12 @@ class _InicioScreenState extends State<InicioScreen>
                     scaleAnimation: _buttonScale,
                     opacityAnimation: _buttonOpacity,
                   ),
-                  const SizedBox(height: 16),
-                  FadeLinkButton(
-                    text: '¿No tienes cuenta? Regístrate',
+                                    const SizedBox(height: 16),
+                        FadeLinkButton(
+                    text: 'Iniciar sesión',
                     onPressed: () {
                       Navigator.pushNamed(context, '/registro');
+                      Navigator.pushNamed(context, '/login');
                     },
                     opacityAnimation: _registerOpacity,
                   ),

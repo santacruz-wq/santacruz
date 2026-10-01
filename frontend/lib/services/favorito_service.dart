@@ -11,8 +11,13 @@ class FavoritoService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final List<dynamic> favoritos = data["favoritos"];
+
       // CADA FAVORITO TRAE EL PRODUCTO POBLADO EN EL CAMPO "producto"
-      return favoritos.map((item) => ProductModel.fromJson(item["producto"])).toList();
+      // IGNORAMOS LOS QUE YA NO TIENEN PRODUCTO (producto == null)
+      return favoritos
+          .where((item) => item["producto"] != null)
+          .map((item) => ProductModel.fromJson(item["producto"]))
+          .toList();
     } else {
       throw Exception("Error al obtener favoritos");
     }

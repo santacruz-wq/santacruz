@@ -45,12 +45,8 @@ class BottomMenu extends StatelessWidget {
                 index: 1,
               ),
               _buildItem(
-                icon: Icons.history_rounded,
-                index: 2,
-              ),
-              _buildItem(
                 icon: Icons.person_rounded,
-                index: 3,
+                index: 2,
               ),
             ],
           ),
