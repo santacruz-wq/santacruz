@@ -131,8 +131,8 @@ class IdiomaData {
       // OFERTAS
       // ============================================================
       'ofertas_especiales': es
-          ? '¡Ofertas especiales! 🔥'
-          : 'Special offers! 🔥',
+          ? '¡Ofertas especiales! '
+          : 'Special offers! ',
 
       'disfruta_ofertas': es
           ? 'Disfruta tus productos favoritos a un precio especial.'
@@ -152,20 +152,20 @@ class IdiomaData {
           : 'No products found',
 
       'bienvenido': es
-          ? '¡Bienvenido a Santa Cruz! 👋'
-          : 'Welcome to Santa Cruz! 👋',
+          ? '¡Bienvenido a Santa Cruz! '
+          : 'Welcome to Santa Cruz! ',
 
       'bienvenido_descripcion': es
           ? 'Disfruta nuestros productos y encuentra tus favoritos en un solo lugar.'
           : 'Enjoy our products and find your favorites all in one place.',
 
-      'sabor_que_enamora': es ? '☕ Sabor que enamora' : '☕ A flavor to love',
+      'sabor_que_enamora': es ? ' Sabor que enamora' : ' A flavor to love',
 
       'categorias': es ? 'Categorías' : 'Categories',
 
       'productos_destacados': es ? 'Productos destacados' : 'Featured products',
 
-      'especiales': es ? '✨ Especiales' : '✨ Specials',
+      'especiales': es ? ' Especiales' : ' Specials',
 
       'ver_todos_productos': es
           ? 'Ver todos los productos'

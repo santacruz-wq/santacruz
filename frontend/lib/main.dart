@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import 'pages/productos_page.dart';
@@ -53,31 +54,26 @@ class SantaCruzApp extends StatelessWidget {
                 useMaterial3: true,
                 fontFamily: 'Arial',
                 brightness: Brightness.dark,
-
                 colorScheme: ColorScheme.fromSeed(
                   seedColor: const Color(0xFF6F4E37),
                   brightness: Brightness.dark,
                 ),
-
                 scaffoldBackgroundColor: const Color(0xFF1E1714),
-
                 appBarTheme: const AppBarTheme(
                   backgroundColor: Color(0xFF1E1714),
                   foregroundColor: Color(0xFFFFF8E7),
                 ),
-
-                cardTheme: const CardThemeData(color: Color(0xFF2B211D)),
-
+                cardTheme: const CardThemeData(
+                  color: Color(0xFF2B211D),
+                ),
                 navigationBarTheme: const NavigationBarThemeData(
                   backgroundColor: Color(0xFF2B211D),
                   indicatorColor: Color(0xFF6F4E37),
                 ),
-
                 inputDecorationTheme: const InputDecorationTheme(
                   filled: true,
                   fillColor: Color(0xFF2B211D),
                 ),
-
                 dialogTheme: const DialogThemeData(
                   backgroundColor: Color(0xFF2B211D),
                 ),
@@ -97,16 +93,15 @@ class SantaCruzApp extends StatelessWidget {
 // ====================================================================
 // INICIO
 // ====================================================================
-    class InicioPage extends StatefulWidget {
+
+class InicioPage extends StatefulWidget {
   const InicioPage({super.key});
 
   @override
   State<InicioPage> createState() => _InicioPageState();
 }
 
-   class _InicioPageState extends State<InicioPage>
-    with TickerProviderStateMixin {
-
+class _InicioPageState extends State<InicioPage> {
   // ==================================================================
   // COLORES
   // ==================================================================
@@ -125,41 +120,38 @@ class SantaCruzApp extends StatelessWidget {
   // CONTROLADORES
   // ==================================================================
 
-  final TextEditingController buscadorController = TextEditingController();
+  final TextEditingController buscadorController =
+      TextEditingController();
 
   String textoBusqueda = '';
 
   int paginaActual = 0;
-
-        // Controlador para la animación de categorías
-late AnimationController categoriasController;
-
-          // ==================================================================
-// ANIMACIÓN DEL TEXTO DE BIENVENIDA
-// ==================================================================
-
-late AnimationController textoBienvenidaController;
-
-String textoBienvenida = '';
-
-   void _cambioIdioma() {
-  if (!mounted) {
-    return;
-  }
-
-  textoBienvenidaController.reset();
-  textoBienvenidaController.repeat();
-}
 
   // ==================================================================
   // CATEGORÍAS
   // ==================================================================
 
   final List<Map<String, dynamic>> categorias = [
-    {'nombre': 'Tortas', 'nombreEn': 'Cakes', 'icono': Icons.cake},
-    {'nombre': 'Postres', 'nombreEn': 'Desserts', 'icono': Icons.icecream},
-    {'nombre': 'Brownies', 'nombreEn': 'Brownies', 'icono': Icons.cookie},
-    {'nombre': 'Café', 'nombreEn': 'Coffee', 'icono': Icons.coffee},
+    {
+      'nombre': 'Tortas',
+      'nombreEn': 'Cakes',
+      'icono': Icons.cake,
+    },
+    {
+      'nombre': 'Postres',
+      'nombreEn': 'Desserts',
+      'icono': Icons.icecream,
+    },
+    {
+      'nombre': 'Brownies',
+      'nombreEn': 'Brownies',
+      'icono': Icons.cookie,
+    },
+    {
+      'nombre': 'Café',
+      'nombreEn': 'Coffee',
+      'icono': Icons.coffee,
+    },
   ];
 
   // ==================================================================
@@ -280,68 +272,10 @@ String textoBienvenida = '';
       final nombre = normalizarTexto(producto['nombre']);
       final nombreEn = normalizarTexto(producto['nombreEn']);
 
-      return nombre.contains(busqueda) || nombreEn.contains(busqueda);
+      return nombre.contains(busqueda) ||
+          nombreEn.contains(busqueda);
     }).toList();
   }
-
-           // ==================================================================
-// ANIMACIÓN LETRA POR LETRA
-// ==================================================================
-
-@override
-void initState() {
-  super.initState();
-
-  IdiomaData.idioma.addListener(_cambioIdioma);
-   
-    // ================================================================
-  // ANIMACIÓN DE CATEGORÍAS
-  // ================================================================
-
-  categoriasController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1000),
-  );
-
-  categoriasController.forward();
-
-  textoBienvenidaController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 10000),
-  );
-
-  textoBienvenidaController.addListener(() {
-    if (!mounted) {
-      return;
-    }
-
-    final textoCompleto = IdiomaData.texto('bienvenido');
-
-    final progreso = textoBienvenidaController.value;
-
-    int cantidadVisible;
-
-    if (progreso < 0.65) {
-      cantidadVisible =
-          (textoCompleto.length * (progreso / 0.65)).floor();
-    } else {
-      cantidadVisible =
-          (textoCompleto.length *
-                  (1 - ((progreso - 0.65) / 0.35)))
-              .floor();
-    }
-
-    cantidadVisible =
-        cantidadVisible.clamp(0, textoCompleto.length);
-
-    setState(() {
-      textoBienvenida =
-          textoCompleto.substring(0, cantidadVisible);
-    });
-  });
-
-  textoBienvenidaController.repeat();
-}  
 
   // ==================================================================
   // BUILD
@@ -351,21 +285,27 @@ void initState() {
   Widget build(BuildContext context) {
     final es = IdiomaData.idioma.value.languageCode == 'es';
 
-    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+    final esOscuro =
+        Theme.of(context).brightness == Brightness.dark;
 
     // ==================================================================
     // COLORES DINÁMICOS
     // ==================================================================
 
-    final fondo = esOscuro ? const Color(0xFF1E1714) : cremaClara;
+    final fondo =
+        esOscuro ? const Color(0xFF1E1714) : cremaClara;
 
-    final superficie = esOscuro ? const Color(0xFF2B211D) : Colors.white;
+    final superficie =
+        esOscuro ? const Color(0xFF2B211D) : Colors.white;
 
-    final superficieSuave = esOscuro ? const Color(0xFF3A2B25) : crema;
+    final superficieSuave =
+        esOscuro ? const Color(0xFF3A2B25) : crema;
 
-    final textoPrincipal = esOscuro ? const Color(0xFFFFF8E7) : cafeOscuro;
+    final textoPrincipal =
+        esOscuro ? const Color(0xFFFFF8E7) : cafeOscuro;
 
-    final textoSecundario = esOscuro ? const Color(0xFFD7C5B8) : cafeClaro;
+    final textoSecundario =
+        esOscuro ? const Color(0xFFD7C5B8) : cafeClaro;
 
     return Scaffold(
       backgroundColor: fondo,
@@ -376,13 +316,13 @@ void initState() {
             // ==========================================================
             // ENCABEZADO
             // ==========================================================
+
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-
+                padding:
+                    const EdgeInsets.fromLTRB(20, 20, 20, 8),
                 child: Row(
                   children: [
-                    // Icono
                     Container(
                       width: 56,
                       height: 56,
@@ -393,7 +333,8 @@ void initState() {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: cafe.withValues(alpha: 0.20),
+                            color:
+                                cafe.withValues(alpha: 0.20),
                             blurRadius: 12,
                             offset: const Offset(0, 5),
                           ),
@@ -405,12 +346,11 @@ void initState() {
                         size: 28,
                       ),
                     ),
-
                     const SizedBox(width: 14),
-
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Santa Cruz',
@@ -421,9 +361,7 @@ void initState() {
                               letterSpacing: -0.5,
                             ),
                           ),
-
                           const SizedBox(height: 2),
-
                           Text(
                             es
                                 ? 'Delicias hechas con amor'
@@ -436,8 +374,6 @@ void initState() {
                         ],
                       ),
                     ),
-
-                    // Pequeño detalle decorativo
                     Container(
                       padding: const EdgeInsets.all(9),
                       decoration: BoxDecoration(
@@ -445,13 +381,18 @@ void initState() {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color:
+                                Colors.black.withValues(alpha: 0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      child: Icon(Icons.favorite_border, color: cafe, size: 22),
+                      child: const Icon(
+                        Icons.favorite_border,
+                        color: cafe,
+                        size: 22,
+                      ),
                     ),
                   ],
                 ),
@@ -461,74 +402,77 @@ void initState() {
             // ==========================================================
             // BUSCADOR
             // ==========================================================
+
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-
+                padding:
+                    const EdgeInsets.fromLTRB(20, 14, 20, 18),
                 child: Container(
                   decoration: BoxDecoration(
                     color: superficie,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color:
+                            Colors.black.withValues(alpha: 0.05),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-
                   child: TextField(
                     controller: buscadorController,
-
                     onChanged: (valor) {
                       setState(() {
                         textoBusqueda = valor;
                       });
                     },
-
                     decoration: InputDecoration(
                       hintText: es
                           ? '¿Qué quieres encontrar?'
                           : 'What are you looking for?',
-
                       hintStyle: TextStyle(
                         color: textoSecundario,
                         fontSize: 14,
                       ),
-
                       prefixIcon: Container(
                         margin: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: superficieSuave,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.search, color: cafe, size: 21),
+                        child: const Icon(
+                          Icons.search,
+                          color: cafe,
+                          size: 21,
+                        ),
                       ),
+                      suffixIcon:
+                          textoBusqueda.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: textoSecundario,
+                                  ),
+                                  onPressed: () {
+                                    buscadorController.clear();
 
-                      suffixIcon: textoBusqueda.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear, color: textoSecundario),
-                              onPressed: () {
-                                buscadorController.clear();
-
-                                setState(() {
-                                  textoBusqueda = '';
-                                });
-                              },
-                            )
-                          : null,
-
+                                    setState(() {
+                                      textoBusqueda = '';
+                                    });
+                                  },
+                                )
+                              : null,
                       filled: true,
                       fillColor: Colors.transparent,
-
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding:
+                          const EdgeInsets.symmetric(
                         vertical: 16,
                         horizontal: 8,
                       ),
-
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius:
+                            BorderRadius.circular(20),
                         borderSide: BorderSide.none,
                       ),
                     ),
@@ -540,24 +484,24 @@ void initState() {
             // ==========================================================
             // RESULTADOS DE BÚSQUEDA
             // ==========================================================
+
             if (textoBusqueda.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-
+                  padding:
+                      const EdgeInsets.fromLTRB(20, 0, 20, 14),
                   child: Container(
                     padding: const EdgeInsets.all(15),
-
                     decoration: BoxDecoration(
                       color: superficieSuave,
                       borderRadius: BorderRadius.circular(17),
                     ),
-
                     child: productosFiltrados.isEmpty
                         ? Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding:
+                                    const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: superficie,
                                   shape: BoxShape.circle,
@@ -568,9 +512,7 @@ void initState() {
                                   size: 20,
                                 ),
                               ),
-
                               const SizedBox(width: 10),
-
                               Expanded(
                                 child: Text(
                                   es
@@ -578,7 +520,8 @@ void initState() {
                                       : 'No products found.',
                                   style: TextStyle(
                                     color: textoPrincipal,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight:
+                                        FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -591,9 +534,7 @@ void initState() {
                                 color: cafe,
                                 size: 21,
                               ),
-
                               const SizedBox(width: 9),
-
                               Text(
                                 es
                                     ? '${productosFiltrados.length} producto(s) encontrado(s)'
@@ -612,51 +553,57 @@ void initState() {
             // ==========================================================
             // TARJETA DE BIENVENIDA
             // ==========================================================
+
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 22),
-
+                padding:
+                    const EdgeInsets.fromLTRB(20, 4, 20, 22),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(22),
-
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [cafeOscuro, cafe, cafeClaro],
+                      colors: [
+                        cafeOscuro,
+                        cafe,
+                        cafeClaro,
+                      ],
                     ),
-
                     borderRadius: BorderRadius.circular(24),
-
                     boxShadow: [
                       BoxShadow(
-                        color: cafe.withValues(alpha: 0.20),
+                        color:
+                            cafe.withValues(alpha: 0.20),
                         blurRadius: 16,
                         offset: const Offset(0, 7),
                       ),
                     ],
                   ),
-
                   child: Row(
                     children: [
                       Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding:
+                                  const EdgeInsets.symmetric(
                                 horizontal: 10,
                                 vertical: 5,
                               ),
-
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.white
+                                    .withValues(alpha: 0.14),
+                                borderRadius:
+                                    BorderRadius.circular(20),
                               ),
-
                               child: Text(
-                                es ? 'SABORES ESPECIALES' : 'SPECIAL FLAVORS',
+                                es
+                                    ? 'SABORES ESPECIALES'
+                                    : 'SPECIAL FLAVORS',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -665,20 +612,16 @@ void initState() {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 12),
-
-                             Text(
-  textoBienvenida,
-  style: const TextStyle(
-    color: Colors.white,
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-  ),
-),
-
+                            Text(
+                              IdiomaData.texto('bienvenido'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 7),
-
                             Text(
                               es
                                   ? 'Descubre nuestros deliciosos postres y tortas.'
@@ -689,34 +632,39 @@ void initState() {
                                 height: 1.4,
                               ),
                             ),
-
                             const SizedBox(height: 17),
-
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const ProductosPage(),
+                                    builder: (_) =>
+                                        const ProductosPage(),
                                   ),
                                 );
                               },
-
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: cafeOscuro,
+                              style:
+                                  ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Colors.white,
+                                foregroundColor:
+                                    cafeOscuro,
                                 elevation: 0,
-                                padding: const EdgeInsets.symmetric(
+                                padding:
+                                    const EdgeInsets.symmetric(
                                   horizontal: 18,
                                   vertical: 12,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(13),
+                                shape:
+                                    RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(13),
                                 ),
                               ),
-
                               child: Text(
-                                es ? 'Ver productos' : 'View products',
+                                es
+                                    ? 'Ver productos'
+                                    : 'View products',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -725,14 +673,13 @@ void initState() {
                           ],
                         ),
                       ),
-
                       const SizedBox(width: 8),
-
                       Container(
                         width: 72,
                         height: 72,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: Colors.white
+                              .withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -750,79 +697,49 @@ void initState() {
             // ==========================================================
             // CATEGORÍAS
             // ==========================================================
+
             SliverToBoxAdapter(
-  child: Padding(
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
-    child: Text(
-      IdiomaData.texto('categorias'),
-      style: const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        color: cafeOscuro,
-        fontFamily: 'Arial',
-      ),
-    ),
-  ),
-),
-
-SliverToBoxAdapter(
-  child: SizedBox(
-    height: 132,
-
-    child: ListView.builder(
-      scrollDirection: Axis.horizontal,
-
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-
-      itemCount: categorias.length,
-
-      itemBuilder: (context, index) {
-        final inicio = index * 0.2;
-
-        final animacion = CurvedAnimation(
-          parent: categoriasController,
-          curve: Interval(
-            inicio,
-            (inicio + 0.6).clamp(0.0, 1.0),
-            curve: Curves.easeOutCubic,
-          ),
-        );
-
-        return FadeTransition(
-          opacity: animacion,
-
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.15),
-              end: Offset.zero,
-            ).animate(animacion),
-
-            child: ScaleTransition(
-              scale: Tween<double>(
-                begin: 0.92,
-                end: 1.0,
-              ).animate(animacion),
-
-              child: categoria(
-                categorias[index],
-                es,
+              child: Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(20, 18, 20, 4),
+                child: Text(
+                  IdiomaData.texto('categorias'),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: cafeOscuro,
+                    fontFamily: 'Arial',
+                  ),
+                ),
               ),
             ),
-          ),
-        );
-      },
-    ),
-  ),
-),
 
-                 
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 132,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding:
+                      const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                  itemCount: categorias.length,
+                  itemBuilder: (context, index) {
+                    return categoria(
+                      categorias[index],
+                      es,
+                    );
+                  },
+                ),
+              ),
+            ),
+
             // ==========================================================
             // PRODUCTOS DESTACADOS
             // ==========================================================
+
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
-
+                padding:
+                    const EdgeInsets.fromLTRB(20, 12, 20, 14),
                 child: Row(
                   children: [
                     Expanded(
@@ -830,8 +747,8 @@ SliverToBoxAdapter(
                         textoBusqueda.isNotEmpty
                             ? (es ? 'Resultados' : 'Results')
                             : (es
-                                  ? 'Productos destacados'
-                                  : 'Featured products'),
+                                ? 'Productos destacados'
+                                : 'Featured products'),
                         style: TextStyle(
                           fontSize: 21,
                           fontWeight: FontWeight.bold,
@@ -839,14 +756,14 @@ SliverToBoxAdapter(
                         ),
                       ),
                     ),
-
                     if (textoBusqueda.isEmpty)
                       TextButton(
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const ProductosPage(),
+                              builder: (_) =>
+                                  const ProductosPage(),
                             ),
                           );
                         },
@@ -866,17 +783,25 @@ SliverToBoxAdapter(
             // ==========================================================
             // PRODUCTOS
             // ==========================================================
+
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverGrid(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final productoActual = productosFiltrados[index];
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final productoActual =
+                        productosFiltrados[index];
 
-                  return producto(productoActual, es);
-                }, childCount: productosFiltrados.length),
-
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    return producto(
+                      productoActual,
+                      es,
+                    );
+                  },
+                  childCount: productosFiltrados.length,
+                ),
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
@@ -885,81 +810,85 @@ SliverToBoxAdapter(
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 24),
+            ),
 
             // ==========================================================
             // OFERTA ESPECIAL
             // ==========================================================
+
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const OfertasPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const OfertasPage(),
+                      ),
                     );
                   },
-
                   child: Container(
                     padding: const EdgeInsets.all(18),
-
                     decoration: BoxDecoration(
                       color: superficie,
-                      borderRadius: BorderRadius.circular(20),
-
+                      borderRadius:
+                          BorderRadius.circular(20),
                       border: Border.all(
-                        color: doradoClaro.withValues(alpha: 0.45),
+                        color: doradoClaro
+                            .withValues(alpha: 0.45),
                       ),
-
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color:
+                              Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-
                     child: Row(
                       children: [
                         Container(
                           width: 52,
                           height: 52,
-
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [doradoClaro, Color(0xFFE7C45F)],
+                            gradient:
+                                const LinearGradient(
+                              colors: [
+                                doradoClaro,
+                                Color(0xFFE7C45F),
+                              ],
                             ),
                             shape: BoxShape.circle,
                           ),
-
                           child: const Icon(
                             Icons.local_offer,
                             color: cafeOscuro,
                             size: 25,
                           ),
                         ),
-
                         const SizedBox(width: 14),
-
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
                             children: [
                               Text(
-                                es ? 'Ofertas especiales' : 'Special offers',
+                                es
+                                    ? 'Ofertas especiales'
+                                    : 'Special offers',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight:
+                                      FontWeight.bold,
                                   fontSize: 17,
                                   color: textoPrincipal,
                                 ),
                               ),
-
                               const SizedBox(height: 4),
-
                               Text(
                                 es
                                     ? 'Descubre promociones y productos especiales.'
@@ -973,16 +902,13 @@ SliverToBoxAdapter(
                             ],
                           ),
                         ),
-
                         Container(
                           width: 34,
                           height: 34,
-
                           decoration: BoxDecoration(
                             color: superficieSuave,
                             shape: BoxShape.circle,
                           ),
-
                           child: const Icon(
                             Icons.arrow_forward_ios,
                             size: 14,
@@ -996,7 +922,9 @@ SliverToBoxAdapter(
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 30)),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 30),
+            ),
           ],
         ),
       ),
@@ -1004,228 +932,229 @@ SliverToBoxAdapter(
       // ================================================================
       // BARRA DE NAVEGACIÓN
       // ================================================================
-      bottomNavigationBar: _barraNavegacion(context, es, esOscuro),
+
+      bottomNavigationBar:
+          _barraNavegacion(context, es, esOscuro),
     );
   }
-    // ==================================================================
-// CATEGORÍA
-// ==================================================================
- Widget categoria(Map<String, dynamic> categoria, bool es) {
-  final esOscuro =
-      Theme.of(context).brightness == Brightness.dark;
 
-  final superficie = esOscuro
-      ? const Color(0xFF2B211D)
-      : Colors.white;
+  // ==================================================================
+  // CATEGORÍA
+  // ==================================================================
 
-  final superficieIcono = esOscuro
-      ? const Color(0xFF3A2B25)
-      : crema;
+  Widget categoria(
+    Map<String, dynamic> categoria,
+    bool es,
+  ) {
+    final esOscuro =
+        Theme.of(context).brightness == Brightness.dark;
 
-  final textoPrincipal = esOscuro
-      ? const Color(0xFFFFF8E7)
-      : cafeOscuro;
+    final superficie = esOscuro
+        ? const Color(0xFF2B211D)
+        : Colors.white;
 
-  return GestureDetector(
-   onTap: () {
-  if (categoria['nombre'] == 'Tortas') {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const TortasPage(),
-      ),
-    );
-  } else if (categoria['nombre'] == 'Postres') {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const PostresPage(),
-      ),
-    );
-  } else if (categoria['nombre'] == 'Brownies') {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const BrowniesPage(),
-      ),
-    );
-  }
-  else if (categoria['nombre'] == 'Café') {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const CafePage(),
-    ),
-  );
-}
-},
+    final superficieIcono = esOscuro
+        ? const Color(0xFF3A2B25)
+        : crema;
 
-    child: Container(
-      width: 105,
+    final textoPrincipal = esOscuro
+        ? const Color(0xFFFFF8E7)
+        : cafeOscuro;
 
-      margin: const EdgeInsets.only(right: 12),
-
-      decoration: BoxDecoration(
-        color: superficie,
-
-        borderRadius: BorderRadius.circular(20),
-
-        border: Border.all(
-          color: esOscuro
-              ? Colors.white.withValues(alpha: 0.04)
-              : cafeClaro.withValues(alpha: 0.08),
+    return GestureDetector(
+      onTap: () {
+        if (categoria['nombre'] == 'Tortas') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const TortasPage(),
+            ),
+          );
+        } else if (categoria['nombre'] == 'Postres') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PostresPage(),
+            ),
+          );
+        } else if (categoria['nombre'] == 'Brownies') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const BrowniesPage(),
+            ),
+          );
+        } else if (categoria['nombre'] == 'Café') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CafePage(),
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: 105,
+        margin:
+            const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: superficie,
+          borderRadius:
+              BorderRadius.circular(20),
+          border: Border.all(
+            color: esOscuro
+                ? Colors.white.withValues(alpha: 0.04)
+                : cafeClaro.withValues(alpha: 0.08),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(
+                alpha: esOscuro ? 0.18 : 0.05,
+              ),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: esOscuro ? 0.18 : 0.05,
+        child: Column(
+          mainAxisAlignment:
+              MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: superficieIcono,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                categoria['icono'],
+                color: cafe,
+                size: 27,
+              ),
             ),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+            const SizedBox(height: 9),
+            Text(
+              es
+                  ? categoria['nombre']
+                  : categoria['nombreEn'],
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: textoPrincipal,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
       ),
-
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-
-            decoration: BoxDecoration(
-              color: superficieIcono,
-              shape: BoxShape.circle,
-            ),
-
-            child: Icon(
-              categoria['icono'],
-              color: cafe,
-              size: 27,
-            ),
-          ),
-
-          const SizedBox(height: 9),
-
-          Text(
-            es
-                ? categoria['nombre']
-                : categoria['nombreEn'],
-
-            textAlign: TextAlign.center,
-
-            style: TextStyle(
-              color: textoPrincipal,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
- 
-    
+    );
+  }
 
   // ==================================================================
   // PRODUCTO
   // ==================================================================
 
-  Widget producto(Map<String, dynamic> producto, bool es) {
-    final esOscuro = Theme.of(context).brightness == Brightness.dark;
+  Widget producto(
+    Map<String, dynamic> producto,
+    bool es,
+  ) {
+    final esOscuro =
+        Theme.of(context).brightness == Brightness.dark;
 
-    final superficie = esOscuro ? const Color(0xFF2B211D) : Colors.white;
+    final superficie = esOscuro
+        ? const Color(0xFF2B211D)
+        : Colors.white;
 
-    final superficieSuave = esOscuro ? const Color(0xFF3A2B25) : crema;
+    final superficieSuave = esOscuro
+        ? const Color(0xFF3A2B25)
+        : crema;
 
-    final textoPrincipal = esOscuro ? const Color(0xFFFFF8E7) : cafeOscuro;
+    final textoPrincipal = esOscuro
+        ? const Color(0xFFFFF8E7)
+        : cafeOscuro;
 
-    final textoSecundario = esOscuro ? const Color(0xFFD7C5B8) : cafeClaro;
+    final textoSecundario = esOscuro
+        ? const Color(0xFFD7C5B8)
+        : cafeClaro;
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => DetalleProductoPage(producto: producto),
+            builder: (_) =>
+                DetalleProductoPage(
+              producto: producto,
+            ),
           ),
         );
       },
-
       child: Container(
         decoration: BoxDecoration(
           color: superficie,
-
-          borderRadius: BorderRadius.circular(20),
-
+          borderRadius:
+              BorderRadius.circular(20),
           border: Border.all(
             color: esOscuro
                 ? Colors.white.withValues(alpha: 0.04)
                 : cafeClaro.withValues(alpha: 0.07),
           ),
-
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: esOscuro ? 0.18 : 0.05),
+              color: Colors.black.withValues(
+                alpha: esOscuro ? 0.18 : 0.05,
+              ),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-
         child: Padding(
           padding: const EdgeInsets.all(12),
-
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
-              // --------------------------------------------------------
-              // IMAGEN / ICONO
-              // --------------------------------------------------------
               Expanded(
                 child: Container(
                   width: double.infinity,
-
                   decoration: BoxDecoration(
                     color: superficieSuave,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius:
+                        BorderRadius.circular(16),
                   ),
-
                   child: Stack(
                     children: [
                       Center(
                         child: Container(
                           width: 78,
                           height: 78,
-
                           decoration: BoxDecoration(
                             color: superficie,
                             shape: BoxShape.circle,
                           ),
-
-                          child: Icon(producto['icono'], size: 42, color: cafe),
+                          child: Icon(
+                            producto['icono'],
+                            size: 42,
+                            color: cafe,
+                          ),
                         ),
                       ),
-
                       Positioned(
                         top: 8,
                         right: 8,
-
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding:
+                              const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 5,
                           ),
-
                           decoration: BoxDecoration(
                             color: superficie,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius:
+                                BorderRadius.circular(10),
                           ),
-
                           child: const Icon(
                             Icons.favorite_border,
                             size: 16,
@@ -1237,18 +1166,14 @@ SliverToBoxAdapter(
                   ),
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // --------------------------------------------------------
-              // NOMBRE
-              // --------------------------------------------------------
               Text(
-                es ? producto['nombre'] : producto['nombreEn'],
-
+                es
+                    ? producto['nombre']
+                    : producto['nombreEn'],
                 maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-
+                overflow:
+                    TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -1256,12 +1181,7 @@ SliverToBoxAdapter(
                   height: 1.2,
                 ),
               ),
-
               const SizedBox(height: 7),
-
-              // --------------------------------------------------------
-              // PRECIO
-              // --------------------------------------------------------
               Row(
                 children: [
                   Expanded(
@@ -1270,32 +1190,39 @@ SliverToBoxAdapter(
                       style: const TextStyle(
                         color: dorado,
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight:
+                            FontWeight.bold,
                       ),
                     ),
                   ),
-
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding:
+                        const EdgeInsets.symmetric(
                       horizontal: 7,
                       vertical: 5,
                     ),
-
                     decoration: BoxDecoration(
                       color: superficieSuave,
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius:
+                          BorderRadius.circular(9),
                     ),
-
-                    child: Icon(Icons.arrow_forward, color: cafe, size: 16),
+                    child: const Icon(
+                      Icons.arrow_forward,
+                      color: cafe,
+                      size: 16,
+                    ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 4),
-
               Text(
-                es ? 'Ver detalle' : 'View details',
-                style: TextStyle(color: textoSecundario, fontSize: 12),
+                es
+                    ? 'Ver detalle'
+                    : 'View details',
+                style: TextStyle(
+                  color: textoSecundario,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -1308,14 +1235,19 @@ SliverToBoxAdapter(
   // BARRA DE NAVEGACIÓN
   // ==================================================================
 
-  Widget _barraNavegacion(BuildContext context, bool es, bool esOscuro) {
+  Widget _barraNavegacion(
+    BuildContext context,
+    bool es,
+    bool esOscuro,
+  ) {
     return NavigationBar(
       selectedIndex: paginaActual,
-
-      backgroundColor: esOscuro ? const Color(0xFF2B211D) : Colors.white,
-
-      indicatorColor: esOscuro ? cafe : doradoClaro.withValues(alpha: 0.55),
-
+      backgroundColor: esOscuro
+          ? const Color(0xFF2B211D)
+          : Colors.white,
+      indicatorColor: esOscuro
+          ? cafe
+          : doradoClaro.withValues(alpha: 0.55),
       onDestinationSelected: (index) {
         setState(() {
           paginaActual = index;
@@ -1336,7 +1268,9 @@ SliverToBoxAdapter(
         if (index == 1) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const FavoritosPage()),
+            MaterialPageRoute(
+              builder: (_) => const FavoritosPage(),
+            ),
           ).then((_) {
             if (mounted) {
               setState(() {});
@@ -1353,7 +1287,9 @@ SliverToBoxAdapter(
         if (index == 2) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const CarritoPage()),
+            MaterialPageRoute(
+              builder: (_) => const CarritoPage(),
+            ),
           ).then((_) {
             if (mounted) {
               setState(() {});
@@ -1370,7 +1306,9 @@ SliverToBoxAdapter(
         if (index == 3) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const PerfilPage()),
+            MaterialPageRoute(
+              builder: (_) => const PerfilPage(),
+            ),
           ).then((_) {
             if (mounted) {
               setState(() {});
@@ -1378,56 +1316,69 @@ SliverToBoxAdapter(
           });
         }
       },
-
       destinations: [
-        // ==============================================================
+        // ============================================================== 
         // INICIO
         // ==============================================================
+
         NavigationDestination(
           icon: const Icon(Icons.home_outlined),
-          selectedIcon: const Icon(Icons.home),
+          selectedIcon:
+              const Icon(Icons.home),
           label: es ? 'Inicio' : 'Home',
         ),
 
-        // ==============================================================
+        // ============================================================== 
         // FAVORITOS
         // ==============================================================
+
         NavigationDestination(
-          icon: const Icon(Icons.favorite_border),
-          selectedIcon: const Icon(Icons.favorite),
-          label: es ? 'Favoritos' : 'Favorites',
+          icon:
+              const Icon(Icons.favorite_border),
+          selectedIcon:
+              const Icon(Icons.favorite),
+          label:
+              es ? 'Favoritos' : 'Favorites',
         ),
 
-        // ==============================================================
+        // ============================================================== 
         // CARRITO
         // ==============================================================
+
         NavigationDestination(
           icon: ValueListenableBuilder<int>(
-            valueListenable: CarritoData.cantidadProductos,
-
-            builder: (context, cantidad, _) {
+            valueListenable:
+                CarritoData.cantidadProductos,
+            builder:
+                (context, cantidad, _) {
               return Badge(
-                isLabelVisible: cantidad > 0,
-
-                label: Text(cantidad.toString()),
-
-                child: const Icon(Icons.shopping_cart_outlined),
+                isLabelVisible:
+                    cantidad > 0,
+                label:
+                    Text(cantidad.toString()),
+                child: const Icon(
+                  Icons.shopping_cart_outlined,
+                ),
               );
             },
           ),
-
-          selectedIcon: const Icon(Icons.shopping_cart),
-
-          label: es ? 'Carrito' : 'Cart',
+          selectedIcon:
+              const Icon(Icons.shopping_cart),
+          label:
+              es ? 'Carrito' : 'Cart',
         ),
 
-        // ==============================================================
+        // ============================================================== 
         // PERFIL
         // ==============================================================
+
         NavigationDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
-          label: es ? 'Perfil' : 'Profile',
+          icon:
+              const Icon(Icons.person_outline),
+          selectedIcon:
+              const Icon(Icons.person),
+          label:
+              es ? 'Perfil' : 'Profile',
         ),
       ],
     );
@@ -1440,8 +1391,9 @@ SliverToBoxAdapter(
   @override
   void dispose() {
     buscadorController.dispose();
-     IdiomaData.idioma.removeListener(_cambioIdioma);
-    textoBienvenidaController.dispose();
     super.dispose();
   }
 }
+
+
+
