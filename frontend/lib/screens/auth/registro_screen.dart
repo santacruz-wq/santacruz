@@ -11,10 +11,13 @@ import 'widgets/registro/registro_google.dart';
 import 'widgets/registro/registro_footer.dart';
 
 class RegistroScreen extends StatefulWidget {
-  const RegistroScreen({super.key});
+  const RegistroScreen({
+    super.key,
+  });
 
   @override
-  State<RegistroScreen> createState() => _RegistroScreenState();
+  State<RegistroScreen> createState() =>
+      _RegistroScreenState();
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
@@ -29,6 +32,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>();
+
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
@@ -63,12 +67,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     setState(() {});
                   },
                 ),
-
                 RegistroGoogle(
                   controller: controller,
                   auth: auth,
                 ),
-
                 RegistroFooter(
                   lang: lang,
                 ),

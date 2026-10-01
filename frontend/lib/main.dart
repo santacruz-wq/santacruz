@@ -29,9 +29,15 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
-        ChangeNotifierProvider(create: (_) => FavoritoProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => LanguageProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FavoritoProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -54,40 +60,54 @@ class MyApp extends StatelessWidget {
       routes: {
         '/inicio': (context) => InicioScreen(),
 
-        '/registro': (context) => const RegistroScreen(),
+        '/registro': (context) =>
+            const RegistroScreen(),
 
         '/language-selection': (context) =>
             const LanguageSelectionScreen(),
 
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) =>
+            const LoginScreen(),
 
         // Menú principal con barra inferior
         '/menu': (context) => const MainShell(),
 
-        '/main-shell': (context) => const MainShell(),
+        '/main-shell': (context) =>
+            const MainShell(),
 
-        '/favoritos': (context) => const FavoritosScreen(),
+        '/favoritos': (context) =>
+            const FavoritosScreen(),
 
         '/verificar-cuenta': (context) {
           final email =
-              ModalRoute.of(context)!.settings.arguments as String;
+              ModalRoute.of(context)!
+                  .settings
+                  .arguments as String;
 
-          return VerificarCuentaScreen(email: email);
+          return VerificarCuentaScreen(
+            email: email,
+          );
         },
+
+        // Recuperar contraseña
+        '/recuperar': (context) =>
+            const RecuperarScreen(),
 
         // Panel Admin
         '/admin': (context) =>
-            const _PlaceholderScreen(titulo: 'Panel Admin'),
+            const _PlaceholderScreen(
+              titulo: 'Panel Admin',
+            ),
 
         // Panel Mesero
-        '/mesero': (context) => const MesasScreen(),
+        '/mesero': (context) =>
+            const MesasScreen(),
 
         // Panel Cocina
         '/cocina': (context) =>
-            const _PlaceholderScreen(titulo: 'Panel Cocina'),
-
-        // Recuperar contraseña
-        '/recuperar': (context) => const RecuperarScreen(),
+            const _PlaceholderScreen(
+              titulo: 'Panel Cocina',
+            ),
       },
     );
   }
@@ -97,10 +117,12 @@ class AppStarter extends StatefulWidget {
   const AppStarter({super.key});
 
   @override
-  State<AppStarter> createState() => _AppStarterState();
+  State<AppStarter> createState() =>
+      _AppStarterState();
 }
 
-class _AppStarterState extends State<AppStarter> {
+class _AppStarterState
+    extends State<AppStarter> {
   bool _listo = false;
 
   @override
@@ -110,9 +132,14 @@ class _AppStarterState extends State<AppStarter> {
   }
 
   Future<void> _cargarDatos() async {
-    final authProvider = context.read<AuthProvider>();
-    final languageProvider = context.read<LanguageProvider>();
-    final favoritoProvider = context.read<FavoritoProvider>();
+    final authProvider =
+        context.read<AuthProvider>();
+
+    final languageProvider =
+        context.read<LanguageProvider>();
+
+    final favoritoProvider =
+        context.read<FavoritoProvider>();
 
     await Future.wait([
       languageProvider.cargarIdiomaGuardado(),
@@ -145,7 +172,8 @@ class _AppStarterState extends State<AppStarter> {
   }
 }
 
-class _PlaceholderScreen extends StatelessWidget {
+class _PlaceholderScreen
+    extends StatelessWidget {
   final String titulo;
 
   const _PlaceholderScreen({
@@ -159,7 +187,9 @@ class _PlaceholderScreen extends StatelessWidget {
         title: Text(titulo),
       ),
       body: Center(
-        child: Text('$titulo — en construcción'),
+        child: Text(
+          '$titulo — en construcción',
+        ),
       ),
     );
   }
