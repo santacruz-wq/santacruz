@@ -146,7 +146,7 @@ class _InicioScreenState extends State<InicioScreen>
                         FadeLinkButton(
                     text: 'Iniciar sesión',
                     onPressed: () {
-                      Navigator.pushNamed(context, '/registro');
+Navigator.pushNamed(context, '/registro');
                       Navigator.pushNamed(context, '/login');
                     },
                     opacityAnimation: _registerOpacity,
