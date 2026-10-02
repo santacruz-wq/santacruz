@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,20 +12,30 @@ import 'screens/auth/verificar_cuenta_screen.dart';
 import 'screens/auth/registro_screen.dart';
 import 'screens/auth/recuperar_screen.dart';
 import 'screens/language_selection/language_selection.dart';
+
 import 'screens/user/favoritos_screen.dart';
+
 import 'screens/main_shell.dart';
-import 'screens/mesero/mesas_screen.dart';
+import 'screens/mesero/mesero_shell.dart';
+import 'screens/cocina/cocina_shell.dart';
 
 import 'services/google_auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar Google Sign-In
+  // ============================================================
+  // GOOGLE SIGN-IN
+  // ============================================================
+
   await GoogleAuthService.inicializar(
     serverClientId:
         '610032994651-dvbn9h7p0o10dj1k6isql0bi76i2vo35.apps.googleusercontent.com',
   );
+
+  // ============================================================
+  // PROVIDERS
+  // ============================================================
 
   runApp(
     MultiProvider(
@@ -44,6 +55,10 @@ void main() async {
   );
 }
 
+// ============================================================
+// APP
+// ============================================================
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -51,89 +66,125 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Santa Cruz de la Plazuela',
+
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         primarySwatch: Colors.green,
         useMaterial3: true,
       ),
+
       home: const AppStarter(),
+
       routes: {
+        // ======================================================
+        // INICIO
+        // ======================================================
+
         '/inicio': (context) => InicioScreen(),
 
-        '/registro': (context) =>
-            const RegistroScreen(),
+        // ======================================================
+        // REGISTRO
+        // ======================================================
+
+        '/registro': (context) => const RegistroScreen(),
+
+        // ======================================================
+        // SELECCIÓN DE IDIOMA
+        // ======================================================
 
         '/language-selection': (context) =>
             const LanguageSelectionScreen(),
 
-        '/login': (context) =>
-            const LoginScreen(),
+        // ======================================================
+        // LOGIN
+        // ======================================================
 
-        // Menú principal con barra inferior
+        '/login': (context) => const LoginScreen(),
+
+        // ======================================================
+        // USUARIO NORMAL
+        // ======================================================
+
         '/menu': (context) => const MainShell(),
 
-        '/main-shell': (context) =>
-            const MainShell(),
+        '/main-shell': (context) => const MainShell(),
 
-        '/favoritos': (context) =>
-            const FavoritosScreen(),
+        // ======================================================
+        // FAVORITOS
+        // ======================================================
+
+        '/favoritos': (context) => const FavoritosScreen(),
+
+        // ======================================================
+        // VERIFICAR CUENTA
+        // ======================================================
 
         '/verificar-cuenta': (context) {
-          final email =
-              ModalRoute.of(context)!
-                  .settings
-                  .arguments as String;
+          final email = ModalRoute.of(context)!
+              .settings
+              .arguments as String;
 
           return VerificarCuentaScreen(
             email: email,
           );
         },
 
-        // Recuperar contraseña
-        '/recuperar': (context) =>
-            const RecuperarScreen(),
+        // ======================================================
+        // RECUPERAR CONTRASEÑA
+        // ======================================================
 
-        // Panel Admin
-        '/admin': (context) =>
-            const _PlaceholderScreen(
+        '/recuperar': (context) => const RecuperarScreen(),
+
+        // ======================================================
+        // ADMIN
+        // ======================================================
+
+        '/admin': (context) => const _PlaceholderScreen(
               titulo: 'Panel Admin',
             ),
 
-        // Panel Mesero
-        '/mesero': (context) =>
-            const MesasScreen(),
+        // ======================================================
+        // MESERO
+        // ======================================================
 
-        // Panel Cocina
-        '/cocina': (context) =>
-            const _PlaceholderScreen(
-              titulo: 'Panel Cocina',
-            ),
+        // Utiliza el MeseroShell de:
+        // screens/mesero/mesero_shell.dart
+        '/mesero': (context) => const MeseroShell(),
+
+        // ======================================================
+        // COCINA
+        // ======================================================
+
+        '/cocina': (context) => const CocinaShell(),
       },
     );
   }
 }
 
+// ============================================================
+// INICIO DE LA APLICACIÓN
+// ============================================================
+
 class AppStarter extends StatefulWidget {
   const AppStarter({super.key});
 
   @override
-  State<AppStarter> createState() =>
-      _AppStarterState();
+  State<AppStarter> createState() => _AppStarterState();
 }
 
-class _AppStarterState
-    extends State<AppStarter> {
+class _AppStarterState extends State<AppStarter> {
   bool _listo = false;
 
   @override
   void initState() {
     super.initState();
+
     _cargarDatos();
   }
 
   Future<void> _cargarDatos() async {
-    final authProvider =
-        context.read<AuthProvider>();
+    final authProvider = context.read<AuthProvider>();
 
     final languageProvider =
         context.read<LanguageProvider>();
@@ -146,7 +197,8 @@ class _AppStarterState
       authProvider.verificarSesion(),
     ]);
 
-    // Si hay una sesión guardada, cargamos los favoritos.
+    // Si existe una sesión guardada,
+    // cargamos los favoritos.
     if (authProvider.usuario != null) {
       await favoritoProvider.cargarFavoritos();
     }
@@ -172,8 +224,11 @@ class _AppStarterState
   }
 }
 
-class _PlaceholderScreen
-    extends StatelessWidget {
+// ============================================================
+// PANTALLAS TEMPORALES
+// ============================================================
+
+class _PlaceholderScreen extends StatelessWidget {
   final String titulo;
 
   const _PlaceholderScreen({
