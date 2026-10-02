@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../widgets/global/bottom_menu.dart';
+import '../../widgets/mesero/mesero_bottom_menu.dart';
 import 'mesas_screen.dart';
 import '../user/perfil_screen.dart';
 
@@ -29,7 +29,7 @@ class _MeseroShellState extends State<MeseroShell> {
         ),
       ),
     ),
-    PerfilScreen(),
+    PerfilScreen(showBottomBar: false),
   ];
 
   @override
@@ -88,7 +88,7 @@ class _MeseroShellState extends State<MeseroShell> {
           index: _currentIndex,
           children: _pages,
         ),
-        bottomNavigationBar: BottomMenu(
+        bottomNavigationBar: MeseroBottomMenu(
           currentIndex: _currentIndex,
           onItemSelected: (index) {
             setState(() {

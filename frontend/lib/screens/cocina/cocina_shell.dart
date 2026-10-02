@@ -9,8 +9,7 @@ class CocinaShell extends StatefulWidget {
   });
 
   @override
-  State<CocinaShell> createState() =>
-      _CocinaShellState();
+  State<CocinaShell> createState() => _CocinaShellState();
 }
 
 class _CocinaShellState extends State<CocinaShell> {
@@ -18,7 +17,7 @@ class _CocinaShellState extends State<CocinaShell> {
 
   final List<Widget> _pages = const [
     PedidosCocinaScreen(),
-    PerfilScreen(),
+    PerfilScreen(showBottomBar: false),
   ];
 
   @override
@@ -32,31 +31,26 @@ class _CocinaShellState extends State<CocinaShell> {
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(
-            padding:
-                const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Container(
               height: 62,
               decoration: BoxDecoration(
                 color: const Color(0xFFF8E8D0),
-                borderRadius:
-                    BorderRadius.circular(32),
+                borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                  color: const Color(0xFFC78C55)
-                      .withValues(alpha: 0.4),
+                  color: const Color(0xFFC78C55).withValues(alpha: 0.4),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF4A3B2A)
-                        .withValues(alpha: 0.10),
+                    color: const Color(0xFF4A3B2A).withValues(alpha: 0.10),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildItem(
                     icon: Icons.restaurant,
@@ -79,8 +73,7 @@ class _CocinaShellState extends State<CocinaShell> {
     required IconData icon,
     required int index,
   }) {
-    final bool seleccionado =
-        _currentIndex == index;
+    final bool seleccionado = _currentIndex == index;
 
     return GestureDetector(
       onTap: () {
@@ -90,8 +83,7 @@ class _CocinaShellState extends State<CocinaShell> {
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration:
-            const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         width: 46,
         height: 46,
         decoration: BoxDecoration(
@@ -102,8 +94,7 @@ class _CocinaShellState extends State<CocinaShell> {
           boxShadow: seleccionado
               ? [
                   BoxShadow(
-                    color: const Color(0xFFC78C55)
-                        .withValues(alpha: 0.35),
+                    color: const Color(0xFFC78C55).withValues(alpha: 0.35),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
