@@ -41,6 +41,8 @@ class _EstadoOrdenButtonState
 
       if (estado == 'en_cocina') {
         mensaje = 'Orden enviada a cocina correctamente.';
+      } else if (estado == 'servido') {
+        mensaje = 'Orden marcada como servida.';
       } else if (estado == 'pagado') {
         mensaje = 'Pago registrado. Mesa liberada.';
       } else {
@@ -102,6 +104,35 @@ class _EstadoOrdenButtonState
             _cargando
                 ? 'Enviando...'
                 : 'Enviar a cocina',
+          ),
+        ),
+      );
+    }
+
+    // ORDEN LISTA
+    if (widget.orden.estaListo) {
+      return SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: ElevatedButton.icon(
+          onPressed: _cargando
+              ? null
+              : () => _cambiarEstado('servido'),
+          icon: _cargando
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(
+                  Icons.room_service,
+                ),
+          label: Text(
+            _cargando
+                ? 'Procesando...'
+                : 'Marcar como servido',
           ),
         ),
       );

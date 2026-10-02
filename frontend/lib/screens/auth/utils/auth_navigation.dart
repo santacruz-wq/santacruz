@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class AuthNavigation {
@@ -8,31 +7,36 @@ class AuthNavigation {
   ) {
     switch (rol) {
       case 'admin':
-        Navigator.pushReplacementNamed(
+        Navigator.pushNamedAndRemoveUntil(
           context,
           '/admin',
+          (route) => false,
         );
         break;
 
       case 'mesero':
-        Navigator.pushReplacementNamed(
+        Navigator.pushNamedAndRemoveUntil(
           context,
           '/mesero',
+          (route) => false,
         );
         break;
 
       case 'cocina':
-        Navigator.pushReplacementNamed(
+        Navigator.pushNamedAndRemoveUntil(
           context,
           '/cocina',
+          (route) => false,
         );
         break;
 
       default:
-        Navigator.pushReplacementNamed(
+        Navigator.pushNamedAndRemoveUntil(
           context,
           '/menu',
+          (route) => false,
         );
+        break;
     }
   }
 }
