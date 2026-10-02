@@ -5,10 +5,11 @@ import '../../core/navigation/menu_navigation.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorito_provider.dart';
 import '../../widgets/global/bottom_menu.dart';
-import '../../widgets/menu/product_card.dart'; //AJUSTAR: ruta real de tu ProductCard
+import '../../widgets/menu/product_card.dart';
 
 class FavoritosScreen extends StatelessWidget {
-  const FavoritosScreen({super.key});
+  final bool showBottomBar;
+  const FavoritosScreen({super.key, this.showBottomBar = true});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +19,12 @@ class FavoritosScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Mis favoritos'), centerTitle: true),
       body: _buildBody(context, auth, favoritos),
-      bottomNavigationBar: BottomMenu(
-        currentIndex: 1,
-        onItemSelected: (i) => navegarDesdeMenu(context, i, 1),
-      ),
+      bottomNavigationBar: showBottomBar
+          ? BottomMenu(
+              currentIndex: 1,
+              onItemSelected: (i) => navegarDesdeMenu(context, i, 1),
+            )
+          : null,
     );
   }
 
@@ -30,7 +33,6 @@ class FavoritosScreen extends StatelessWidget {
     AuthProvider auth,
     FavoritoProvider favoritos,
   ) {
-    //SIN SESION: INVITAMOS A INICIAR SESION
     if (auth.usuario == null) {
       return Center(
         child: Padding(
@@ -56,12 +58,10 @@ class FavoritosScreen extends StatelessWidget {
       );
     }
 
-    //CARGANDO
     if (favoritos.cargando && favoritos.productos.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    //SIN FAVORITOS
     if (favoritos.productos.isEmpty) {
       return RefreshIndicator(
         onRefresh: favoritos.cargarFavoritos,
@@ -80,8 +80,6 @@ class FavoritosScreen extends StatelessWidget {
       );
     }
 
-    //LISTA DE FAVORITOS (ARRASTRAR HACIA ABAJO PARA REFRESCAR)
-    //LISTA DE FAVORITOS (ARRASTRAR HACIA ABAJO PARA REFRESCAR)
     return RefreshIndicator(
       onRefresh: favoritos.cargarFavoritos,
       child: GridView.builder(
@@ -90,8 +88,7 @@ class FavoritosScreen extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          mainAxisExtent:
-              190, //ALTO FIJO: EVITA OVERFLOW SEGUN EL ANCHO DE PANTALLA
+          mainAxisExtent: 190,
         ),
         itemCount: favoritos.productos.length,
         itemBuilder: (context, index) {
@@ -100,8 +97,7 @@ class FavoritosScreen extends StatelessWidget {
           return ProductCard(
             id: producto.id,
             name: producto.nombre,
-            price:
-                '\$${producto.precio}', //AJUSTAR: mismo formato de precio que usas en el menú
+            price: '\$${producto.precio}',
             image: producto.imagen,
             margin: EdgeInsets.zero,
           );

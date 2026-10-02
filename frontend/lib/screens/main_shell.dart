@@ -15,9 +15,9 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    MenuScreen(showBottomBar: false), // <-- importante
-    FavoritosScreen(),
-    PerfilScreen(),
+    MenuScreen(showBottomBar: false),
+    FavoritosScreen(showBottomBar: false),
+    PerfilScreen(showBottomBar: false),
   ];
 
   @override
