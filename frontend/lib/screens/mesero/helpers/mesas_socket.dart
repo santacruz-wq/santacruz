@@ -4,7 +4,8 @@ import '../../../services/socket_service.dart';
 // 🔔 EVENTOS DE SOCKET.IO
 // ============================
 
-/// Empieza a escuchar todos los eventos que cambian el estado de una orden.
+/// Empieza a escuchar todos los eventos que cambian
+/// el estado de una mesa o de una orden.
 void escucharEventosMesas(
   void Function(dynamic data) callback,
 ) {
@@ -14,6 +15,9 @@ void escucharEventosMesas(
   SocketService.escucharPedidoPagado(callback);
   SocketService.escucharPedidoCancelado(callback);
   SocketService.escucharNuevaAdicion(callback);
+
+  // 🔔 MESA LIBERADA
+  SocketService.escucharMesaLiberada(callback);
 }
 
 /// Deja de escuchar los mismos eventos (se usa en dispose).
@@ -26,4 +30,6 @@ void dejarDeEscucharEventosMesas(
   SocketService.dejarDeEscucharPedidoPagado(callback);
   SocketService.dejarDeEscucharPedidoCancelado(callback);
   SocketService.dejarDeEscucharNuevaAdicion(callback);
+  // 🔔 MESA LIBERADA
+  SocketService.dejarDeEscucharMesaLiberada(callback);
 }
