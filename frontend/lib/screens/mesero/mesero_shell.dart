@@ -5,6 +5,7 @@ import '../../widgets/mesero/mesero_bottom_menu.dart';
 import 'mesas_screen.dart';
 import 'pedidos_screen.dart';
 import '../user/perfil_screen.dart';
+import 'historial_pedidos_screen.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../services/socket_service.dart';
@@ -20,10 +21,11 @@ class _MeseroShellState extends State<MeseroShell> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    MesasScreen(),
-    PedidosScreen(),
-    PerfilScreen(showBottomBar: false),
-  ];
+  MesasScreen(),
+  PedidosScreen(),
+  HistorialPedidosScreen(),
+  PerfilScreen(showBottomBar: false),
+];
 
   @override
   void initState() {

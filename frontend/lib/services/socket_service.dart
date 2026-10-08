@@ -226,6 +226,28 @@ class SocketService {
   }
 
   // ============================
+  // 🔔 MESA LIBERADA
+  // ============================
+
+  static void escucharMesaLiberada(
+    void Function(dynamic data) callback,
+  ) {
+    _socket?.on(
+      'mesaLiberada',
+      callback,
+    );
+  }
+
+  static void dejarDeEscucharMesaLiberada(
+    void Function(dynamic data) callback,
+  ) {
+    _socket?.off(
+      'mesaLiberada',
+      callback,
+    );
+  }
+
+  // ============================
   // 🔌 DESCONECTAR
   // ============================
 

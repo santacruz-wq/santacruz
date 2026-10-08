@@ -45,8 +45,12 @@ class MeseroBottomMenu extends StatelessWidget {
                 index: 1,
               ),
               _buildItem(
-                icon: Icons.person_rounded,
+                icon: Icons.history_rounded,
                 index: 2,
+              ),
+              _buildItem(
+                icon: Icons.person_rounded,
+                index: 3,
               ),
             ],
           ),
@@ -69,7 +73,9 @@ class MeseroBottomMenu extends StatelessWidget {
         width: 46,
         height: 46,
         decoration: BoxDecoration(
-          color: seleccionado ? AppColors.caramelo : Colors.transparent,
+          color: seleccionado
+              ? AppColors.caramelo
+              : Colors.transparent,
           shape: BoxShape.circle,
           boxShadow: seleccionado
               ? [
@@ -84,7 +90,9 @@ class MeseroBottomMenu extends StatelessWidget {
         child: Icon(
           icon,
           size: 24,
-          color: seleccionado ? Colors.white : AppColors.textoCafe,
+          color: seleccionado
+              ? Colors.white
+              : AppColors.textoCafe,
         ),
       ),
     );
