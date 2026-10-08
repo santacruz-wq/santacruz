@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../models/producto_model.dart';
 import '../../services/producto_service.dart';
+import 'agregar_producto/productos_sheet_lista.dart';
+import 'agregar_producto/seleccion_helper.dart';
+import 'agregar_producto/sheet_header.dart';
 
 class AgregarProductoSheet extends StatefulWidget {
   final Function(
@@ -30,8 +33,7 @@ class _AgregarProductoSheetState
   void initState() {
     super.initState();
 
-    _productosFuture =
-        ProductoService.getProductos();
+    _productosFuture = ProductoService.getProductos();
   }
 
   @override
@@ -56,8 +58,7 @@ class _AgregarProductoSheetState
   }
 
   void _disminuir(ProductoModel producto) {
-    final cantidad =
-        _cantidades[producto.id] ?? 0;
+    final cantidad = _cantidades[producto.id] ?? 0;
 
     if (cantidad <= 1) {
       setState(() {
@@ -67,8 +68,7 @@ class _AgregarProductoSheetState
       });
     } else {
       setState(() {
-        _cantidades[producto.id] =
-            cantidad - 1;
+        _cantidades[producto.id] = cantidad - 1;
       });
     }
   }
@@ -95,32 +95,12 @@ class _AgregarProductoSheetState
       return;
     }
 
-    final productosSeleccionados =
-        <Map<String, dynamic>>[];
-
-    for (final producto in productos) {
-      final cantidad =
-          _cantidades[producto.id] ?? 0;
-
-      if (cantidad > 0) {
-        final nota =
-            _notas[producto.id]?.text.trim();
-
-        final item = <String, dynamic>{
-          "producto": producto.id,
-          "cantidad": cantidad,
-        };
-
-        if (nota != null && nota.isNotEmpty) {
-          item["notas"] = nota;
-        }
-
-        productosSeleccionados.add(item);
-      }
-    }
-
     widget.onAgregar(
-      productosSeleccionados,
+      construirSeleccion(
+        productos,
+        _cantidades,
+        _notas,
+      ),
     );
 
     Navigator.pop(context);
@@ -138,256 +118,20 @@ class _AgregarProductoSheetState
         ),
         child: Column(
           children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Agregar productos',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-
-            const Divider(),
+            const SheetHeader(),
 
             Expanded(
-              child:
-                  FutureBuilder<List<ProductoModel>>(
-                future: _productosFuture,
-                builder: (
-                  context,
-                  snapshot,
-                ) {
-                  if (snapshot.connectionState ==
-                      ConnectionState.waiting) {
-                    return const Center(
-                      child:
-                          CircularProgressIndicator(),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'No se pudieron cargar los productos',
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _productosFuture =
-                                    ProductoService
-                                        .getProductos();
-                              });
-                            },
-                            child: const Text(
-                              'Reintentar',
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final productos =
-                      snapshot.data ?? [];
-
-                  if (productos.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No hay productos disponibles',
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: productos.length,
-                    itemBuilder: (
-                      context,
-                      index,
-                    ) {
-                      final producto =
-                          productos[index];
-
-                      final cantidad =
-                          _cantidades[
-                                  producto.id] ??
-                              0;
-
-                      return Card(
-                        margin:
-                            const EdgeInsets.only(
-                          bottom: 12,
-                        ),
-                        child: Padding(
-                          padding:
-                              const EdgeInsets.all(
-                            10,
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius:
-                                        BorderRadius
-                                            .circular(
-                                      10,
-                                    ),
-                                    child: SizedBox(
-                                      width: 60,
-                                      height: 60,
-                                      child: producto
-                                              .imagen
-                                              .isNotEmpty
-                                          ? Image.network(
-                                              producto.imagen,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (
-                                                context,
-                                                error,
-                                                stackTrace,
-                                              ) {
-                                                return const Icon(
-                                                  Icons
-                                                      .image_not_supported_outlined,
-                                                );
-                                              },
-                                            )
-                                          : const Icon(
-                                              Icons
-                                                  .image_outlined,
-                                            ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(
-                                    width: 12,
-                                  ),
-
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment
-                                              .start,
-                                      children: [
-                                        Text(
-                                          producto
-                                              .nombre,
-                                          maxLines: 1,
-                                          overflow:
-                                              TextOverflow
-                                                  .ellipsis,
-                                          style:
-                                              const TextStyle(
-                                            fontWeight:
-                                                FontWeight
-                                                    .bold,
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 4,
-                                        ),
-                                        Text(
-                                          '\$${producto.precio.toStringAsFixed(0)}',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  IconButton(
-                                    onPressed:
-                                        cantidad > 0
-                                            ? () =>
-                                                _disminuir(
-                                                  producto,
-                                                )
-                                            : null,
-                                    icon:
-                                        const Icon(
-                                      Icons
-                                          .remove_circle_outline,
-                                    ),
-                                  ),
-
-                                  Text(
-                                    '$cantidad',
-                                    style:
-                                        const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight:
-                                          FontWeight
-                                              .bold,
-                                    ),
-                                  ),
-
-                                  IconButton(
-                                    onPressed:
-                                        () =>
-                                            _aumentar(
-                                          producto,
-                                        ),
-                                    icon:
-                                        const Icon(
-                                      Icons
-                                          .add_circle_outline,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              if (cantidad > 0) ...[
-                                const SizedBox(
-                                  height: 10,
-                                ),
-
-                                TextField(
-                                  controller:
-                                      _notas[producto.id],
-                                  maxLines: 2,
-                                  decoration:
-                                      InputDecoration(
-                                    labelText:
-                                        'Nota para cocina (opcional)',
-                                    hintText:
-                                        'Ej: Agregar una porción de coco',
-                                    prefixIcon:
-                                        const Icon(
-                                      Icons
-                                          .note_alt_outlined,
-                                    ),
-                                    border:
-                                        OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius
-                                              .circular(
-                                        12,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
+              child: ProductosSheetLista(
+                productosFuture: _productosFuture,
+                cantidades: _cantidades,
+                notas: _notas,
+                onAumentar: _aumentar,
+                onDisminuir: _disminuir,
+                onReintentar: () {
+                  setState(() {
+                    _productosFuture =
+                        ProductoService.getProductos();
+                  });
                 },
               ),
             ),
@@ -399,8 +143,7 @@ class _AgregarProductoSheetState
               height: 50,
               child: ElevatedButton(
                 onPressed: () async {
-                  final productos =
-                      await _productosFuture;
+                  final productos = await _productosFuture;
 
                   if (!mounted) return;
 
