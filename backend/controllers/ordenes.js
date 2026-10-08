@@ -3,30 +3,52 @@ import OrdenDetalle from '../models/ordenDetalle.js';
 import Producto from '../models/product.js';
 import Mesa from '../models/mesa.js';
 
-// CREAR UNA NUEVA ORDEN CON SUS PRODUCTOS
+
+// ============================
+// 🔹 CREAR UNA NUEVA ORDEN
+// ============================
 
 export const crearOrden = async (req, res) => {
+
     try {
+
         const { mesa, productos } = req.body;
+
         const mesero = req.usuario._id;
+
 
         // VALIDAMOS LOS CAMPOS
 
-        if (!mesa || !productos || productos.length === 0) {
+        if (
+            !mesa ||
+            !productos ||
+            productos.length === 0
+        ) {
+
             return res.status(400).json({
-                message: 'Por favor, seleccione una mesa y al menos un producto'
+                message:
+                    'Por favor, seleccione una mesa y al menos un producto'
             });
+
         }
 
-        // VERIFICAMOS QUE LA MESA EXISTA Y ESTÉ ACTIVA
 
-        const existeMesa = await Mesa.findById(mesa);
+        // VERIFICAMOS LA MESA
 
-        if (!existeMesa || !existeMesa.activo) {
+        const existeMesa =
+            await Mesa.findById(mesa);
+
+        if (
+            !existeMesa ||
+            !existeMesa.activo
+        ) {
+
             return res.status(404).json({
                 message: 'Mesa no encontrada'
             });
+
         }
+
 
         // CREAMOS LA ORDEN
 
@@ -37,291 +59,677 @@ export const crearOrden = async (req, res) => {
 
         await nuevaOrden.save();
 
-        // CREAMOS CADA DETALLE Y CALCULAMOS EL TOTAL
+
+        // CREAMOS LOS DETALLES
 
         let total = 0;
+
         const detalles = [];
 
-        for (const item of productos) {
-            const producto = await Producto.findById(item.producto);
 
-            if (!producto || !producto.disponible) {
+        for (const item of productos) {
+
+            const producto =
+                await Producto.findById(
+                    item.producto
+                );
+
+
+            if (
+                !producto ||
+                !producto.disponible
+            ) {
+
                 return res.status(400).json({
-                    message: `El producto ${item.producto} no está disponible`
+                    message:
+                        `El producto ${item.producto} no está disponible`
                 });
+
             }
 
-            const subtotal = producto.precio * item.cantidad;
+
+            const subtotal =
+                producto.precio *
+                item.cantidad;
+
 
             total += subtotal;
 
-            const detalle = new OrdenDetalle({
-                orden: nuevaOrden._id,
-                producto: producto._id,
-                cantidad: item.cantidad,
-                precioUnitario: producto.precio,
-                subtotal,
-                esAdicion: false,
-                notas: item.notas
-            });
+
+            const detalle =
+                new OrdenDetalle({
+
+                    orden: nuevaOrden._id,
+
+                    producto: producto._id,
+
+                    cantidad: item.cantidad,
+
+                    precioUnitario:
+                        producto.precio,
+
+                    subtotal,
+
+                    esAdicion: false,
+
+                    notas: item.notas
+
+                });
+
 
             await detalle.save();
 
             detalles.push(detalle);
+
         }
 
-        // ACTUALIZAMOS EL TOTAL DE LA ORDEN
+
+        // ACTUALIZAMOS TOTAL
 
         nuevaOrden.total = total;
 
         await nuevaOrden.save();
 
-        // MARCAMOS LA MESA COMO OCUPADA
+
+        // MARCAMOS MESA OCUPADA
 
         existeMesa.estado = 'ocupada';
 
         await existeMesa.save();
 
+
+        // ============================
+        // 🔹 NOTIFICAR A TODOS LOS MESEROS
+        // ============================
+
+        const io = req.app.get('io');
+
+        if (io) {
+
+            const mesaInfo =
+                await Mesa.findById(
+                    nuevaOrden.mesa
+                );
+
+
+            io.to('meseros').emit(
+                'nuevoPedido',
+                {
+
+                    ordenId: nuevaOrden._id,
+
+                    mesa: mesaInfo
+                        ? {
+                            _id: mesaInfo._id,
+                            nombre: mesaInfo.nombre
+                        }
+                        : nuevaOrden.mesa,
+
+                    mesero: nuevaOrden.mesero,
+
+                    total,
+
+                    mensaje:
+                        'Nuevo pedido creado'
+
+                }
+            );
+
+        }
+
+
         res.status(201).json({
-            message: 'Orden creada correctamente',
+
+            message:
+                'Orden creada correctamente',
+
             orden: nuevaOrden,
+
             detalles
+
         });
 
+
     } catch (error) {
+
         res.status(500).json({
-            message: 'Error del servidor',
-            error: error.message
+
+            message:
+                'Error del servidor',
+
+            error:
+                error.message
+
         });
+
     }
+
 };
 
 
-// OBTENER TODAS LAS ÓRDENES
+// ============================
+// 🔹 OBTENER TODAS LAS ÓRDENES
+// ============================
 
 export const getOrdenes = async (req, res) => {
+
     try {
-        const ordenes = await Orden.find()
-            .populate('mesa', 'nombre')
-            .populate('mesero', 'nombre')
-            .sort({ createdAt: -1 });
+
+        const ordenes =
+            await Orden.find()
+
+                .populate(
+                    'mesa',
+                    'nombre'
+                )
+
+                .populate(
+                    'mesero',
+                    'nombre'
+                )
+
+                .sort({
+                    createdAt: -1
+                });
+
 
         res.status(200).json({
-            message: 'Órdenes obtenidas correctamente',
+
+            message:
+                'Órdenes obtenidas correctamente',
+
             ordenes
+
         });
 
+
     } catch (error) {
+
         res.status(500).json({
-            message: 'Error del servidor',
-            error: error.message
+
+            message:
+                'Error del servidor',
+
+            error:
+                error.message
+
         });
+
     }
+
 };
 
 
-// OBTENER UNA ORDEN POR ID CON SUS DETALLES
+// ============================
+// 🔹 OBTENER ORDEN POR ID
+// ============================
 
 export const getOrdenPorId = async (req, res) => {
+
     try {
+
         const { id } = req.params;
 
-        const orden = await Orden.findById(id)
-            .populate('mesa', 'nombre')
-            .populate('mesero', 'nombre');
+
+        const orden =
+            await Orden.findById(id)
+
+                .populate(
+                    'mesa',
+                    'nombre'
+                )
+
+                .populate(
+                    'mesero',
+                    'nombre'
+                );
+
 
         if (!orden) {
+
             return res.status(404).json({
-                message: 'Orden no encontrada'
+
+                message:
+                    'Orden no encontrada'
+
             });
+
         }
 
-        const detalles = await OrdenDetalle.find({
-            orden: id
-        }).populate(
-            'producto',
-            'nombre precio'
-        );
+
+        const detalles =
+            await OrdenDetalle.find({
+                orden: id
+            })
+
+                .populate(
+                    'producto',
+                    'nombre precio'
+                );
+
 
         res.status(200).json({
-            message: 'Orden obtenida correctamente',
+
+            message:
+                'Orden obtenida correctamente',
+
             orden,
+
             detalles
+
         });
 
+
     } catch (error) {
+
         res.status(500).json({
-            message: 'Error del servidor',
-            error: error.message
+
+            message:
+                'Error del servidor',
+
+            error:
+                error.message
+
         });
+
     }
+
 };
 
 
-// AGREGAR UN PRODUCTO A UNA ORDEN EXISTENTE
-// SOLO SI LA ORDEN TODAVÍA ESTÁ PENDIENTE
+// ============================
+// 🔹 AGREGAR PRODUCTO
+// ============================
 
 export const agregarProducto = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { producto, cantidad, notas } = req.body;
 
-        const orden = await Orden.findById(id);
+    try {
+
+        const { id } = req.params;
+
+        const {
+            producto,
+            cantidad,
+            notas
+        } = req.body;
+
+
+        const orden =
+            await Orden.findById(id);
+
 
         if (!orden) {
+
             return res.status(404).json({
-                message: 'Orden no encontrada'
+
+                message:
+                    'Orden no encontrada'
+
             });
+
         }
 
-        if (orden.estado !== 'pendiente') {
+
+        if (
+            orden.estado !== 'pendiente'
+        ) {
+
             return res.status(400).json({
-                message: 'La orden ya fue enviada a cocina. Debe crearse una nueva adición.'
+
+                message:
+                    'La orden ya fue enviada a cocina. Debe crearse una nueva adición.'
+
             });
+
         }
 
-        const productoDB = await Producto.findById(producto);
 
-        if (!productoDB || !productoDB.disponible) {
+        const productoDB =
+            await Producto.findById(
+                producto
+            );
+
+
+        if (
+            !productoDB ||
+            !productoDB.disponible
+        ) {
+
             return res.status(400).json({
-                message: 'Producto no disponible'
+
+                message:
+                    'Producto no disponible'
+
             });
+
         }
 
-        const subtotal = productoDB.precio * cantidad;
 
-        const detalle = new OrdenDetalle({
-            orden: orden._id,
-            producto: productoDB._id,
-            cantidad,
-            precioUnitario: productoDB.precio,
-            subtotal,
-            esAdicion: false,
-            notas
-        });
+        const subtotal =
+            productoDB.precio *
+            cantidad;
+
+
+        const detalle =
+            new OrdenDetalle({
+
+                orden: orden._id,
+
+                producto:
+                    productoDB._id,
+
+                cantidad,
+
+                precioUnitario:
+                    productoDB.precio,
+
+                subtotal,
+
+                esAdicion: false,
+
+                notas
+
+            });
+
 
         await detalle.save();
 
-        // ACTUALIZAMOS EL TOTAL DE LA ORDEN
 
         orden.total += subtotal;
 
         await orden.save();
 
+
         res.status(201).json({
-            message: 'Producto agregado correctamente',
+
+            message:
+                'Producto agregado correctamente',
+
             detalle,
+
             orden
+
         });
 
+
     } catch (error) {
+
         res.status(500).json({
-            message: 'Error del servidor',
-            error: error.message
+
+            message:
+                'Error del servidor',
+
+            error:
+                error.message
+
         });
+
     }
+
 };
 
 
-// CREAR UNA NUEVA ADICIÓN A UNA ORDEN
-// SE UTILIZA CUANDO LA ORDEN YA FUE ENVIADA A COCINA
+// ============================
+// 🔹 CREAR NUEVA ADICIÓN
+// ============================
 
 export const crearAdicion = async (req, res) => {
+
     try {
+
         const { id } = req.params;
+
         const { productos } = req.body;
 
-        if (!productos || productos.length === 0) {
+
+        if (
+            !productos ||
+            productos.length === 0
+        ) {
+
             return res.status(400).json({
-                message: 'Debe agregar al menos un producto a la adición'
+
+                message:
+                    'Debe agregar al menos un producto a la adición'
+
             });
+
         }
 
-        const orden = await Orden.findById(id);
+
+        const orden =
+            await Orden.findById(id);
+
 
         if (!orden) {
+
             return res.status(404).json({
-                message: 'Orden no encontrada'
+
+                message:
+                    'Orden no encontrada'
+
             });
+
         }
 
-        // NO SE PUEDEN AGREGAR PRODUCTOS A UNA ORDEN FINALIZADA
+
+        // NO SE PUEDEN AGREGAR PRODUCTOS
+        // A UNA ORDEN FINALIZADA
 
         if (
             orden.estado === 'pagado' ||
             orden.estado === 'cancelado'
         ) {
+
             return res.status(400).json({
-                message: 'No se pueden agregar productos a una orden finalizada'
+
+                message:
+                    'No se pueden agregar productos a una orden finalizada'
+
             });
+
         }
 
+
         let totalAdicion = 0;
+
         const detalles = [];
+
 
         // CREAMOS LOS NUEVOS PRODUCTOS
 
         for (const item of productos) {
-            const productoDB = await Producto.findById(
-                item.producto
-            );
 
-            if (!productoDB || !productoDB.disponible) {
+            const productoDB =
+                await Producto.findById(
+                    item.producto
+                );
+
+
+            if (
+                !productoDB ||
+                !productoDB.disponible
+            ) {
+
                 return res.status(400).json({
-                    message: `El producto ${item.producto} no está disponible`
+
+                    message:
+                        `El producto ${item.producto} no está disponible`
+
                 });
+
             }
 
-            const cantidad = item.cantidad || 1;
+
+            const cantidad =
+                item.cantidad || 1;
+
 
             const subtotal =
-                productoDB.precio * cantidad;
+                productoDB.precio *
+                cantidad;
+
 
             totalAdicion += subtotal;
 
-            const detalle = new OrdenDetalle({
-                orden: orden._id,
-                producto: productoDB._id,
-                cantidad,
-                precioUnitario: productoDB.precio,
-                subtotal,
-                esAdicion: true,
-                notas: item.notas
-            });
+
+            const detalle =
+                new OrdenDetalle({
+
+                    orden: orden._id,
+
+                    producto:
+                        productoDB._id,
+
+                    cantidad,
+
+                    precioUnitario:
+                        productoDB.precio,
+
+                    subtotal,
+
+                    esAdicion: true,
+
+                    notas:
+                        item.notas
+
+                });
+
 
             await detalle.save();
 
             detalles.push(detalle);
+
         }
 
-        // SUMAMOS LA ADICIÓN AL TOTAL DE LA ORDEN
+
+        // ACTUALIZAMOS TOTAL
 
         orden.total += totalAdicion;
 
         await orden.save();
 
+
+        const io = req.app.get('io');
+
+
+        // ============================
+        // 🔹 NOTIFICAR A COCINA
+        // ============================
+
+        if (io) {
+
+            const mesa =
+                await Mesa.findById(
+                    orden.mesa
+                );
+
+
+            const datosAdicion = {
+
+                ordenId:
+                    orden._id,
+
+                mesa: mesa
+                    ? {
+                        _id: mesa._id,
+                        nombre: mesa.nombre
+                    }
+                    : orden.mesa,
+
+                productos:
+                    detalles.map(
+                        (detalle, index) => ({
+
+                            producto:
+                                productos[index].producto,
+
+                            cantidad:
+                                detalle.cantidad,
+
+                            notas:
+                                detalle.notas,
+
+                            precioUnitario:
+                                detalle.precioUnitario,
+
+                            subtotal:
+                                detalle.subtotal
+
+                        })
+                    ),
+
+                totalAdicion,
+
+                mensaje:
+                    'Nueva adición para la mesa'
+
+            };
+
+
+            // COCINA
+
+            io.to('cocina').emit(
+                'nuevaAdicion',
+                datosAdicion
+            );
+
+
+            // TODOS LOS MESEROS
+
+            io.to('meseros').emit(
+                'nuevaAdicion',
+                datosAdicion
+            );
+
+        }
+
+
         res.status(201).json({
-            message: 'Adición creada correctamente',
+
+            message:
+                'Adición creada correctamente',
+
             orden,
+
             detalles,
+
             totalAdicion
+
         });
+
 
     } catch (error) {
+
         res.status(500).json({
-            message: 'Error del servidor',
-            error: error.message
+
+            message:
+                'Error del servidor',
+
+            error:
+                error.message
+
         });
+
     }
+
 };
 
-
-// CAMBIAR EL ESTADO DE LA ORDEN
+// ============================
+// 🔹 CAMBIAR ESTADO DE ORDEN
+// ============================
 
 export const cambiarEstadoOrden = async (req, res) => {
+
     try {
+
         const { id } = req.params;
         const { estado } = req.body;
+
+
+        // ============================
+        // 🔹 ESTADOS VÁLIDOS
+        // ============================
 
         const estadosValidos = [
             "pendiente",
@@ -332,66 +740,251 @@ export const cambiarEstadoOrden = async (req, res) => {
             "cancelado"
         ];
 
+
         if (!estadosValidos.includes(estado)) {
+
             return res.status(400).json({
-                message: 'Estado inválido'
+
+                message: "Estado inválido"
+
             });
+
         }
+
+
+        // ============================
+        // 🔹 BUSCAR ORDEN
+        // ============================
 
         const orden = await Orden.findById(id);
 
+
         if (!orden) {
+
             return res.status(404).json({
-                message: 'Orden no encontrada'
+
+                message: "Orden no encontrada"
+
             });
+
         }
+
+
+        // ============================
+        // 🔹 CAMBIAR ESTADO
+        // ============================
 
         orden.estado = estado;
 
         await orden.save();
 
-        // SI LA ORDEN SE PAGÓ O SE CANCELÓ,
-        // LIBERAMOS LA MESA
+
+        // ============================
+        // 🔹 SOCKET.IO
+        // ============================
+
+        const io = req.app.get("io");
+
+
+        // ============================
+        // 🔹 PEDIDO ENVIADO A COCINA
+        // ============================
+
+        if (estado === "en_cocina") {
+
+            if (io) {
+
+                io.to("cocina").emit(
+                    "pedidoEnCocina",
+                    {
+                        ordenId: orden._id,
+
+                        mesa: orden.mesa,
+
+                        mensaje:
+                            "Nuevo pedido enviado a cocina"
+                    }
+                );
+
+            }
+
+        }
+
+
+        // ============================
+        // 🔹 ORDEN LISTA
+        // ============================
+
+        if (estado === "listo") {
+
+            if (io) {
+
+                io.to("meseros").emit(
+                    "pedidoListo",
+                    {
+                        ordenId: orden._id,
+
+                        mesa: orden.mesa,
+
+                        mensaje:
+                            "El pedido está listo"
+                    }
+                );
+
+            }
+
+        }
+
+
+        // ============================
+        // 🔹 ORDEN SERVIDA
+        // ============================
+
+        if (estado === "servido") {
+
+            if (io) {
+
+                io.to("meseros").emit(
+                    "pedidoServido",
+                    {
+                        ordenId: orden._id,
+
+                        mesa: orden.mesa,
+
+                        mensaje:
+                            "El pedido fue servido"
+                    }
+                );
+
+            }
+
+        }
+
+
+        // ============================
+        // 🔹 ORDEN PAGADA
+        // ============================
+
+        if (estado === "pagado") {
+
+            if (io) {
+
+                io.to("meseros").emit(
+                    "pedidoPagado",
+                    {
+                        ordenId: orden._id,
+
+                        mesa: orden.mesa,
+
+                        mensaje:
+                            "El pedido fue pagado"
+                    }
+                );
+
+            }
+
+        }
+
+
+        // ============================
+        // 🔹 ORDEN CANCELADA
+        // ============================
+
+        if (estado === "cancelado") {
+
+            if (io) {
+
+                io.to("meseros").emit(
+                    "pedidoCancelado",
+                    {
+                        ordenId: orden._id,
+
+                        mesa: orden.mesa,
+
+                        mensaje:
+                            "El pedido fue cancelado"
+                    }
+                );
+
+            }
+
+        }
+
+
+        // ============================
+        // 🔹 LIBERAR MESA
+        // ============================
 
         if (
-            estado === 'pagado' ||
-            estado === 'cancelado'
+            estado === "pagado" ||
+            estado === "cancelado"
         ) {
-            const mesa = await Mesa.findById(
-                orden.mesa
-            );
+
+            const mesa =
+                await Mesa.findById(orden.mesa);
+
 
             if (mesa) {
-                mesa.estado = 'libre';
+
+                mesa.estado = "libre";
+
                 await mesa.save();
-            }
-        }
 
-        // SI EL PEDIDO QUEDÓ LISTO,
-        // NOTIFICAMOS AL MESERO EN TIEMPO REAL
 
-        if (estado === 'listo') {
-            const io = req.app.get('io');
+                // ============================
+                // 🔹 AVISAR QUE LA MESA QUEDÓ LIBRE
+                // ============================
 
-            io.to(orden.mesero.toString()).emit(
-                'pedidoListo',
-                {
-                    ordenId: orden._id,
-                    mesa: orden.mesa,
-                    mensaje: 'El pedido está listo para servir'
+                if (io) {
+
+                    io.to("meseros").emit(
+                        "mesaLiberada",
+                        {
+                            mesaId: mesa._id,
+
+                            mensaje:
+                                "La mesa quedó libre"
+                        }
+                    );
+
                 }
-            );
+
+            }
+
         }
 
-        res.status(200).json({
-            message: 'Estado de la orden actualizado',
+
+        // ============================
+        // 🔹 RESPUESTA
+        // ============================
+
+        return res.status(200).json({
+
+            message:
+                "Estado de la orden actualizado",
+
             orden
+
         });
+
 
     } catch (error) {
-        res.status(500).json({
-            message: 'Error del servidor',
-            error: error.message
+
+        console.error(
+            "Error al cambiar estado de orden:",
+            error
+        );
+
+        return res.status(500).json({
+
+            message:
+                "Error del servidor",
+
+            error:
+                error.message
+
         });
+
     }
+
 };

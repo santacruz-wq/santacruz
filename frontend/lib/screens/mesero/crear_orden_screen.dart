@@ -4,7 +4,10 @@ import '../../models/mesa_model.dart';
 import '../../models/producto_model.dart';
 import '../../services/producto_service.dart';
 import '../../services/orden_service.dart';
-import '../../widgets/mesero/producto_card.dart';
+import 'helpers/orden_helpers.dart';
+import 'widgets/crear_orden_boton.dart';
+import 'widgets/nota_dialog.dart';
+import 'widgets/productos_orden_body.dart';
 
 class CrearOrdenScreen extends StatefulWidget {
   final MesaModel mesa;
@@ -15,16 +18,17 @@ class CrearOrdenScreen extends StatefulWidget {
   });
 
   @override
-  State<CrearOrdenScreen> createState() =>
-      _CrearOrdenScreenState();
+  State<CrearOrdenScreen> createState() => _CrearOrdenScreenState();
 }
 
-class _CrearOrdenScreenState
-    extends State<CrearOrdenScreen> {
+class _CrearOrdenScreenState extends State<CrearOrdenScreen> {
   late Future<List<ProductoModel>> _productosFuture;
 
   // PRODUCTOS SELECCIONADOS
   final Map<String, int> _cantidades = {};
+
+  // NOTAS DE LOS PRODUCTOS
+  final Map<String, String> _notas = {};
 
   bool _creandoOrden = false;
 
@@ -32,8 +36,7 @@ class _CrearOrdenScreenState
   void initState() {
     super.initState();
 
-    _productosFuture =
-        ProductoService.getProductos();
+    _productosFuture = ProductoService.getProductos();
   }
 
   // AGREGAR PRODUCTO
@@ -46,19 +49,41 @@ class _CrearOrdenScreenState
 
   // QUITAR PRODUCTO
   void _quitarProducto(ProductoModel producto) {
-    final cantidad =
-        _cantidades[producto.id] ?? 0;
+    final cantidad = _cantidades[producto.id] ?? 0;
 
     if (cantidad <= 1) {
       setState(() {
         _cantidades.remove(producto.id);
+        _notas.remove(producto.id);
       });
     } else {
       setState(() {
-        _cantidades[producto.id] =
-            cantidad - 1;
+        _cantidades[producto.id] = cantidad - 1;
       });
     }
+  }
+
+  // AGREGAR O EDITAR NOTA
+  Future<void> _editarNota(
+    ProductoModel producto,
+  ) async {
+    final nota = await mostrarNotaDialog(
+      context,
+      producto,
+      _notas[producto.id] ?? '',
+    );
+
+    if (!mounted || nota == null) {
+      return;
+    }
+
+    setState(() {
+      if (nota.trim().isEmpty) {
+        _notas.remove(producto.id);
+      } else {
+        _notas[producto.id] = nota.trim();
+      }
+    });
   }
 
   // CANTIDAD TOTAL DE PRODUCTOS
@@ -76,9 +101,7 @@ class _CrearOrdenScreenState
     if (_creandoOrden) return;
 
     if (_cantidades.isEmpty) {
-      _mostrarMensaje(
-        'Selecciona al menos un producto.',
-      );
+      mostrarMensaje(context, 'Selecciona al menos un producto.');
       return;
     }
 
@@ -87,31 +110,20 @@ class _CrearOrdenScreenState
     });
 
     try {
-      final productosOrden = <Map<String, dynamic>>[];
+      final productosOrden = construirProductosOrden(
+        productos,
+        _cantidades,
+        _notas,
+      );
 
-      for (final producto in productos) {
-        final cantidad =
-            _cantidades[producto.id] ?? 0;
-
-        if (cantidad > 0) {
-          productosOrden.add({
-            "producto": producto.id,
-            "cantidad": cantidad,
-          });
-        }
-      }
-
-      final orden =
-          await OrdenService.crearOrden(
+      final orden = await OrdenService.crearOrden(
         mesaId: widget.mesa.id,
         productos: productosOrden,
       );
 
       if (!mounted) return;
 
-      _mostrarMensaje(
-        'Orden creada correctamente.',
-      );
+      mostrarMensaje(context, 'Orden creada correctamente.');
 
       await Future.delayed(
         const Duration(milliseconds: 500),
@@ -123,11 +135,9 @@ class _CrearOrdenScreenState
     } catch (e) {
       if (!mounted) return;
 
-      _mostrarMensaje(
-        e.toString().replaceFirst(
-              'Exception: ',
-              '',
-            ),
+      mostrarMensaje(
+        context,
+        e.toString().replaceFirst('Exception: ', ''),
       );
     } finally {
       if (mounted) {
@@ -138,17 +148,6 @@ class _CrearOrdenScreenState
     }
   }
 
-  void _mostrarMensaje(String mensaje) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        behavior:
-            SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,188 +156,37 @@ class _CrearOrdenScreenState
           'Orden - ${widget.mesa.nombre}',
         ),
       ),
-
-      body: FutureBuilder<List<ProductoModel>>(
-        future: _productosFuture,
-        builder: (
-          context,
-          snapshot,
-        ) {
-          // CARGANDO
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child:
-                  CircularProgressIndicator(),
-            );
-          }
-
-          // ERROR
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'No se pudieron cargar los productos',
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _productosFuture =
-                            ProductoService
-                                .getProductos();
-                      });
-                    },
-                    child: const Text(
-                      'Reintentar',
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final productos =
-              snapshot.data ?? [];
-
-          // SIN PRODUCTOS
-          if (productos.isEmpty) {
-            return const Center(
-              child: Text(
-                'No hay productos disponibles',
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              // INFORMACIÓN DE LA MESA
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.all(16),
-                child: Text(
-                  'Mesa: ${widget.mesa.nombre}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              // LISTA DE PRODUCTOS
-              Expanded(
-                child: ListView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    horizontal: 16,
-                  ),
-                  itemCount:
-                      productos.length,
-                  itemBuilder: (
-                    context,
-                    index,
-                  ) {
-                    final producto =
-                        productos[index];
-
-                    final cantidad =
-                        _cantidades[
-                                producto.id] ??
-                            0;
-
-                    return Column(
-                      children: [
-                        ProductoCard(
-                          producto:
-                              producto,
-                          onAgregar: () =>
-                              _agregarProducto(
-                            producto,
-                          ),
-                        ),
-
-                        if (cantidad > 0)
-                          Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment
-                                    .end,
-                            children: [
-                              IconButton(
-                                onPressed: () =>
-                                    _quitarProducto(
-                                  producto,
-                                ),
-                                icon: const Icon(
-                                  Icons
-                                      .remove_circle_outline,
-                                ),
-                              ),
-                              Text(
-                                '$cantidad',
-                                style:
-                                    const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight:
-                                      FontWeight
-                                          .bold,
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () =>
-                                    _agregarProducto(
-                                  producto,
-                                ),
-                                icon: const Icon(
-                                  Icons
-                                      .add_circle_outline,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
+      body: ProductosOrdenBody(
+        productosFuture: _productosFuture,
+        mesa: widget.mesa,
+        cantidades: _cantidades,
+        notas: _notas,
+        onAgregar: _agregarProducto,
+        onQuitar: _quitarProducto,
+        onEditarNota: _editarNota,
+        onReintentar: () {
+          setState(() {
+            _productosFuture =
+                ProductoService.getProductos();
+          });
         },
       ),
 
       // BOTÓN CREAR ORDEN
-      bottomNavigationBar:
-          SafeArea(
-        child: Padding(
-          padding:
-              const EdgeInsets.all(16),
-          child: SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: _creandoOrden
-                  ? null
-                  : () async {
-                      final productos =
-                          await _productosFuture;
+      bottomNavigationBar: CrearOrdenBoton(
+        creandoOrden: _creandoOrden,
+        cantidadProductos: _cantidadProductos,
+        onPressed: _creandoOrden
+            ? null
+            : () async {
+                final productos = await _productosFuture;
 
-                      if (!mounted) return;
+                if (!mounted) return;
 
-                      await _crearOrden(
-                        productos,
-                      );
-                    },
-              child: _creandoOrden
-                  ? const CircularProgressIndicator()
-                  : Text(
-                      'Crear orden ($_cantidadProductos)',
-                    ),
-            ),
-          ),
-        ),
+                await _crearOrden(
+                  productos,
+                );
+              },
       ),
     );
   }

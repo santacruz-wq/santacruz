@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../widgets/mesero/mesero_bottom_menu.dart';
 import 'mesas_screen.dart';
+import 'pedidos_screen.dart';
 import '../user/perfil_screen.dart';
 
 import '../../providers/auth_provider.dart';
@@ -20,15 +21,7 @@ class _MeseroShellState extends State<MeseroShell> {
 
   final List<Widget> _pages = const [
     MesasScreen(),
-    Center(
-      child: Text(
-        'Pedidos',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
+    PedidosScreen(),
     PerfilScreen(showBottomBar: false),
   ];
 
@@ -42,40 +35,12 @@ class _MeseroShellState extends State<MeseroShell> {
 
       if (usuario != null && usuario.id != null) {
         SocketService.conectar(usuario.id!);
-
-        SocketService.escucharPedidoListo(
-          (data) {
-            _mostrarPedidoListo(data);
-          },
-        );
       }
     });
   }
 
-  void _mostrarPedidoListo(dynamic data) {
-    if (!mounted) return;
-
-    String mesa = '';
-
-    if (data is Map) {
-      mesa = data['mesa']?.toString() ?? '';
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          mesa.isNotEmpty
-              ? '🔔 Pedido listo - $mesa'
-              : '🔔 Pedido listo para servir',
-        ),
-        duration: const Duration(seconds: 4),
-      ),
-    );
-  }
-
   @override
   void dispose() {
-    SocketService.desconectar();
     super.dispose();
   }
 
