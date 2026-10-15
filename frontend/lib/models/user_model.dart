@@ -6,6 +6,7 @@ class UserModel {
   final bool activo;
   final bool isVerified;
   final String? avatar;
+  final DateTime? createdAt;
 
   UserModel({
     this.id,
@@ -15,6 +16,7 @@ class UserModel {
     required this.activo,
     this.isVerified = true,
     this.avatar,
+    this.createdAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,9 @@ class UserModel {
       activo: json['activo'] ?? true,
       isVerified: json['isVerified'] ?? true,
       avatar: json['avatar'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
     );
   }
 
@@ -37,6 +42,7 @@ class UserModel {
       'activo': activo,
       'isVerified': isVerified,
       'avatar': avatar,
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 }

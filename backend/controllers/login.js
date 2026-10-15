@@ -2,66 +2,74 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import user from '../models/user.js';
 
-
 //CONTROLADOR DE LOGIN 
 
 export const loginUsers = async (req, res) => {
 
-    try{
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    //VALIDAMOS LOS CAMPOS 
+        //VALIDAMOS LOS CAMPOS 
 
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Por favor, ingrese su correo electrónico y contraseña' });
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Por favor, ingrese su correo electrónico y contraseña' });
+        }
+
+        //BUSCAMOS EL USUARIO EN LA BASE DE DATOS
+
+        const existeUser = await user.findOne({ email });
+
+        if (!existeUser) {
+            return res.status(400).json({ message: 'Usuario no encontrado' });
+        }
+
+        //VALIDAMOS QUE LA CUENTA ESTÉ VERIFICADA
+
+        if (!existeUser.isVerified) {
+            return res.status(403).json({
+                message: 'Tu cuenta no está verificada. Ingresa el código enviado a tu correo antes de iniciar sesión.'
+            });
+        }
+
+        //VALIDAMOS QUE EL USUARIO ESTÉ ACTIVO
+
+        if (!existeUser.activo) {
+            return res.status(403).json({ message: 'Usuario deshabilitado, contacta al administrador' });
+        }
+
+        //VALIDAMOS LA CONTRASEÑA
+
+        const esvalida = await bcrypt.compare(password, existeUser.password);
+        if (!esvalida) {
+            return res.status(400).json({ message: 'Contraseña incorrecta' });
+        }
+
+        //TOKEN DE AUTENTICACIÓN
+
+        const token = jwt.sign(
+            { id: existeUser._id, email: existeUser.email, rol: existeUser.rol },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        //RESPONDEMOS TOKEN DE AUTENTICACIÓN
+
+        res.status(200).json({
+            message: 'inicio de sesion exitoso',
+            token: token,
+            usuario: {
+                _id: existeUser._id,
+                nombre: existeUser.nombre,
+                email: existeUser.email,
+                rol: existeUser.rol,
+                activo: existeUser.activo,
+                avatar: existeUser.avatar,
+                createdAt: existeUser.createdAt
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Error del servidor', error: error.message });
     }
-    
 
-    //BUSCAMOS EL USUARIO EN LA BASE DE DATOS
-
-    const existeUser = await user.findOne({ email });
-
-    if (!existeUser) {
-        return res.status(400).json({ message: 'Usuario no encontrado' });
-    }
-
-    //VALIDAMOS QUE EL USUARIO ESTÉ ACTIVO
-    if (!existeUser.isVerified) {
-    return res.status(403).json({
-        message: 'Tu cuenta no está verificada. Ingresa el código enviado a tu correo antes de iniciar sesión.'
-    });
-}
-
-    if (!existeUser.activo) {
-        return res.status(403).json({ message: 'Usuario deshabilitado, contacta al administrador' });
-    }
-
-    //VALIDAMOS LA CONTRASEÑA
-
-    const esvalida = await bcrypt.compare(password, existeUser.password);
-    if (!esvalida) {
-        return res.status(400).json({ message: 'Contraseña incorrecta' });
-    }
-
-    //token de autenticación
-
-    const token = jwt.sign({
-        id: existeUser._id, email: existeUser.email, rol: existeUser.rol }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    //RESPONDEMOS TOKEN DE AUTENTICACIÓN
-
-    res.status(200).json({ 
-        message: 'inicio de sesion exitoso',
-        token: token, 
-        usuario:{
-            _id: existeUser._id,
-            nombre: existeUser.nombre,
-            email: existeUser.email,
-            rol: existeUser.rol,
-            activo: existeUser.activo
-        }});
-
-        } catch (error) {
-        res.status(500).json({ message: 'Error del servidor', error: error.message });}
-
-}
+};
