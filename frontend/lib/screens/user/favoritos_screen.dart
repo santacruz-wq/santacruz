@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,8 +25,10 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
   void initState() {
     super.initState();
 
-    // CARGAMOS LOS FAVORITOS CUANDO SE ABRE LA PANTALLA
+    // Cargar los favoritos al abrir la pantalla.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
       final auth = context.read<AuthProvider>();
 
       if (auth.usuario != null) {
@@ -33,9 +36,6 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
       }
     });
   }
-class FavoritosScreen extends StatelessWidget {
-  final bool showBottomBar;
-  const FavoritosScreen({super.key, this.showBottomBar = true});
 
   @override
   Widget build(BuildContext context) {
@@ -47,24 +47,17 @@ class FavoritosScreen extends StatelessWidget {
         title: const Text('Mis favoritos'),
         centerTitle: true,
       ),
-
       body: _buildBody(
         context,
         auth,
         favoritos,
       ),
-
       bottomNavigationBar: widget.showBottomBar
           ? BottomMenu(
               currentIndex: 1,
-              onItemSelected: (i) =>
-                  navegarDesdeMenu(context, i, 1),
-      appBar: AppBar(title: const Text('Mis favoritos'), centerTitle: true),
-      body: _buildBody(context, auth, favoritos),
-      bottomNavigationBar: showBottomBar
-          ? BottomMenu(
-              currentIndex: 1,
-              onItemSelected: (i) => navegarDesdeMenu(context, i, 1),
+              onItemSelected: (i) {
+                navegarDesdeMenu(context, i, 1);
+              },
             )
           : null,
     );
@@ -75,10 +68,7 @@ class FavoritosScreen extends StatelessWidget {
     AuthProvider auth,
     FavoritoProvider favoritos,
   ) {
-    // =========================
-    // SIN SESIÓN
-    // =========================
-
+    // Usuario sin sesión.
     if (auth.usuario == null) {
       return Center(
         child: Padding(
@@ -91,29 +81,18 @@ class FavoritosScreen extends StatelessWidget {
                 size: 64,
                 color: Colors.grey,
               ),
-
               const SizedBox(height: 16),
-
               const Text(
                 'Inicia sesión para ver tus favoritos',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontSize: 16),
               ),
-
               const SizedBox(height: 16),
-
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/login',
-                  );
+                  Navigator.pushNamed(context, '/login');
                 },
-                child: const Text(
-                  'Iniciar sesión',
-                ),
+                child: const Text('Iniciar sesión'),
               ),
             ],
           ),
@@ -121,25 +100,14 @@ class FavoritosScreen extends StatelessWidget {
       );
     }
 
-    // =========================
-    // CARGANDO
-    // =========================
-
-    if (favoritos.cargando &&
-        favoritos.productos.isEmpty) {
+    // Cargando favoritos.
+    if (favoritos.cargando && favoritos.productos.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
 
-    // =========================
-    // SIN FAVORITOS
-    // =========================
-
-    if (favoritos.cargando && favoritos.productos.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
+    // Sin favoritos.
     if (favoritos.productos.isEmpty) {
       return RefreshIndicator(
         onRefresh: favoritos.cargarFavoritos,
@@ -147,38 +115,28 @@ class FavoritosScreen extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 120),
-
             Icon(
               Icons.favorite_border,
               size: 64,
               color: Colors.grey,
             ),
-
             SizedBox(height: 16),
-
             Text(
               'Aún no tienes favoritos',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-              ),
+              style: TextStyle(fontSize: 16),
             ),
           ],
         ),
       );
     }
 
-    // =========================
-    // LISTA DE FAVORITOS
-    // =========================
-
+    // Lista de productos favoritos.
     return RefreshIndicator(
       onRefresh: favoritos.cargarFavoritos,
       child: GridView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-
         padding: const EdgeInsets.all(16),
-
         gridDelegate:
             const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -186,12 +144,9 @@ class FavoritosScreen extends StatelessWidget {
           mainAxisSpacing: 12,
           mainAxisExtent: 190,
         ),
-
         itemCount: favoritos.productos.length,
-
         itemBuilder: (context, index) {
-          final producto =
-              favoritos.productos[index];
+          final producto = favoritos.productos[index];
 
           return ProductCard(
             id: producto.id,

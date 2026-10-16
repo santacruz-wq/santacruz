@@ -1,5 +1,8 @@
+
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../core/storage/secure_storage.dart';
@@ -32,22 +35,30 @@ class AuthProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    final resultado =
-        await AuthService.login(
-      email,
-      password,
-    );
+    try {
+      final resultado = await AuthService.login(
+        email,
+        password,
+      );
 
-    _cargando = false;
+      _cargando = false;
 
-    if (resultado["success"]) {
-      _usuario = resultado["user"];
+      if (resultado['success'] == true) {
+        _usuario = resultado['user'] as UserModel?;
 
-      notifyListeners();
+        notifyListeners();
 
-      return true;
-    } else {
-      _error = resultado["message"];
+        return _usuario != null;
+      } else {
+        _error = resultado['message']?.toString();
+
+        notifyListeners();
+
+        return false;
+      }
+    } catch (e) {
+      _cargando = false;
+      _error = e.toString().replaceFirst('Exception: ', '');
 
       notifyListeners();
 
@@ -65,28 +76,66 @@ class AuthProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    final resultado =
-        await AuthService.loginConGoogle();
+    try {
+      final resultado = await AuthService.loginConGoogle();
 
-    _cargando = false;
+      _cargando = false;
 
-    if (resultado["success"]) {
-      _usuario = resultado["user"];
+      if (resultado['success'] == true) {
+        _usuario = resultado['user'] as UserModel?;
 
-      notifyListeners();
+        notifyListeners();
 
-      return true;
-    } else {
-      // Si el usuario canceló Google,
-      // no mostramos error.
-      if (resultado["cancelado"] != true) {
-        _error = resultado["message"];
+        return _usuario != null;
+      } else {
+        // Si el usuario cancela Google, no mostramos error.
+        if (resultado['cancelado'] != true) {
+          _error = resultado['message']?.toString();
+        }
+
+        notifyListeners();
+
+        return false;
       }
+    } catch (e) {
+      _cargando = false;
+      _error = e.toString().replaceFirst('Exception: ', '');
 
       notifyListeners();
 
       return false;
     }
+  }
+
+  // =========================================================
+  // ACTUALIZAR USUARIO DESDE EL PERFIL
+  // =========================================================
+
+  void actualizarUsuarioDesdePerfil(
+    Map<String, dynamic> datos,
+  ) {
+    final usuarioActual = _usuario;
+
+    if (usuarioActual == null) return;
+
+    final usuarioActualizado = <String, dynamic>{
+      ...usuarioActual.toJson(),
+      '_id': usuarioActual.id,
+      'nombre': datos['nombre'] ?? usuarioActual.nombre,
+      'email': datos['email'] ?? usuarioActual.email,
+      'rol': datos['rol'] ?? usuarioActual.rol,
+      'activo': datos['activo'] ?? usuarioActual.activo,
+      'isVerified': datos['isVerified'] ?? usuarioActual.isVerified,
+      'avatar': datos.containsKey('avatar')
+          ? datos['avatar']
+          : usuarioActual.avatar,
+      'createdAt':
+          datos['createdAt'] ?? usuarioActual.createdAt?.toIso8601String(),
+    };
+
+    _usuario = UserModel.fromJson(usuarioActualizado);
+
+    notifyListeners();
   }
 
   // =========================================================
@@ -100,6 +149,8 @@ class AuthProvider extends ChangeNotifier {
 
     _usuario = null;
 
+    _error = null;
+
     notifyListeners();
   }
 
@@ -108,16 +159,16 @@ class AuthProvider extends ChangeNotifier {
   // =========================================================
 
   Future<void> verificarSesion() async {
-    final token =
-        await SecureStorage.getToken();
+    final token = await SecureStorage.getToken();
 
-    final userJson =
-        await SecureStorage.getUser();
+    final userJson = await SecureStorage.getUser();
 
     if (token != null && userJson != null) {
-      _usuario = UserModel.fromJson(
-        jsonDecode(userJson),
-      );
+      final decoded = jsonDecode(userJson);
+
+      if (decoded is Map<String, dynamic>) {
+        _usuario = UserModel.fromJson(decoded);
+      }
 
       notifyListeners();
     }
