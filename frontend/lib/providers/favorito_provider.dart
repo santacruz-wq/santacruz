@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/product_model.dart';
 import '../services/favorito_service.dart';
 
@@ -8,7 +9,9 @@ class FavoritoProvider extends ChangeNotifier {
   bool _cargando = false;
 
   List<ProductModel> get productos => _productos;
+
   bool get cargando => _cargando;
+
   int get total => _ids.length;
 
   // VERIFICA DESDE MEMORIA SI ES FAVORITO
@@ -29,6 +32,9 @@ class FavoritoProvider extends ChangeNotifier {
       _ids
         ..clear()
         ..addAll(lista.map((producto) => producto.id));
+        ..addAll(
+          lista.map((producto) => producto.id),
+        );
     } catch (error) {
       debugPrint('Error cargando favoritos: $error');
     }
@@ -42,6 +48,9 @@ class FavoritoProvider extends ChangeNotifier {
     final eraFavorito = _ids.contains(productoId);
 
     // ACTUALIZAMOS TEMPORALMENTE LA INTERFAZ
+  Future<bool> toggle(String productoId) async {
+    final eraFavorito = _ids.contains(productoId);
+
     if (eraFavorito) {
       _ids.remove(productoId);
 
@@ -63,6 +72,13 @@ class FavoritoProvider extends ChangeNotifier {
     }
 
     // SI EL BACKEND FALLA, RECARGAMOS EL ESTADO REAL
+
+    if (eraFavorito) {
+      exito = await FavoritoService.quitarFavorito(productoId);
+    } else {
+      exito = await FavoritoService.agregarFavorito(productoId);
+    }
+
     if (!exito) {
       await cargarFavoritos();
       return false;

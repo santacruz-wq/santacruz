@@ -30,6 +30,16 @@ class PerfilScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Cerrar sesión'),
+        title: const Text("Cerrar sesión"),
+        content: const Text("¿Estás seguro de que quieres cerrar sesión?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Cerrar sesión"),
           ),
         ],
       ),
@@ -84,6 +94,9 @@ class PerfilScreen extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final favoritos = context.watch<FavoritoProvider>();
     final lang = context.watch<LanguageProvider>();
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
     final usuario = authProvider.usuario;
 
     if (usuario == null) {
@@ -100,6 +113,15 @@ class PerfilScreen extends StatelessWidget {
       backgroundColor: AppColors.cremaClaro,
       appBar: AppBar(
         title: const Text('Mi Perfil'),
+        appBar: AppBar(title: const Text("Perfil")),
+        body: const Center(child: Text("No has iniciado sesión")),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.cremaClaro,
+      appBar: AppBar(
+        title: const Text("Mi Perfil"),
         backgroundColor: AppColors.cremaClaro,
         foregroundColor: AppColors.textoCafe,
         elevation: 0,
@@ -128,6 +150,20 @@ class PerfilScreen extends StatelessWidget {
               Text(
                 usuario.nombre,
                 style: const TextStyle(
+              CircleAvatar(
+                radius: 55,
+                backgroundColor: AppColors.caramelo.withOpacity(0.15),
+                backgroundImage: (usuario.avatar != null && usuario.avatar!.isNotEmpty)
+                    ? NetworkImage(usuario.avatar!)
+                    : null,
+                child: (usuario.avatar == null || usuario.avatar!.isEmpty)
+                    ? Icon(Icons.person, size: 55, color: AppColors.cafeMedio)
+                    : null,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                usuario.nombre,
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textoCafe,
@@ -144,6 +180,12 @@ class PerfilScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               //OPCIONES
+              const SizedBox(height: 6),
+              Text(
+                usuario.email,
+                style: TextStyle(fontSize: 15, color: AppColors.cafeMedio),
+              ),
+              const SizedBox(height: 30),
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
@@ -152,6 +194,7 @@ class PerfilScreen extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -196,6 +239,33 @@ class PerfilScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               //CERRAR SESION
+                    ListTile(
+                      leading: Icon(Icons.badge_outlined, color: AppColors.cafeMedio),
+                      title: Text("Rol", style: TextStyle(color: AppColors.textoCafe)),
+                      trailing: Text(
+                        usuario.rol,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.caramelo,
+                        ),
+                      ),
+                    ),
+                    Divider(height: 1, color: AppColors.cremaOscuro),
+                    ListTile(
+                      leading: Icon(Icons.email_outlined, color: AppColors.cafeMedio),
+                      title: Text("Correo", style: TextStyle(color: AppColors.textoCafe)),
+                      trailing: Text(
+                        usuario.email,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textoCafe,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -203,6 +273,7 @@ class PerfilScreen extends StatelessWidget {
                   icon: const Icon(Icons.logout, color: Colors.red),
                   label: const Text(
                     'Cerrar sesión',
+                    "Cerrar sesión",
                     style: TextStyle(color: Colors.red),
                   ),
                   style: OutlinedButton.styleFrom(

@@ -1,13 +1,14 @@
-
 // ============================
 // 🔹 IMPORTS
 // ============================
+
 import express from 'express';
 import "dotenv/config";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./db/db.js";
-import dns from "dns";     
+import dns from "dns";
+
 // Rutas
 import userRoutes from './routes/user.js';
 import loginRoutes from './routes/login.js';
@@ -24,13 +25,10 @@ import favoritosRoutes from "./routes/favoritos.js";
 import chatRoutes from "./routes/chatroutes.js";
 
 
-
-
-
-
 // ============================
 // 🔹 CONFIGURACIÓN
 // ============================
+
 const app = express();
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -42,36 +40,106 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 3000;
+
+
 // ============================
 // 🔹 SOCKET.IO
 // ============================
+
 const server = http.createServer(app);
+
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: {
+        origin: "*"
+    }
 });
 
-//GUARDAMOS LA INSTANCIA DE IO PARA USARLA EN LOS CONTROLLERS
+
+// GUARDAMOS LA INSTANCIA DE IO
+// PARA USARLA EN LOS CONTROLLERS
+
 app.set("io", io);
 
-io.on("connection", (socket) => {
-    console.log("Cliente conectado:", socket.id);
 
-    //EL MESERO SE UNE A UNA SALA CON SU PROPIO ID DE USUARIO
+io.on("connection", (socket) => {
+
+    console.log(
+        "Cliente conectado:",
+        socket.id
+    );
+
+
+    // ============================
+    // 🔹 SALA INDIVIDUAL DEL MESERO
+    // ============================
+
+    // SE CONSERVA PARA NOTIFICACIONES
+    // QUE SEAN EXCLUSIVAS DE UN USUARIO
+
     socket.on("join", (usuarioId) => {
+
         socket.join(usuarioId);
-        console.log(`Usuario ${usuarioId} se unió a su sala`);
+
+        console.log(
+            `Usuario ${usuarioId} se unió a su sala`
+        );
+
     });
+
+
+    // ============================
+    // 🔹 SALA GENERAL DE MESEROS
+    // ============================
+
+    // TODOS LOS MESEROS SE CONECTAN
+    // A ESTA MISMA SALA
+
+    socket.on("joinMeseros", () => {
+
+        socket.join("meseros");
+
+        console.log(
+            `Mesero se unió a la sala: ${socket.id}`
+        );
+
+    });
+
+
+    // ============================
+    // 🔹 SALA DE COCINA
+    // ============================
+
+    socket.on("joinCocina", () => {
+
+        socket.join("cocina");
+
+        console.log(
+            `Cocina se unió a la sala: ${socket.id}`
+        );
+
+    });
+
+
+    // ============================
+    // 🔹 DESCONECTAR
+    // ============================
 
     socket.on("disconnect", () => {
-        console.log("Cliente desconectado:", socket.id);
-    });
-});
 
+        console.log(
+            "Cliente desconectado:",
+            socket.id
+        );
+
+    });
+
+});
 
 
 // ============================
 // 🔹 RUTAS DE LA API
 // ============================
+
 app.use('/api/usuarios', userRoutes);
 app.use('/api/login', loginRoutes);
 app.use('/api/recuperar', recuperarRoutes);
@@ -87,9 +155,16 @@ app.use("/api/inventario", inventarioRoutes);
 app.use("/api/notificacion", notificacionRoutes);
 app.use("/api/favoritos", favoritosRoutes);
 app.use("/api/chat", chatRoutes);
+
+
 // ============================
 // 🔹 SERVIDOR
 // ============================
+
 server.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+
+    console.log(
+        `Servidor corriendo en http://localhost:${PORT}`
+    );
+
 });

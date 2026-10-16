@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/config/app_colors.dart';
 import '../../core/navigation/menu_navigation.dart';
 import '../../widgets/global/bottom_menu.dart';
-import '../../widgets/menu/menu_header.dart';
-import '../../widgets/menu/menu_search.dart';
 import '../../widgets/menu/menu_categorias.dart';
-import '../../widgets/menu/menu_products.dart';
-import '../../widgets/menu/menu_grid.dart';
 import '../../models/product_model.dart';
 import '../../models/categoria_model.dart';
 import '../../services/product_service.dart';
-import '../../providers/language_provider.dart';
+import 'widgets/menu_top_section.dart';
+import 'widgets/menu_productos_section.dart';
 
 class MenuScreen extends StatefulWidget {
   final bool showBottomBar; // <-- NUEVO
   const MenuScreen({super.key, this.showBottomBar = true});
+  final bool showBottomBar;
+
+  const MenuScreen({
+    super.key,
+    this.showBottomBar = true,
+  });
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -30,6 +34,7 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   void initState() {
     super.initState();
+
     _futureProductos = ProductService.getProductos();
   }
 
@@ -54,6 +59,8 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>();
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.crema,
       body: Stack(
@@ -78,6 +85,12 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   ],
                 ),
+              MenuTopSection(
+                onBusquedaChanged: (texto) {
+                  setState(() {
+                    _busqueda = texto;
+                  });
+                },
               ),
               const SizedBox(height: 15),
               Expanded(
@@ -114,6 +127,11 @@ class _MenuScreenState extends State<MenuScreen> {
                               ],
                             );
                           },
+                        MenuProductosSection(
+                          futureProductos: _futureProductos,
+                          busqueda: _busqueda,
+                          selectedCategory: _selectedCategory,
+                          categorias: _categorias,
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -127,6 +145,16 @@ class _MenuScreenState extends State<MenuScreen> {
       ),
       bottomNavigationBar: widget.showBottomBar
           ? BottomMenu(currentIndex: 0, onItemSelected: (i) => navegarDesdeMenu(context, i, 0))
+      // MENÚ INFERIOR
+      bottomNavigationBar: widget.showBottomBar
+          ? BottomMenu(
+              currentIndex: 0,
+              onItemSelected: (i) => navegarDesdeMenu(
+                context,
+                i,
+                0,
+              ),
+            )
           : null,
     );
   }

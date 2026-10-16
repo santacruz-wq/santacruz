@@ -33,6 +33,9 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
       }
     });
   }
+class FavoritosScreen extends StatelessWidget {
+  final bool showBottomBar;
+  const FavoritosScreen({super.key, this.showBottomBar = true});
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +59,12 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
               currentIndex: 1,
               onItemSelected: (i) =>
                   navegarDesdeMenu(context, i, 1),
+      appBar: AppBar(title: const Text('Mis favoritos'), centerTitle: true),
+      body: _buildBody(context, auth, favoritos),
+      bottomNavigationBar: showBottomBar
+          ? BottomMenu(
+              currentIndex: 1,
+              onItemSelected: (i) => navegarDesdeMenu(context, i, 1),
             )
           : null,
     );
@@ -126,6 +135,10 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     // =========================
     // SIN FAVORITOS
     // =========================
+
+    if (favoritos.cargando && favoritos.productos.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     if (favoritos.productos.isEmpty) {
       return RefreshIndicator(
