@@ -65,6 +65,14 @@ export const soloAdmin = (req, res, next) => {
 
     next();
 };
+export const soloUsuario = (req, res, next) => {
+    const rolesPermitidos = ["user", "usuario"];
+
+    if (!rolesPermitidos.includes(req.usuario?.rol)) {
+        return res.status(403).json({ message: "Solo los usuarios pueden dejar reseñas" });
+    }
+    next();
+};
 
 // SOLO USUARIOS
 export const soloUser = (req, res, next) => {

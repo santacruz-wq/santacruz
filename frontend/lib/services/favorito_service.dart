@@ -1,55 +1,79 @@
 import 'dart:convert';
+
 import '../core/config/api_config.dart';
 import '../core/network/api_client.dart';
 import '../models/product_model.dart';
 
 class FavoritoService {
-  // OBTENEMOS LA LISTA DE FAVORITOS DEL USUARIO (CON EL PRODUCTO POBLADO)
+  // OBTENER FAVORITOS
   static Future<List<ProductModel>> getFavoritos() async {
-    final response = await ApiClient.get(ApiConfig.favoritos);
+    final response = await ApiClient.get(
+      ApiConfig.favoritos,
+    );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final List<dynamic> favoritos = data["favoritos"];
 
-      // CADA FAVORITO TRAE EL PRODUCTO POBLADO EN EL CAMPO "producto"
-      // IGNORAMOS LOS QUE YA NO TIENEN PRODUCTO (producto == null)
+      final List<dynamic> favoritos =
+          data["favoritos"];
+
       return favoritos
-          .where((item) => item["producto"] != null)
-          .map((item) => ProductModel.fromJson(item["producto"]))
+          .where(
+            (item) => item["producto"] != null,
+          )
+          .map(
+            (item) => ProductModel.fromJson(
+              item["producto"],
+            ),
+          )
           .toList();
     } else {
-      throw Exception("Error al obtener favoritos");
+      throw Exception(
+        "Error al obtener favoritos",
+      );
     }
   }
 
-  // VERIFICAMOS SI UN PRODUCTO ESPECIFICO YA ES FAVORITO
-  static Future<bool> esFavorito(String productoId) async {
+  // VERIFICAR FAVORITO
+  static Future<bool> esFavorito(
+    String productoId,
+  ) async {
     final response = await ApiClient.get(
       "${ApiConfig.favoritosVerificar}/$productoId",
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
       return data["esFavorito"] ?? false;
     }
+
     return false;
   }
 
-  // AGREGAMOS UN PRODUCTO A FAVORITOS
-  static Future<bool> agregarFavorito(String productoId) async {
+  // AGREGAR FAVORITO
+  static Future<bool> agregarFavorito(
+    String productoId,
+  ) async {
     final response = await ApiClient.post(
       ApiConfig.favoritos,
-      {"producto": productoId},
+      {
+        "producto": productoId,
+      },
     );
+
     return response.statusCode == 201;
   }
 
-  // QUITAMOS UN PRODUCTO DE FAVORITOS
-  static Future<bool> quitarFavorito(String productoId) async {
+  // ELIMINAR FAVORITO
+  static Future<bool> quitarFavorito(
+    String productoId,
+  ) async {
     final response = await ApiClient.delete(
       "${ApiConfig.favoritos}/$productoId",
     );
+
     return response.statusCode == 200;
   }
+  
 }

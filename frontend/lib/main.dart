@@ -14,6 +14,10 @@ import 'screens/auth/recuperar_screen.dart';
 import 'screens/language_selection/language_selection.dart';
 
 import 'screens/user/favoritos_screen.dart';
+import 'screens/menu/menu_screen.dart';
+import 'screens/auth/registro_screen.dart';
+import 'screens/main_shell.dart';
+import 'screens/mesero/mesas_screen.dart';
 
 import 'screens/main_shell.dart';
 import 'screens/mesero/mesero_shell.dart';
@@ -40,15 +44,9 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => LanguageProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => FavoritoProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritoProvider()),
       ],
       child: const MyApp(),
     ),
@@ -69,10 +67,7 @@ class MyApp extends StatelessWidget {
 
       debugShowCheckedModeBanner: false,
 
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
 
       home: const AppStarter(),
 
@@ -83,6 +78,11 @@ class MyApp extends StatelessWidget {
 
         '/inicio': (context) => InicioScreen(),
 
+        // Registro
+        '/registro': (context) => const RegistroScreen(),
+
+        // Selección de idioma
+        '/language-selection': (context) => const LanguageSelectionScreen(),
         // ======================================================
         // REGISTRO
         // ======================================================
@@ -102,6 +102,9 @@ class MyApp extends StatelessWidget {
 
         '/login': (context) => const LoginScreen(),
 
+        // Menú principal (envuelto en MainShell con la barra inferior)
+        '/menu': (context) => const MainShell(),
+        '/main-shell': (context) => const MainShell(),
         // ======================================================
         // USUARIO NORMAL
         // ======================================================
@@ -121,15 +124,16 @@ class MyApp extends StatelessWidget {
         // ======================================================
 
         '/verificar-cuenta': (context) {
+          final email = ModalRoute.of(context)!.settings.arguments as String;
           final email = ModalRoute.of(context)!
               .settings
               .arguments as String;
 
-          return VerificarCuentaScreen(
-            email: email,
-          );
+          return VerificarCuentaScreen(email: email);
         },
 
+        // Paneles temporales
+        '/admin': (context) => const _PlaceholderScreen(titulo: 'Panel Admin'),
         // ======================================================
         // RECUPERAR CONTRASEÑA
         // ======================================================
@@ -148,6 +152,11 @@ class MyApp extends StatelessWidget {
         // MESERO
         // ======================================================
 
+        '/cocina': (context) =>
+            const _PlaceholderScreen(titulo: 'Panel Cocina'),
+
+        '/recuperar': (context) =>
+            const _PlaceholderScreen(titulo: 'Recuperar Contraseña'),
         // Utiliza el MeseroShell de:
         // screens/mesero/mesero_shell.dart
         '/mesero': (context) => const MeseroShell(),
@@ -213,11 +222,7 @@ class _AppStarterState extends State<AppStarter> {
   @override
   Widget build(BuildContext context) {
     if (!_listo) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return InicioScreen();
@@ -231,21 +236,13 @@ class _AppStarterState extends State<AppStarter> {
 class _PlaceholderScreen extends StatelessWidget {
   final String titulo;
 
-  const _PlaceholderScreen({
-    required this.titulo,
-  });
+  const _PlaceholderScreen({required this.titulo});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(titulo),
-      ),
-      body: Center(
-        child: Text(
-          '$titulo — en construcción',
-        ),
-      ),
+      appBar: AppBar(title: Text(titulo)),
+      body: Center(child: Text('$titulo — en construcción')),
     );
   }
 }

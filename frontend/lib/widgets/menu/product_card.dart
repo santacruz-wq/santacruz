@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/config/app_colors.dart';
 import '../global/favorito_button.dart';
+import '../resenas/resenas_section.dart';
 
 class ProductCard extends StatelessWidget {
   final String id;
@@ -37,7 +38,7 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Imagen con botón de favoritos
+          // Imagen con botón de favoritos y botón de reseñas
           Stack(
             children: [
               ClipRRect(
@@ -60,6 +61,30 @@ class ProductCard extends StatelessWidget {
                           color: AppColors.caramelo,
                         ),
                       ),
+                    ),
+                  ),
+                ),
+              ),
+              // Botón de reseñas (esquina superior izquierda)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: GestureDetector(
+                  onTap: () => mostrarResenasProducto(
+                    context,
+                    productoId: id,
+                    nombre: name,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.star_rounded,
+                      size: 14,
+                      color: AppColors.caramelo,
                     ),
                   ),
                 ),

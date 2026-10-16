@@ -14,10 +14,12 @@ class FavoritoProvider extends ChangeNotifier {
 
   int get total => _ids.length;
 
+  // VERIFICA DESDE MEMORIA SI ES FAVORITO
   bool esFavorito(String productoId) {
     return _ids.contains(productoId);
   }
 
+  // CARGA LOS FAVORITOS DESDE EL BACKEND
   Future<void> cargarFavoritos() async {
     _cargando = true;
     notifyListeners();
@@ -29,6 +31,7 @@ class FavoritoProvider extends ChangeNotifier {
 
       _ids
         ..clear()
+        ..addAll(lista.map((producto) => producto.id));
         ..addAll(
           lista.map((producto) => producto.id),
         );
@@ -40,6 +43,11 @@ class FavoritoProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // AGREGA O ELIMINA UN FAVORITO
+  Future<bool> toggle(String productoId) async {
+    final eraFavorito = _ids.contains(productoId);
+
+    // ACTUALIZAMOS TEMPORALMENTE LA INTERFAZ
   Future<bool> toggle(String productoId) async {
     final eraFavorito = _ids.contains(productoId);
 
@@ -63,11 +71,21 @@ class FavoritoProvider extends ChangeNotifier {
       exito = await FavoritoService.agregarFavorito(productoId);
     }
 
+    // SI EL BACKEND FALLA, RECARGAMOS EL ESTADO REAL
+
+    if (eraFavorito) {
+      exito = await FavoritoService.quitarFavorito(productoId);
+    } else {
+      exito = await FavoritoService.agregarFavorito(productoId);
+    }
+
     if (!exito) {
       await cargarFavoritos();
       return false;
     }
 
+    // DESPUÉS DE AGREGAR:
+    // RECARGAMOS PARA OBTENER EL PRODUCTO COMPLETO
     if (!eraFavorito) {
       await cargarFavoritos();
     }
@@ -75,6 +93,7 @@ class FavoritoProvider extends ChangeNotifier {
     return true;
   }
 
+  // LIMPIAR AL CERRAR SESIÓN
   void limpiar() {
     _ids.clear();
     _productos = [];
