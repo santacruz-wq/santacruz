@@ -6,7 +6,8 @@ import {
     getOrdenPorId,
     agregarProducto,
     crearAdicion,
-    cambiarEstadoOrden
+    cambiarEstadoOrden,
+    getProductosMasVendidos
 } from '../controllers/ordenes.js';
 
 import {
@@ -17,8 +18,7 @@ import {
 
 const router = express.Router();
 
-// CREAR UNA NUEVA ORDEN (MESERO)
-
+// Crear orden
 router.post(
     '/',
     verificarToken,
@@ -26,25 +26,29 @@ router.post(
     crearOrden
 );
 
-// OBTENER TODAS LAS ÓRDENES
+// Productos más vendidos (administrador)
+router.get(
+    '/estadisticas/productos-mas-vendidos',
+    verificarToken,
+    permitirRoles('admin'),
+    getProductosMasVendidos
+);
 
+// Obtener todas las órdenes
 router.get(
     '/',
     verificarToken,
     getOrdenes
 );
 
-// OBTENER UNA ORDEN POR ID
-
+// Obtener orden por ID
 router.get(
     '/:id',
     verificarToken,
     getOrdenPorId
 );
 
-// AGREGAR UN PRODUCTO A UNA ORDEN
-// SOLO SI TODAVÍA ESTÁ PENDIENTE
-
+// Agregar producto a una orden pendiente
 router.post(
     '/:id/productos',
     verificarToken,
@@ -52,9 +56,7 @@ router.post(
     agregarProducto
 );
 
-// CREAR UNA ADICIÓN A UNA ORDEN
-// SE PUEDE HACER AUNQUE YA ESTÉ EN COCINA
-
+// Crear adición
 router.post(
     '/:id/adiciones',
     verificarToken,
@@ -62,17 +64,11 @@ router.post(
     crearAdicion
 );
 
-// CAMBIAR ESTADO DE LA ORDEN
-// MESERO, COCINA O ADMIN
-
+// Cambiar estado de una orden
 router.patch(
     '/:id/estado',
     verificarToken,
-    permitirRoles(
-        'mesero',
-        'cocina',
-        'admin'
-    ),
+    permitirRoles('mesero', 'cocina', 'admin'),
     cambiarEstadoOrden
 );
 

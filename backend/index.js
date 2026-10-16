@@ -23,6 +23,8 @@ import inventarioRoutes from "./routes/inventario.js";
 import notificacionRoutes from "./routes/notificacion.js";
 import favoritosRoutes from "./routes/favoritos.js";
 import chatRoutes from "./routes/chatroutes.js";
+import adminUsuariosRoutes from "./routes/usuarios.js";
+import perfilRoutes from "./routes/perfil.js";
 
 
 // ============================
@@ -155,7 +157,8 @@ app.use("/api/inventario", inventarioRoutes);
 app.use("/api/notificacion", notificacionRoutes);
 app.use("/api/favoritos", favoritosRoutes);
 app.use("/api/chat", chatRoutes);
-
+app.use("/api/admin/usuarios", adminUsuariosRoutes);
+app.use("/api/perfil", perfilRoutes);
 
 // ============================
 // 🔹 SERVIDOR

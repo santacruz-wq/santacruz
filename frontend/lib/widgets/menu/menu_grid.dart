@@ -71,10 +71,11 @@ class MenuGrid extends StatelessWidget {
                 disponible: product.disponible,
               ),
               child: ProductGridCard(
-                name: nombresTraducidos[index],
-                price: '\$${product.precio.toStringAsFixed(0)}',
-                image: product.imagenUrl,
-              ),
+  id: product.id,
+  name: nombresTraducidos[index],
+  price: '\$${product.precio.toStringAsFixed(0)}',
+  image: product.imagenUrl,
+),
             );
           },
         );

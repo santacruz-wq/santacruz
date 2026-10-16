@@ -4,9 +4,12 @@ import '../core/config/api_config.dart';
 import '../core/network/api_client.dart';
 import '../models/orden_model.dart';
 import '../models/orden_detalle_model.dart';
+import '../models/producto_mas_vendido_model.dart';
 
 class OrdenService {
+  // ============================
   // CREAR UNA NUEVA ORDEN
+  // ============================
 
   static Future<OrdenModel> crearOrden({
     required String mesaId,
@@ -23,9 +26,7 @@ class OrdenService {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 201) {
-      return OrdenModel.fromJson(
-        data["orden"],
-      );
+      return OrdenModel.fromJson(data["orden"]);
     }
 
     throw Exception(
@@ -33,7 +34,9 @@ class OrdenService {
     );
   }
 
+  // ============================
   // OBTENER TODAS LAS ÓRDENES
+  // ============================
 
   static Future<List<OrdenModel>> getOrdenes() async {
     final response = await ApiClient.get(
@@ -43,23 +46,21 @@ class OrdenService {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      final List<dynamic> lista =
-          data["ordenes"] ?? [];
+      final List<dynamic> lista = data["ordenes"] ?? [];
 
       return lista
-          .map(
-            (item) => OrdenModel.fromJson(item),
-          )
+          .map((item) => OrdenModel.fromJson(item))
           .toList();
     }
 
     throw Exception(
-      data["message"] ??
-          "No se pudieron obtener las órdenes",
+      data["message"] ?? "No se pudieron obtener las órdenes",
     );
   }
 
+  // ============================
   // OBTENER UNA ORDEN POR ID
+  // ============================
 
   static Future<Map<String, dynamic>> getOrdenPorId(
     String ordenId,
@@ -71,17 +72,12 @@ class OrdenService {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      final orden = OrdenModel.fromJson(
-        data["orden"],
-      );
+      final orden = OrdenModel.fromJson(data["orden"]);
 
-      final List<dynamic> lista =
-          data["detalles"] ?? [];
+      final List<dynamic> lista = data["detalles"] ?? [];
 
       final detalles = lista
-          .map(
-            (item) => OrdenDetalleModel.fromJson(item),
-          )
+          .map((item) => OrdenDetalleModel.fromJson(item))
           .toList();
 
       return {
@@ -91,13 +87,14 @@ class OrdenService {
     }
 
     throw Exception(
-      data["message"] ??
-          "No se pudo obtener la orden",
+      data["message"] ?? "No se pudo obtener la orden",
     );
   }
 
-  // AGREGAR PRODUCTO A UNA ORDEN EXISTENTE
-  // SOLO CUANDO LA ORDEN SIGUE PENDIENTE
+  // ============================
+  // AGREGAR PRODUCTO A UNA ORDEN
+  // Solo cuando sigue pendiente
+  // ============================
 
   static Future<bool> agregarProducto({
     required String ordenId,
@@ -121,13 +118,13 @@ class OrdenService {
     }
 
     throw Exception(
-      data["message"] ??
-          "No se pudo agregar el producto",
+      data["message"] ?? "No se pudo agregar el producto",
     );
   }
 
-  // CREAR UNA ADICIÓN A UNA ORDEN
-  // SE PUEDE USAR AUNQUE LA ORDEN YA ESTÉ EN COCINA
+  // ============================
+  // CREAR UNA ADICIÓN
+  // ============================
 
   static Future<bool> crearAdicion({
     required String ordenId,
@@ -147,12 +144,13 @@ class OrdenService {
     }
 
     throw Exception(
-      data["message"] ??
-          "No se pudo crear la adición",
+      data["message"] ?? "No se pudo crear la adición",
     );
   }
 
+  // ============================
   // CAMBIAR ESTADO DE LA ORDEN
+  // ============================
 
   static Future<bool> cambiarEstado(
     String ordenId,
@@ -174,6 +172,37 @@ class OrdenService {
     throw Exception(
       data["message"] ??
           "No se pudo cambiar el estado de la orden",
+    );
+  }
+
+  // ============================
+  // OBTENER LOS 5 PRODUCTOS
+  // MÁS VENDIDOS
+  // ============================
+
+  static Future<List<ProductoMasVendidoModel>>
+      getProductosMasVendidos() async {
+    final response = await ApiClient.get(
+      '${ApiConfig.ordenes}/estadisticas/productos-mas-vendidos',
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> lista = data["productos"] ?? [];
+
+      return lista
+          .map(
+            (item) => ProductoMasVendidoModel.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList();
+    }
+
+    throw Exception(
+      data["message"] ??
+          "No se pudieron obtener los productos más vendidos",
     );
   }
 }

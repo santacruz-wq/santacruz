@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../models/product_model.dart';
@@ -14,12 +15,12 @@ class FavoritoProvider extends ChangeNotifier {
 
   int get total => _ids.length;
 
-  // VERIFICA DESDE MEMORIA SI ES FAVORITO
+  // Verifica si un producto es favorito.
   bool esFavorito(String productoId) {
     return _ids.contains(productoId);
   }
 
-  // CARGA LOS FAVORITOS DESDE EL BACKEND
+  // Carga los favoritos desde el backend.
   Future<void> cargarFavoritos() async {
     _cargando = true;
     notifyListeners();
@@ -32,25 +33,19 @@ class FavoritoProvider extends ChangeNotifier {
       _ids
         ..clear()
         ..addAll(lista.map((producto) => producto.id));
-        ..addAll(
-          lista.map((producto) => producto.id),
-        );
     } catch (error) {
       debugPrint('Error cargando favoritos: $error');
+    } finally {
+      _cargando = false;
+      notifyListeners();
     }
-
-    _cargando = false;
-    notifyListeners();
   }
 
-  // AGREGA O ELIMINA UN FAVORITO
+  // Agrega o elimina un favorito.
   Future<bool> toggle(String productoId) async {
     final eraFavorito = _ids.contains(productoId);
 
-    // ACTUALIZAMOS TEMPORALMENTE LA INTERFAZ
-  Future<bool> toggle(String productoId) async {
-    final eraFavorito = _ids.contains(productoId);
-
+    // Actualización optimista de la interfaz.
     if (eraFavorito) {
       _ids.remove(productoId);
 
@@ -63,40 +58,34 @@ class FavoritoProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    bool exito;
+    try {
+      final exito = eraFavorito
+          ? await FavoritoService.quitarFavorito(productoId)
+          : await FavoritoService.agregarFavorito(productoId);
 
-    if (eraFavorito) {
-      exito = await FavoritoService.quitarFavorito(productoId);
-    } else {
-      exito = await FavoritoService.agregarFavorito(productoId);
-    }
+      if (!exito) {
+        await cargarFavoritos();
+        return false;
+      }
 
-    // SI EL BACKEND FALLA, RECARGAMOS EL ESTADO REAL
+      // Recupera el producto completo después de agregarlo.
+      if (!eraFavorito) {
+        await cargarFavoritos();
+      }
 
-    if (eraFavorito) {
-      exito = await FavoritoService.quitarFavorito(productoId);
-    } else {
-      exito = await FavoritoService.agregarFavorito(productoId);
-    }
-
-    if (!exito) {
+      return true;
+    } catch (error) {
+      debugPrint('Error actualizando favorito: $error');
       await cargarFavoritos();
       return false;
     }
-
-    // DESPUÉS DE AGREGAR:
-    // RECARGAMOS PARA OBTENER EL PRODUCTO COMPLETO
-    if (!eraFavorito) {
-      await cargarFavoritos();
-    }
-
-    return true;
   }
 
-  // LIMPIAR AL CERRAR SESIÓN
+  // Limpia los favoritos al cerrar sesión.
   void limpiar() {
     _ids.clear();
     _productos = [];
+    _cargando = false;
     notifyListeners();
   }
 }
