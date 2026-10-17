@@ -1,9 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/favorito_provider.dart';
+import 'providers/resena_provider.dart';
 
 import 'screens/inicio/inicio_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -16,8 +18,8 @@ import 'screens/main_shell.dart';
 import 'screens/mesero/mesero_shell.dart';
 import 'screens/cocina/cocina_shell.dart';
 import 'screens/admin/admin_shell.dart';
-import 'providers/resena_provider.dart';
 
+import 'core/config/app_theme.dart';
 import 'services/google_auth_service.dart';
 
 void main() async {
@@ -49,11 +51,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Santa Cruz de la Plazuela',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        useMaterial3: true,
-      ),
+
+      // Tema global de Santa Cruz de la Plazuela.
+      theme: AppTheme.light,
+
       home: const AppStarter(),
+
       routes: {
         '/inicio': (context) => InicioScreen(),
         '/registro': (context) => const RegistroScreen(),
@@ -63,11 +66,14 @@ class MyApp extends StatelessWidget {
         '/menu': (context) => const MainShell(),
         '/main-shell': (context) => const MainShell(),
         '/favoritos': (context) => const FavoritosScreen(),
+
         '/verificar-cuenta': (context) {
           final email =
               ModalRoute.of(context)!.settings.arguments as String;
+
           return VerificarCuentaScreen(email: email);
         },
+
         '/recuperar': (context) => const RecuperarScreen(),
         '/admin': (context) => const AdminShell(),
         '/mesero': (context) => const MeseroShell(),
@@ -98,13 +104,19 @@ class _AppStarterState extends State<AppStarter> {
     final languageProvider = context.read<LanguageProvider>();
     final favoritoProvider = context.read<FavoritoProvider>();
 
-    await Future.wait([
-      languageProvider.cargarIdiomaGuardado(),
-      authProvider.verificarSesion(),
-    ]);
+    try {
+      await Future.wait([
+        languageProvider.cargarIdiomaGuardado(),
+        authProvider.verificarSesion(),
+      ]);
 
-    if (authProvider.usuario != null) {
-      await favoritoProvider.cargarFavoritos();
+      if (authProvider.usuario != null) {
+        await favoritoProvider.cargarFavoritos();
+      }
+    } catch (e) {
+      debugPrint(
+        'Error al recuperar los datos iniciales: $e',
+      );
     }
 
     if (!mounted) return;
@@ -112,6 +124,31 @@ class _AppStarterState extends State<AppStarter> {
     setState(() {
       _listo = true;
     });
+  }
+
+  Widget _pantallaSegunRol(String rol) {
+    switch (rol.trim().toLowerCase()) {
+      case 'admin':
+      case 'administrador':
+        return const AdminShell();
+
+      case 'mesero':
+        return const MeseroShell();
+
+      case 'cocina':
+        return const CocinaShell();
+
+      case 'user':
+      case 'usuario':
+        return const MainShell();
+
+      default:
+        debugPrint(
+          'Rol no reconocido al restaurar sesión: $rol',
+        );
+
+        return InicioScreen();
+    }
   }
 
   @override
@@ -122,6 +159,12 @@ class _AppStarterState extends State<AppStarter> {
           child: CircularProgressIndicator(),
         ),
       );
+    }
+
+    final usuario = context.watch<AuthProvider>().usuario;
+
+    if (usuario != null) {
+      return _pantallaSegunRol(usuario.rol);
     }
 
     return InicioScreen();

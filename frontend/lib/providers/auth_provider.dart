@@ -158,19 +158,44 @@ class AuthProvider extends ChangeNotifier {
   // RECUPERAR SESIÓN
   // =========================================================
 
+  
   Future<void> verificarSesion() async {
-    final token = await SecureStorage.getToken();
+    try {
+      final token = await SecureStorage.getToken();
+      final userJson = await SecureStorage.getUser();
 
-    final userJson = await SecureStorage.getUser();
-
-    if (token != null && userJson != null) {
-      final decoded = jsonDecode(userJson);
-
-      if (decoded is Map<String, dynamic>) {
-        _usuario = UserModel.fromJson(decoded);
+      if (token == null ||
+          token.trim().isEmpty ||
+          userJson == null ||
+          userJson.trim().isEmpty) {
+        _usuario = null;
+        notifyListeners();
+        return;
       }
 
+      final decoded = jsonDecode(userJson);
+
+      if (decoded is! Map<String, dynamic>) {
+        _usuario = null;
+        notifyListeners();
+        return;
+      }
+
+      final usuario = UserModel.fromJson(decoded);
+
+      if (usuario.id == null || usuario.rol.trim().isEmpty) {
+        _usuario = null;
+        notifyListeners();
+        return;
+      }
+
+      _usuario = usuario;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error al recuperar la sesión: $e');
+      _usuario = null;
       notifyListeners();
     }
   }
+
 }
