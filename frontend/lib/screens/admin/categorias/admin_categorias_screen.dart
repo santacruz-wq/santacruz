@@ -140,9 +140,15 @@ class _AdminCategoriasScreenState extends State<AdminCategoriasScreen> {
     return Scaffold(
       backgroundColor: colorCrema,
       appBar: AppBar(
-        title: const Text('Categorías'),
-        backgroundColor: colorCafe,
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Categorías',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: colorCrema,
+        foregroundColor: colorCafe,
+        elevation: 0,
         actions: [
           IconButton(
             tooltip: 'Actualizar',
