@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../core/config/app_colors.dart';
@@ -31,6 +32,17 @@ class _AdminShellState extends State<AdminShell> {
       _indiceActual = indice;
       _menuAbierto = false;
     });
+  }
+
+  Future<void> _manejarBotonAtras() async {
+    if (_menuAbierto) {
+      setState(() => _menuAbierto = false);
+      return;
+    }
+
+    if (_indiceActual != 0) {
+      _cambiarPagina(0);
+    }
   }
 
   Future<void> _abrirProductos() async {
@@ -109,108 +121,115 @@ class _AdminShellState extends State<AdminShell> {
       const AdminResenasScreen(),
     ];
 
-    return Scaffold(
-      backgroundColor: AppColors.crema,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _manejarBotonAtras();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.crema,
 
-      body: IndexedStack(
-        index: _indiceActual,
-        children: paginas,
-      ),
+        body: IndexedStack(
+          index: _indiceActual,
+          children: paginas,
+        ),
 
-      // La burbuja solo se muestra en Inicio.
-      floatingActionButton: _indiceActual == 0
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (_menuAbierto) ...[
-                  _opcionBurbuja(
-                    texto: 'Reseñas',
-                    icono: Icons.rate_review_outlined,
-                    accion: _abrirResenas,
-                    heroTag: 'admin_burbuja_resenas',
-                  ),
-                  _opcionBurbuja(
-                    texto: 'Pedidos',
-                    icono: Icons.shopping_bag_outlined,
-                    accion: _abrirPedidos,
-                    heroTag: 'admin_burbuja_pedidos',
-                  ),
-                  _opcionBurbuja(
-                    texto: 'Categorías',
-                    icono: Icons.category_outlined,
-                    accion: _abrirCategorias,
-                    heroTag: 'admin_burbuja_categorias',
-                  ),
-                  _opcionBurbuja(
-                    texto: 'Productos',
-                    icono: Icons.restaurant_menu,
-                    accion: _abrirProductos,
-                    heroTag: 'admin_burbuja_productos',
-                  ),
-                ],
-                FloatingActionButton(
-                  heroTag: 'admin_burbuja_principal',
-                  backgroundColor: AppColors.caramelo,
-                  foregroundColor: Colors.white,
-                  tooltip: _menuAbierto
-                      ? 'Cerrar menú de gestión'
-                      : 'Abrir menú de gestión',
-                  onPressed: () {
-                    setState(() {
-                      _menuAbierto = !_menuAbierto;
-                    });
-                  },
-                  child: AnimatedRotation(
-                    turns: _menuAbierto ? 0.125 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      _menuAbierto
-                          ? Icons.close
-                          : Icons.widgets_outlined,
-                      size: 28,
+        // La burbuja solo se muestra en Inicio.
+        floatingActionButton: _indiceActual == 0
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (_menuAbierto) ...[
+                    _opcionBurbuja(
+                      texto: 'Reseñas',
+                      icono: Icons.rate_review_outlined,
+                      accion: _abrirResenas,
+                      heroTag: 'admin_burbuja_resenas',
+                    ),
+                    _opcionBurbuja(
+                      texto: 'Pedidos',
+                      icono: Icons.shopping_bag_outlined,
+                      accion: _abrirPedidos,
+                      heroTag: 'admin_burbuja_pedidos',
+                    ),
+                    _opcionBurbuja(
+                      texto: 'Categorías',
+                      icono: Icons.category_outlined,
+                      accion: _abrirCategorias,
+                      heroTag: 'admin_burbuja_categorias',
+                    ),
+                    _opcionBurbuja(
+                      texto: 'Productos',
+                      icono: Icons.restaurant_menu,
+                      accion: _abrirProductos,
+                      heroTag: 'admin_burbuja_productos',
+                    ),
+                  ],
+                  FloatingActionButton(
+                    heroTag: 'admin_burbuja_principal',
+                    backgroundColor: AppColors.caramelo,
+                    foregroundColor: Colors.white,
+                    tooltip: _menuAbierto
+                        ? 'Cerrar menú de gestión'
+                        : 'Abrir menú de gestión',
+                    onPressed: () {
+                      setState(() {
+                        _menuAbierto = !_menuAbierto;
+                      });
+                    },
+                    child: AnimatedRotation(
+                      turns: _menuAbierto ? 0.125 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        _menuAbierto
+                            ? Icons.close
+                            : Icons.widgets_outlined,
+                        size: 28,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            )
-          : null,
+                ],
+              )
+            : null,
 
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _indiceBarraInferior,
-        onDestinationSelected: (indice) {
-          const destinos = [0, 1, 3, 4, 5];
-          _cambiarPagina(destinos[indice]);
-        },
-        backgroundColor: AppColors.cremaClaro,
-        indicatorColor: AppColors.carameloClaro,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: 'Inicio',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
-            label: 'Stock',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people),
-            label: 'Usuarios',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.admin_panel_settings_outlined),
-            selectedIcon: Icon(Icons.admin_panel_settings),
-            label: 'Administradores',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _indiceBarraInferior,
+          onDestinationSelected: (indice) {
+            const destinos = [0, 1, 3, 4, 5];
+            _cambiarPagina(destinos[indice]);
+          },
+          backgroundColor: AppColors.cremaClaro,
+          indicatorColor: AppColors.carameloClaro,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined),
+              selectedIcon: Icon(Icons.dashboard),
+              label: 'Inicio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.inventory_2_outlined),
+              selectedIcon: Icon(Icons.inventory_2),
+              label: 'Stock',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.people_outline),
+              selectedIcon: Icon(Icons.people),
+              label: 'Usuarios',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.admin_panel_settings_outlined),
+              selectedIcon: Icon(Icons.admin_panel_settings),
+              label: 'Administradores',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'Perfil',
+            ),
+          ],
+        ),
       ),
     );
   }

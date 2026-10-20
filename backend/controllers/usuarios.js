@@ -1,11 +1,17 @@
+
 import mongoose from "mongoose";
 import User from "../models/user.js";
 
-// LISTAR USUARIOS: SOLO ADMINISTRADORES
+// LISTAR USUARIOS: SOLO CUENTAS VERIFICADAS
 export const listarUsuarios = async (req, res) => {
     try {
-        const usuarios = await User.find()
-            .select("-password -codigoRecuperacion -codigoExpiracion -codigoVerificacion -codigoVerificacionExpiracion -googleId")
+        const usuarios = await User.find({
+            isVerified: true,
+        })
+            .select(
+                "-password -codigoRecuperacion -codigoExpiracion " +
+                "-codigoVerificacion -codigoVerificacionExpiracion -googleId"
+            )
             .sort({ createdAt: -1 })
             .lean();
 
@@ -16,6 +22,7 @@ export const listarUsuarios = async (req, res) => {
         });
     } catch (error) {
         console.error("Error listando usuarios:", error);
+
         return res.status(500).json({
             success: false,
             message: "Error al consultar los usuarios",
@@ -62,7 +69,8 @@ export const cambiarRolUsuario = async (req, res) => {
         if (usuario.rol === "admin") {
             return res.status(403).json({
                 success: false,
-                message: "Los administradores se gestionan desde su sección independiente",
+                message:
+                    "Los administradores se gestionan desde su sección independiente",
             });
         }
 
@@ -83,6 +91,7 @@ export const cambiarRolUsuario = async (req, res) => {
         });
     } catch (error) {
         console.error("Error cambiando rol:", error);
+
         return res.status(500).json({
             success: false,
             message: "Error al cambiar el rol",
@@ -122,14 +131,16 @@ export const cambiarEstadoUsuario = async (req, res) => {
         if (usuario._id.equals(req.usuario._id)) {
             return res.status(403).json({
                 success: false,
-                message: "No puedes desactivar tu propia cuenta desde esta sección",
+                message:
+                    "No puedes desactivar tu propia cuenta desde esta sección",
             });
         }
 
         if (usuario.rol === "admin") {
             return res.status(403).json({
                 success: false,
-                message: "Los administradores se gestionan desde su sección independiente",
+                message:
+                    "Los administradores se gestionan desde su sección independiente",
             });
         }
 
@@ -152,6 +163,7 @@ export const cambiarEstadoUsuario = async (req, res) => {
         });
     } catch (error) {
         console.error("Error cambiando estado:", error);
+
         return res.status(500).json({
             success: false,
             message: "Error al cambiar el estado de la cuenta",
@@ -176,7 +188,8 @@ const verificarPasswordAdministrador = async (req, password) => {
         return {
             valido: false,
             status: 403,
-            message: "La cuenta autenticada ya no tiene permisos de administrador",
+            message:
+                "La cuenta autenticada ya no tiene permisos de administrador",
         };
     }
 
@@ -185,7 +198,8 @@ const verificarPasswordAdministrador = async (req, password) => {
         return {
             valido: false,
             status: 400,
-            message: "Esta cuenta no tiene contraseña local. Configura una antes de continuar",
+            message:
+                "Esta cuenta no tiene contraseña local. Configura una antes de continuar",
         };
     }
 
@@ -199,7 +213,10 @@ const verificarPasswordAdministrador = async (req, password) => {
         };
     }
 
-    return { valido: true, administrador };
+    return {
+        valido: true,
+        administrador,
+    };
 };
 
 // GESTIONAR ROL DE ADMINISTRADOR CON CONFIRMACIÓN DE CONTRASEÑA
@@ -234,7 +251,8 @@ export const cambiarRolAdministrador = async (req, res) => {
         if (usuario._id.equals(req.usuario._id)) {
             return res.status(403).json({
                 success: false,
-                message: "No puedes cambiar tu propio rol de administrador",
+                message:
+                    "No puedes cambiar tu propio rol de administrador",
             });
         }
 
@@ -269,7 +287,8 @@ export const cambiarRolAdministrador = async (req, res) => {
             if (otrosAdminsActivos === 0) {
                 return res.status(409).json({
                     success: false,
-                    message: "No puedes quitar el rol al último administrador activo",
+                    message:
+                        "No puedes quitar el rol al último administrador activo",
                 });
             }
         }
@@ -293,6 +312,7 @@ export const cambiarRolAdministrador = async (req, res) => {
         });
     } catch (error) {
         console.error("Error gestionando administrador:", error);
+
         return res.status(500).json({
             success: false,
             message: "Error al gestionar el rol de administrador",
@@ -346,7 +366,8 @@ export const cambiarEstadoAdministrador = async (req, res) => {
             if (otrosAdminsActivos === 0) {
                 return res.status(409).json({
                     success: false,
-                    message: "No puedes desactivar al último administrador activo",
+                    message:
+                        "No puedes desactivar al último administrador activo",
                 });
             }
         }
@@ -369,7 +390,11 @@ export const cambiarEstadoAdministrador = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error cambiando estado del administrador:", error);
+        console.error(
+            "Error cambiando estado del administrador:",
+            error,
+        );
+
         return res.status(500).json({
             success: false,
             message: "Error al cambiar el estado del administrador",

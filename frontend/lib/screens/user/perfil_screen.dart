@@ -1,5 +1,8 @@
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/config/api_config.dart';
@@ -8,271 +11,152 @@ import '../../core/navigation/menu_navigation.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorito_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../services/perfil_service.dart';
 import '../../widgets/global/bottom_menu.dart';
+import 'widgets/perfil_cabecera.dart';
+import 'widgets/perfil_cerrar_sesion.dart';
+import 'widgets/perfil_informacion.dart';
+import 'widgets/perfil_preferencias.dart';
+import 'widgets/perfil_seccion.dart';
+import 'widgets/perfil_seguridad.dart';
+import 'widgets/perfil_vista_invitado.dart';
 
-class PerfilScreen extends StatelessWidget {
+class PerfilScreen extends StatefulWidget {
   final bool showBottomBar;
 
-  const PerfilScreen({
-    super.key,
-    this.showBottomBar = true,
-  });
+  const PerfilScreen({super.key, this.showBottomBar = true});
+
+  @override
+  State<PerfilScreen> createState() => _PerfilScreenState();
+}
+
+class _PerfilScreenState extends State<PerfilScreen> {
+  final TextEditingController _nombreController = TextEditingController();
+  File? _imagenSeleccionada;
+  bool _guardando = false;
+  bool _editandoNombre = false;
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    super.dispose();
+  }
 
   String? _urlAvatar(String? avatar) {
     if (avatar == null || avatar.isEmpty) return null;
-
-    if (avatar.startsWith('http://') ||
-        avatar.startsWith('https://')) {
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
       return avatar;
     }
-
-    final base = ApiConfig.baseUrl.replaceFirst(
-      RegExp(r'/api/?$'),
-      '',
-    );
-
+    final base = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
     return '$base${avatar.startsWith('/') ? avatar : '/$avatar'}';
   }
 
-  Future<void> _cerrarSesion(BuildContext context) async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.cremaClaro,
-        title: const Text(
-          'Cerrar sesión',
-          style: TextStyle(color: AppColors.textoCafe),
-        ),
-        content: const Text(
-          '¿Estás seguro de que quieres cerrar sesión?',
-          style: TextStyle(color: AppColors.textoCafe),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
-              'Cerrar sesión',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
+  void _mostrarMensaje(String mensaje, {bool esError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: esError ? Colors.red.shade700 : null,
       ),
     );
+  }
 
-    if (confirmar != true || !context.mounted) return;
+  String _limpiarError(Object error) =>
+      error.toString().replaceFirst('Exception: ', '');
+
+  Future<void> _seleccionarFoto() async {
+    if (_guardando) return;
 
     try {
-      await context.read<AuthProvider>().logout();
-      context.read<FavoritoProvider>().limpiar();
-
-      if (!context.mounted) return;
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/menu',
-        (route) => false,
+      final imagen = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
       );
+
+      if (imagen == null || !mounted) return;
+
+      setState(() {
+        _imagenSeleccionada = File(imagen.path);
+        _guardando = true;
+      });
+
+      final data = await PerfilService.actualizarAvatar(
+        _imagenSeleccionada!,
+      );
+
+      final usuarioActualizado = data['usuario'];
+
+      if (usuarioActualizado is Map<String, dynamic> && mounted) {
+        context.read<AuthProvider>().actualizarUsuarioDesdePerfil(
+              usuarioActualizado,
+            );
+        setState(() => _imagenSeleccionada = null);
+      }
+
+      if (mounted) {
+        _mostrarMensaje(
+          data['message']?.toString() ?? 'Foto de perfil actualizada.',
+        );
+      }
     } catch (e) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'No se pudo cerrar la sesión: '
-            '${e.toString().replaceFirst('Exception: ', '')}',
-          ),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+      if (!mounted) return;
+      setState(() => _imagenSeleccionada = null);
+      _mostrarMensaje(_limpiarError(e), esError: true);
+    } finally {
+      if (mounted) setState(() => _guardando = false);
     }
   }
 
-  Widget _seccion({
-    required String titulo,
-    required IconData icono,
-    required Widget contenido,
-  }) {
-    return Card(
-      color: AppColors.cremaClaro,
-      elevation: 1,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icono, color: AppColors.caramelo, size: 24),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    titulo,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textoCafe,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            contenido,
-          ],
-        ),
-      ),
-    );
-  }
+  Future<void> _guardarNombre() async {
+    final auth = context.read<AuthProvider>();
+    final usuario = auth.usuario;
+    final nombre = _nombreController.text.trim();
 
-  Widget _fila({
-    required IconData icono,
-    required String titulo,
-    required String valor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icono, color: AppColors.cafeMedio, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.cafeMedio,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  valor,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppColors.textoCafe,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    if (usuario == null) return;
 
-  Widget _boton({
-    required String texto,
-    required IconData icono,
-    required VoidCallback accion,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: accion,
-        icon: Icon(icono),
-        label: Text(texto),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.cafeMedio,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          side: const BorderSide(color: AppColors.cremaOscuro),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
+    if (nombre.isEmpty) {
+      _mostrarMensaje('Ingresa tu nombre.', esError: true);
+      return;
+    }
 
-  Widget _vistaInvitado(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.crema,
-      appBar: AppBar(
-        title: const Text(
-          'Mi perfil',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: AppColors.crema,
-        foregroundColor: AppColors.textoCafe,
-        elevation: 0,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  color: AppColors.cremaOscuro,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.person_outline,
-                  size: 64,
-                  color: AppColors.cafeMedio,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Inicia sesión para ver tu perfil',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textoCafe,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Consulta tus datos personales y tus favoritos.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.cafeMedio),
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/login');
-                  },
-                  icon: const Icon(Icons.login),
-                  label: const Text('Iniciar sesión'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.caramelo,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: showBottomBar
-          ? BottomMenu(
-              currentIndex: 2,
-              onItemSelected: (i) {
-                navegarDesdeMenu(context, i, 2);
-              },
-            )
-          : null,
-    );
+    if (nombre.length > 100) {
+      _mostrarMensaje(
+        'El nombre no puede superar 100 caracteres.',
+        esError: true,
+      );
+      return;
+    }
+
+    if (_guardando) return;
+    setState(() => _guardando = true);
+
+    try {
+      final data = await PerfilService.actualizarPerfil(
+        nombre: nombre,
+        email: usuario.email,
+      );
+
+      final usuarioActualizado = data['usuario'];
+
+      if (usuarioActualizado is Map<String, dynamic> && mounted) {
+        auth.actualizarUsuarioDesdePerfil(usuarioActualizado);
+        setState(() {
+          _editandoNombre = false;
+          _nombreController.clear();
+        });
+      }
+
+      if (mounted) {
+        _mostrarMensaje(
+          data['message']?.toString() ?? 'Nombre actualizado correctamente.',
+        );
+      }
+    } catch (e) {
+      if (mounted) _mostrarMensaje(_limpiarError(e), esError: true);
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
   }
 
   @override
@@ -283,16 +167,10 @@ class PerfilScreen extends StatelessWidget {
     final usuario = auth.usuario;
 
     if (usuario == null) {
-      return _vistaInvitado(context);
+      return PerfilVistaInvitado(showBottomBar: widget.showBottomBar);
     }
 
-    final avatarUrl = _urlAvatar(usuario.avatar);
-
-    final esPersonal = [
-      'admin',
-      'mesero',
-      'cocina',
-    ].contains(usuario.rol);
+    final esPersonal = ['admin', 'mesero', 'cocina'].contains(usuario.rol);
 
     return Scaffold(
       backgroundColor: AppColors.crema,
@@ -309,245 +187,44 @@ class PerfilScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 30),
           children: [
-            // Cabecera inspirada en el perfil administrativo.
-            Card(
-              color: AppColors.cremaClaro,
-              elevation: 1,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 53,
-                      backgroundColor: AppColors.cremaOscuro,
-                      backgroundImage: avatarUrl == null
-                          ? null
-                          : NetworkImage(avatarUrl),
-                      child: avatarUrl == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 58,
-                              color: AppColors.cafeMedio,
-                            )
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      usuario.nombre,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textoCafe,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      usuario.email,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.cafeMedio,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.carameloClaro.withValues(
-                          alpha: 0.35,
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        usuario.rol.toUpperCase(),
-                        style: const TextStyle(
-                          color: AppColors.textoCafe,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            PerfilCabecera(
+              usuario: usuario,
+              avatarUrl: _urlAvatar(usuario.avatar),
+              imagenSeleccionada: _imagenSeleccionada,
+              nombreController: _nombreController,
+              guardando: _guardando,
+              editandoNombre: _editandoNombre,
+              onSeleccionarFoto: _seleccionarFoto,
+              onGuardarNombre: _guardarNombre,
+              onAlternarEdicion: () => setState(() {
+                _editandoNombre = !_editandoNombre;
+                _nombreController.text = usuario.nombre;
+              }),
             ),
-
-            // Información personal de solo lectura.
-            _seccion(
-              titulo: 'Información personal',
-              icono: Icons.person_outline,
-              contenido: Column(
-                children: [
-                  _fila(
-                    icono: Icons.badge_outlined,
-                    titulo: 'Nombre completo',
-                    valor: usuario.nombre,
-                  ),
-                  const Divider(color: AppColors.cremaOscuro),
-                  _fila(
-                    icono: Icons.email_outlined,
-                    titulo: 'Correo electrónico',
-                    valor: usuario.email,
-                  ),
-                ],
-              ),
+            PerfilInformacion(
+              nombre: usuario.nombre,
+              email: usuario.email,
             ),
-
-            // Preferencias del usuario.
-            _seccion(
-              titulo: 'Preferencias',
-              icono: Icons.tune,
-              contenido: Column(
-                children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(
-                      Icons.favorite_border,
-                      color: AppColors.caramelo,
-                    ),
-                    title: const Text(
-                      'Mis favoritos',
-                      style: TextStyle(color: AppColors.textoCafe),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${favoritos.total}',
-                          style: const TextStyle(
-                            color: AppColors.caramelo,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: AppColors.cafeMedio,
-                        ),
-                      ],
-                    ),
-                    onTap: () {
-                      Navigator.pushNamed(context, '/favoritos');
-                    },
-                  ),
-                  const Divider(color: AppColors.cremaOscuro),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(
-                      Icons.language,
-                      color: AppColors.caramelo,
-                    ),
-                    title: const Text(
-                      'Idioma',
-                      style: TextStyle(color: AppColors.textoCafe),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          idioma.idiomaNombre,
-                          style: const TextStyle(
-                            color: AppColors.caramelo,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: AppColors.cafeMedio,
-                        ),
-                      ],
-                    ),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/language-selection',
-                      );
-                    },
-                  ),
-                  if (esPersonal) ...[
-                    const Divider(color: AppColors.cremaOscuro),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(
-                        Icons.badge_outlined,
-                        color: AppColors.caramelo,
-                      ),
-                      title: const Text(
-                        'Rol',
-                        style: TextStyle(color: AppColors.textoCafe),
-                      ),
-                      trailing: Text(
-                        usuario.rol,
-                        style: const TextStyle(
-                          color: AppColors.caramelo,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+            PerfilPreferencias(
+              totalFavoritos: favoritos.total,
+              idioma: idioma.idiomaNombre,
+              rol: usuario.rol,
+              esPersonal: esPersonal,
             ),
-
-            // Cambio de contraseña mediante el flujo de recuperación.
-            _seccion(
-              titulo: 'Seguridad',
-              icono: Icons.lock_outline,
-              contenido: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Puedes cambiar tu contraseña verificando tu correo electrónico.',
-                    style: TextStyle(
-                      color: AppColors.cafeMedio,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/recuperar',
-                          arguments: usuario.email,
-                        );
-                      },
-                      icon: const Icon(Icons.lock_reset_outlined),
-                      label: const Text('Cambiar contraseña'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.caramelo,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            _boton(
+            PerfilSeguridad(email: usuario.email),
+            PerfilBoton(
               texto: 'Cerrar sesión',
               icono: Icons.logout,
-              accion: () => _cerrarSesion(context),
+              accion: () => cerrarSesionPerfil(context),
+              deshabilitado: _guardando,
             ),
           ],
         ),
       ),
-      bottomNavigationBar: showBottomBar
+      bottomNavigationBar: widget.showBottomBar
           ? BottomMenu(
               currentIndex: 2,
-              onItemSelected: (i) {
-                navegarDesdeMenu(context, i, 2);
-              },
+              onItemSelected: (i) => navegarDesdeMenu(context, i, 2),
             )
           : null,
     );
