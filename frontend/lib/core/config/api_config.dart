@@ -1,8 +1,7 @@
 class ApiConfig {
-  // URL de tu backend desplegado en Render
-  static const String _remoteUrl = "https://santacruz-dh65.onrender.com/";
-
-  static const String baseUrl = "http://10.0.2.2:3000/api";
+  // Backend desplegado en Render
+  static const String baseUrl =
+      "https://santacruz-dh65.onrender.com/api";
 
   static const String login = "$baseUrl/login";
   static const String registrar = "$baseUrl/usuarios/registrar";
@@ -11,8 +10,10 @@ class ApiConfig {
   static const String recuperarSolicitar = "$baseUrl/recuperar/solicitar";
   static const String recuperarCambiar = "$baseUrl/recuperar/cambiar";
 
-  static const String verificarCodigo = "$baseUrl/usuarios/verificar-codigo";
-  static const String reenviarCodigo = "$baseUrl/usuarios/reenviar-codigo";
+  static const String verificarCodigo =
+      "$baseUrl/usuarios/verificar-codigo";
+  static const String reenviarCodigo =
+      "$baseUrl/usuarios/reenviar-codigo";
 
   static const String productos = "$baseUrl/productos";
   static const String categorias = "$baseUrl/categorias";
