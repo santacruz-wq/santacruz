@@ -142,6 +142,15 @@ io.on("connection", (socket) => {
 // 🔹 RUTAS DE LA API
 // ============================
 
+// Montando las rutas de la API
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
+app.get('/', (req, res) => {
+    res.send('¡Mi API está corriendo al 100%! 🚀');
+});
+
 app.use('/api/usuarios', userRoutes);
 app.use('/api/login', loginRoutes);
 app.use('/api/recuperar', recuperarRoutes);
@@ -159,6 +168,7 @@ app.use("/api/favoritos", favoritosRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/admin/usuarios", adminUsuariosRoutes);
 app.use("/api/perfil", perfilRoutes);
+
 
 // ============================
 // 🔹 SERVIDOR
