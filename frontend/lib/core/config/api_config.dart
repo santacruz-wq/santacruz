@@ -1,4 +1,7 @@
 class ApiConfig {
+  // URL de tu backend desplegado en Render
+  static const String _remoteUrl = "https://santacruz-dh65.onrender.com/";
+
   static const String baseUrl = "http://10.0.2.2:3000/api";
 
   static const String login = "$baseUrl/login";
