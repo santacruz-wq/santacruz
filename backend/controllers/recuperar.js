@@ -1,54 +1,82 @@
 import user from "../models/user.js";
-import nodemailer from "nodemailer";
+import { BrevoClient } from "@getbrevo/brevo";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-//CONFIGURAR TRANSPORTE DE CORREO
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
+// CONFIGURAR BREVO PARA EL ENVÍO DE CORREO
+const brevo = new BrevoClient({
+    apiKey: process.env.BREVO_API_KEY,
 });
 
-//FUNCION PARA GENERAR CODIGO DE RECUPERACION
+// FUNCIÓN PARA GENERAR CÓDIGO DE RECUPERACIÓN
 const generarCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString(); // genera un código de 6 dígitos
+    return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-//FUNCION PARA SOLICITAR CODIGO DE RECUPERACION
+// FUNCIÓN PARA ENVIAR CORREOS MEDIANTE BREVO
+const enviarCorreo = async (mailOptions) => {
+    if (!process.env.BREVO_API_KEY) {
+        throw new Error("BREVO_API_KEY no está configurada en el archivo .env");
+    }
+
+    if (!process.env.EMAIL_USER) {
+        throw new Error("EMAIL_USER no está configurada en el archivo .env");
+    }
+
+    return await brevo.transactionalEmails.sendTransacEmail({
+        subject: mailOptions.subject,
+        sender: {
+            name: "Santa Cruz de la Plazuela",
+            email: process.env.EMAIL_USER,
+        },
+        to: [
+            {
+                email: mailOptions.to,
+            },
+        ],
+        htmlContent: mailOptions.html,
+    });
+};
+
+// FUNCIÓN PARA SOLICITAR CÓDIGO DE RECUPERACIÓN
 export const solicitarCode = async (req, res) => {
     try {
         const { email } = req.body;
 
-        //VALIDAMOS QUE EL CAMPO ESTE PRESENTE
+        // VALIDAMOS QUE EL CAMPO ESTÉ PRESENTE
         if (!email) {
-            return res.status(400).json({ message: "El campo email es requerido" });
+            return res.status(400).json({
+                message: "El campo email es requerido"
+            });
         }
 
-        //BUSCAMOS USUARIO POR EMAIL
+        // BUSCAMOS USUARIO POR EMAIL
         const usuario = await user.findOne({ email });
+
         if (!usuario) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
+            return res.status(404).json({
+                message: "Usuario no encontrado"
+            });
         }
 
-        //VERIFICAMOS QUE EL USUARIO ESTE ACTIVO
+        // VERIFICAMOS QUE EL USUARIO ESTÉ ACTIVO
         if (!usuario.activo) {
-            return res.status(403).json({ message: "Usuario deshabilitado, contacta al administrador" });
+            return res.status(403).json({
+                message: "Usuario deshabilitado, contacta al administrador"
+            });
         }
 
-        //GENERAMOS EL CODIGO DE RECUPERACION
+        // GENERAMOS EL CÓDIGO DE RECUPERACIÓN
         const codigo = generarCode();
 
-        //GUARDAMOS EL CODIGO CON FECHA DE EXPIRACION DE 15 MINUTOS
+        // GUARDAMOS EL CÓDIGO CON FECHA DE EXPIRACIÓN DE 15 MINUTOS
         usuario.codigoRecuperacion = codigo;
-        usuario.codigoExpiracion = Date.now() + 900000; // 15 minutos en milisegundos
+        usuario.codigoExpiracion = Date.now() + 900000;
+
         await usuario.save();
 
-        
         // CONSTRUIMOS EL CORREO DE RECUPERACIÓN DE CONTRASEÑA
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -205,33 +233,58 @@ export const solicitarCode = async (req, res) => {
             `
         };
 
+        // ENVIAMOS EL CORREO MEDIANTE BREVO
+        try {
+            await enviarCorreo(mailOptions);
+        } catch (errorCorreo) {
+            console.error(
+                "Error al enviar el código de recuperación mediante Brevo:",
+                errorCorreo
+            );
 
-        //ENVIAMOS EL CORREO
-        await transporter.sendMail(mailOptions);
-        res.status(200).json({ message: "Código de recuperación enviado al correo" });
+            // INVALIDAMOS EL CÓDIGO SI NO SE PUDO ENVIAR EL CORREO
+            usuario.codigoRecuperacion = null;
+            usuario.codigoExpiracion = null;
+            await usuario.save();
+
+            return res.status(502).json({
+                message: "No se pudo enviar el correo de recuperación. Inténtalo nuevamente."
+            });
+        }
+
+        return res.status(200).json({
+            message: "Código de recuperación enviado al correo"
+        });
 
     } catch (error) {
         console.error("Error al solicitar código de recuperación:", error);
-        res.status(500).json({ message: "Error al solicitar el codigo de recuperacion" });
+
+        return res.status(500).json({
+            message: "Error al solicitar el código de recuperación"
+        });
     }
 };
 
-//FUNCION PARA CAMBIAR CONTRASEÑA
+// FUNCIÓN PARA CAMBIAR CONTRASEÑA
 export const cambiarPassword = async (req, res) => {
     try {
         const { email, codigo, nuevaPassword } = req.body;
 
-        //VALIDAMOS QUE LOS CAMPOS ESTEN PRESENTES
+        // VALIDAMOS QUE LOS CAMPOS ESTÉN PRESENTES
         if (!email || !codigo || !nuevaPassword) {
-            return res.status(400).json({ message: "todos los campos son requeridos" });
+            return res.status(400).json({
+                message: "Todos los campos son requeridos"
+            });
         }
 
-        //VALIDAMOS QUE LA CONTRASEÑA TENGA AL MENOS 6 CARACTERES
-        if (nuevaPassword.length < 6) {
-            return res.status(400).json({ message: "la contraseña debe tener al menos 6 caracteres" });
+        // VALIDAMOS QUE LA CONTRASEÑA TENGA AL MENOS 6 CARACTERES
+        if (typeof nuevaPassword !== "string" || nuevaPassword.length < 6) {
+            return res.status(400).json({
+                message: "La contraseña debe tener al menos 6 caracteres"
+            });
         }
 
-        //BUSCAMOS USUARIO POR EMAIL, CODIGO Y VIGENCIA
+        // BUSCAMOS USUARIO POR EMAIL, CÓDIGO Y VIGENCIA
         const usuario = await user.findOne({
             email,
             codigoRecuperacion: codigo,
@@ -239,21 +292,21 @@ export const cambiarPassword = async (req, res) => {
         });
 
         if (!usuario) {
-            return res.status(400).json({ message: "Código de recuperación inválido o expirado" });
+            return res.status(400).json({
+                message: "Código de recuperación inválido o expirado"
+            });
         }
 
-
-        //ACTUALIZAMOS LA CONTRASEÑA Y LIMPIAMOS EL CODIGO
+        // ACTUALIZAMOS LA CONTRASEÑA Y LIMPIAMOS EL CÓDIGO
         usuario.password = nuevaPassword;
         usuario.codigoRecuperacion = null;
         usuario.codigoExpiracion = null;
 
-        //GUARDAMOS LOS CAMBIOS
+        // GUARDAMOS LOS CAMBIOS
+        // Se conserva el comportamiento del modelo user para cifrar la contraseña.
         await usuario.save();
 
-        //CONSTRUIMOS EL CORREO DE CONFIRMACION
-        
-        // CORREO DE CONFIRMACIÓN DE CAMBIO DE CONTRASEÑA
+        // CONSTRUIMOS EL CORREO DE CONFIRMACIÓN DE CAMBIO DE CONTRASEÑA
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: usuario.email,
@@ -387,13 +440,31 @@ export const cambiarPassword = async (req, res) => {
             `
         };
 
+        // ENVIAMOS EL CORREO DE CONFIRMACIÓN MEDIANTE BREVO
+        try {
+            await enviarCorreo(mailOptions);
+        } catch (errorCorreo) {
+            console.error(
+                "La contraseña cambió, pero falló el envío de la confirmación mediante Brevo:",
+                errorCorreo
+            );
 
-        //ENVIAMOS EL CORREO DE CONFIRMACION
-        await transporter.sendMail(mailOptions);
-        res.status(200).json({ message: "Contraseña cambiada exitosamente" });
+            // La contraseña ya se cambió; no devolver un error que indique lo contrario.
+            return res.status(200).json({
+                message: "Contraseña cambiada exitosamente, pero no se pudo enviar el correo de confirmación."
+            });
+        }
+
+        return res.status(200).json({
+            message: "Contraseña cambiada exitosamente"
+        });
 
     } catch (error) {
         console.error("Error al cambiar la contraseña:", error);
-        res.status(500).json({ message: "Error al cambiar la contraseña", error: error.message });
+
+        return res.status(500).json({
+            message: "Error al cambiar la contraseña",
+            error: error.message
+        });
     }
 };
