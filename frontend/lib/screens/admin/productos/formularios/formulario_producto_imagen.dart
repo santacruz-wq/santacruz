@@ -10,7 +10,7 @@ class FormularioProductoImagen extends StatelessWidget {
   final ProductModel? producto;
   final XFile? imagen;
   final bool guardando;
-  final VoidCallback onSeleccionarImagen;
+  final ValueChanged<ImageSource> onSeleccionarImagen;
 
   const FormularioProductoImagen({
     super.key,
@@ -20,13 +20,61 @@ class FormularioProductoImagen extends StatelessWidget {
     required this.onSeleccionarImagen,
   });
 
+  Future<void> _mostrarOpcionesImagen(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Seleccionar imagen',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt_outlined),
+                  title: const Text('Tomar foto'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onSeleccionarImagen(ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Elegir de galería'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onSeleccionarImagen(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Center(
           child: InkWell(
-            onTap: guardando ? null : onSeleccionarImagen,
+            onTap: guardando
+                ? null
+                : () => _mostrarOpcionesImagen(context),
             borderRadius: BorderRadius.circular(16),
             child: Container(
               width: 180,
@@ -62,12 +110,14 @@ class FormularioProductoImagen extends StatelessWidget {
               fit: BoxFit.cover,
             );
           }
+
           if (snapshot.hasError) {
             return const Icon(
               Icons.broken_image_outlined,
               size: 40,
             );
           }
+
           return const Center(
             child: CircularProgressIndicator(),
           );

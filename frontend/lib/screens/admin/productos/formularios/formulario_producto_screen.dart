@@ -88,11 +88,13 @@ class _FormularioProductoScreenState
                 padding: const EdgeInsets.all(18),
                 children: [
                   FormularioProductoImagen(
-                    producto: widget.producto,
-                    imagen: _controller.imagen,
-                    guardando: _controller.guardando,
-                    onSeleccionarImagen: _controller.seleccionarImagen,
-                  ),
+  producto: widget.producto,
+  imagen: _controller.imagen,
+  guardando: _controller.guardando,
+  onSeleccionarImagen: (origen) {
+    _controller.seleccionarImagen(origen: origen);
+  },
+),
                   const SizedBox(height: 22),
                   FormularioProductoCampos(
                     categorias: _controller.categorias,

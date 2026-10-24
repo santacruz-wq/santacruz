@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -56,10 +55,13 @@ class FormularioProductoController extends ChangeNotifier {
     }
   }
 
-  Future<void> seleccionarImagen() async {
+  // Permite elegir entre la cámara y la galería.
+  Future<void> seleccionarImagen({
+    ImageSource origen = ImageSource.gallery,
+  }) async {
     try {
       final seleccionada = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
+        source: origen,
         imageQuality: 85,
         maxWidth: 1200,
       );
@@ -70,7 +72,9 @@ class FormularioProductoController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      error = 'No se pudo seleccionar la imagen: $e';
+      error = origen == ImageSource.camera
+          ? 'No se pudo tomar la foto: $e'
+          : 'No se pudo seleccionar la imagen: $e';
       notifyListeners();
     }
   }
