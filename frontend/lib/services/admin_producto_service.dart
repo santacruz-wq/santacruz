@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/config/api_config.dart';
@@ -36,6 +37,41 @@ class AdminProductoService {
     );
   }
 
+  /// Crea el archivo multipart con su tipo MIME correspondiente.
+  /// Solo permite JPG, JPEG, PNG y WEBP.
+  static http.MultipartFile _crearArchivoImagen(
+    XFile imagen,
+    List<int> bytes,
+  ) {
+    final extension = imagen.name.split('.').last.toLowerCase();
+
+    final tipos = <String, MediaType>{
+      'jpg': MediaType('image', 'jpeg'),
+      'jpeg': MediaType('image', 'jpeg'),
+      'png': MediaType('image', 'png'),
+      'webp': MediaType('image', 'webp'),
+    };
+
+    final tipo = tipos[extension];
+
+    if (tipo == null) {
+      throw Exception(
+        'Formato no permitido. Usa JPG, JPEG, PNG o WEBP.',
+      );
+    }
+
+    if (bytes.isEmpty) {
+      throw Exception('La imagen seleccionada está vacía.');
+    }
+
+    return http.MultipartFile.fromBytes(
+      'imagen',
+      bytes,
+      filename: imagen.name,
+      contentType: tipo,
+    );
+  }
+
   static Future<List<ProductModel>> obtenerProductos() async {
     final token = await _obtenerToken();
 
@@ -59,7 +95,9 @@ class AdminProductoService {
     } else if (respuesta is Map && respuesta['productos'] is List) {
       lista = respuesta['productos'] as List<dynamic>;
     } else {
-      throw Exception('El servidor devolvió una lista de productos inválida.');
+      throw Exception(
+        'El servidor devolvió una lista de productos inválida.',
+      );
     }
 
     return lista.map((item) {
@@ -95,12 +133,10 @@ class AdminProductoService {
     request.fields['precio'] = precio.trim().replaceAll(',', '.');
     request.fields['categoria'] = categoriaId;
 
+    final bytes = await imagen.readAsBytes();
+
     request.files.add(
-      http.MultipartFile.fromBytes(
-        'imagen',
-        await imagen.readAsBytes(),
-        filename: imagen.name,
-      ),
+      _crearArchivoImagen(imagen, bytes),
     );
 
     final respuesta = await request.send();
@@ -134,12 +170,10 @@ class AdminProductoService {
     request.fields['categoria'] = categoriaId;
 
     if (imagen != null) {
+      final bytes = await imagen.readAsBytes();
+
       request.files.add(
-        http.MultipartFile.fromBytes(
-          'imagen',
-          await imagen.readAsBytes(),
-          filename: imagen.name,
-        ),
+        _crearArchivoImagen(imagen, bytes),
       );
     }
 

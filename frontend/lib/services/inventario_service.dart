@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import '../core/config/api_config.dart';
@@ -112,6 +113,56 @@ class InventarioService {
   }
 
   // ============================
+  // EDITAR NOMBRE Y UNIDAD DE MEDIDA DEL INSUMO
+  // ============================
+
+  static Future<InventarioModel> actualizarInsumo({
+    required String inventarioId,
+    required String nombreInsumo,
+    required String unidadMedida,
+  }) async {
+    final response = await ApiClient.put(
+      '${ApiConfig.inventario}/insumos/$inventarioId',
+      {
+        'nombreInsumo': nombreInsumo.trim(),
+        'unidadMedida': unidadMedida.trim(),
+      },
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return InventarioModel.fromJson(data['inventario']);
+    }
+
+    throw Exception(
+      data['message'] ?? 'No se pudo actualizar el insumo',
+    );
+  }
+
+  // ============================
+  // ELIMINAR INSUMO INDEPENDIENTE
+  // ============================
+
+  static Future<void> eliminarInsumo({
+    required String inventarioId,
+  }) async {
+    final response = await ApiClient.delete(
+      '${ApiConfig.inventario}/insumos/$inventarioId',
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw Exception(
+      data['message'] ?? 'No se pudo eliminar el insumo',
+    );
+  }
+
+  // ============================
   // ACTUALIZAR MÍNIMO Y MÁXIMO
   // ============================
 
@@ -173,7 +224,6 @@ class InventarioService {
       data['message'] ?? 'No se pudieron actualizar los límites',
     );
   }
-
 
   // ============================
   // REGISTRAR MOVIMIENTO

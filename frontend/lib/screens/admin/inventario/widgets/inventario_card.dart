@@ -12,6 +12,8 @@ class InventarioCard extends StatelessWidget {
   final IconData iconoEstado;
   final VoidCallback onVerHistorial;
   final VoidCallback onEditarLimites;
+  final VoidCallback? onEditarInsumo;
+  final VoidCallback? onEliminarInsumo;
 
   const InventarioCard({
     super.key,
@@ -21,6 +23,8 @@ class InventarioCard extends StatelessWidget {
     required this.iconoEstado,
     required this.onVerHistorial,
     required this.onEditarLimites,
+    this.onEditarInsumo,
+    this.onEliminarInsumo,
   });
 
   String _cantidad(double n) =>
@@ -134,7 +138,26 @@ class InventarioCard extends StatelessWidget {
             Wrap(
               alignment: WrapAlignment.end,
               spacing: 8,
+              runSpacing: 4,
               children: [
+                if (item.esInsumo && onEditarInsumo != null)
+                  TextButton.icon(
+                    onPressed: onEditarInsumo,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Editar insumo'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.caramelo,
+                    ),
+                  ),
+                if (item.esInsumo && onEliminarInsumo != null)
+                  TextButton.icon(
+                    onPressed: onEliminarInsumo,
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Eliminar'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                  ),
                 TextButton.icon(
                   onPressed: onEditarLimites,
                   icon: const Icon(Icons.tune),
