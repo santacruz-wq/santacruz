@@ -1,3 +1,4 @@
+
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
@@ -74,6 +75,21 @@ const userSchema = new mongoose.Schema({
     avatar: {
         type: String,
         default: ''
+    },
+
+    // NUEVO: SESIONES PARA RENOVAR TOKENS
+    refreshSessions: {
+        type: [{
+            tokenHash: {
+                type: String,
+                required: true
+            },
+            expiresAt: {
+                type: Date,
+                required: true
+            }
+        }],
+        default: []
     }
 }, {
     timestamps: true,

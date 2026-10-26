@@ -1,8 +1,11 @@
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorage {
   static const _storage = FlutterSecureStorage();
+
   static const _tokenKey = "jwt_token";
+  static const _refreshTokenKey = "refresh_token";
   static const _userKey = "user_data";
 
   static Future<void> saveToken(String token) async {
@@ -17,7 +20,20 @@ class SecureStorage {
     await _storage.delete(key: _tokenKey);
   }
 
-  //GUARDAMOS LOS DATOS DEL USUARIO (COMO JSON STRING)
+  // REFRESH TOKEN
+  static Future<void> saveRefreshToken(String token) async {
+    await _storage.write(key: _refreshTokenKey, value: token);
+  }
+
+  static Future<String?> getRefreshToken() async {
+    return await _storage.read(key: _refreshTokenKey);
+  }
+
+  static Future<void> deleteRefreshToken() async {
+    await _storage.delete(key: _refreshTokenKey);
+  }
+
+  // DATOS DEL USUARIO
   static Future<void> saveUser(String userJson) async {
     await _storage.write(key: _userKey, value: userJson);
   }
@@ -30,7 +46,7 @@ class SecureStorage {
     await _storage.delete(key: _userKey);
   }
 
-    //IDIOMA SELECCIONADO
+  // IDIOMA SELECCIONADO
   static const _idiomaCodigoKey = "idioma_codigo";
   static const _idiomaNombreKey = "idioma_nombre";
 
@@ -42,7 +58,12 @@ class SecureStorage {
   static Future<Map<String, String>?> getIdioma() async {
     final codigo = await _storage.read(key: _idiomaCodigoKey);
     final nombre = await _storage.read(key: _idiomaNombreKey);
+
     if (codigo == null || nombre == null) return null;
-    return {"codigo": codigo, "nombre": nombre};
+
+    return {
+      "codigo": codigo,
+      "nombre": nombre
+    };
   }
 }
