@@ -1,3 +1,4 @@
+
 class ApiConfig {
   // Backend desplegado en Render
   static const String baseUrl =
@@ -5,6 +6,10 @@ class ApiConfig {
 
   static const String login = "$baseUrl/login";
   static const String registrar = "$baseUrl/usuarios/registrar";
+
+  // Renovación y cierre de sesión
+  static const String renovarSesion = "$baseUrl/login/refresh";
+  static const String cerrarSesion = "$baseUrl/login/logout";
 
   // Recuperar contraseña
   static const String recuperarSolicitar = "$baseUrl/recuperar/solicitar";

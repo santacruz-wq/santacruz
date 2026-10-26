@@ -1,8 +1,9 @@
+
 import { OAuth2Client } from "google-auth-library";
-import jwt from "jsonwebtoken";
 import user from "../models/user.js";
 import RegistroPendiente from "../models/registroPendiente.js";
 import dotenv from "dotenv";
+import { crearTokensSesion } from "./sesion.js";
 
 dotenv.config();
 
@@ -25,13 +26,11 @@ export const loginWithGoogle = async (req, res) => {
         let picture;
         let emailVerificadoPorGoogle = false;
 
-        // Detectar si es un ID Token JWT.
         const esJwt =
             idToken.split(".").length === 3 &&
             !idToken.startsWith("ya29.");
 
         if (esJwt) {
-            // Android / iOS.
             const ticket = await client.verifyIdToken({
                 idToken,
                 audience: process.env.GOOGLE_CLIENT_ID,
@@ -52,7 +51,6 @@ export const loginWithGoogle = async (req, res) => {
             picture = payload.picture;
             emailVerificadoPorGoogle = payload.email_verified === true;
         } else {
-            // Google Access Token.
             const userInfoResponse = await fetch(
                 "https://www.googleapis.com/oauth2/v3/userinfo",
                 {
@@ -72,10 +70,7 @@ export const loginWithGoogle = async (req, res) => {
 
             googleId = userData.sub;
             email = userData.email;
-            given_name =
-                userData.given_name ||
-                userData.name ||
-                "USUARIO";
+            given_name = userData.given_name || userData.name || "USUARIO";
             family_name = userData.family_name || "";
             picture = userData.picture;
             emailVerificadoPorGoogle = userData.email_verified === true;
@@ -83,46 +78,34 @@ export const loginWithGoogle = async (req, res) => {
 
         if (!email || !googleId || !emailVerificadoPorGoogle) {
             return res.status(401).json({
-                mensaje:
-                    "Google debe proporcionar un correo verificado para iniciar sesión",
+                mensaje: "Google debe proporcionar un correo verificado para iniciar sesión",
             });
         }
 
         const correoLimpio = email.toLowerCase().trim();
 
-        // Buscar usuario definitivo.
-        let usuario = await user.findOne({
-            email: correoLimpio,
-        });
+        let usuario = await user.findOne({ email: correoLimpio });
 
-        // Si existe un registro pendiente por correo y contraseña,
-        // no vincularlo automáticamente a Google.
         const registroPendiente = await RegistroPendiente.findOne({
             email: correoLimpio,
         });
 
         if (registroPendiente && !usuario) {
             return res.status(409).json({
-                mensaje:
-                    "Este correo tiene un registro pendiente de verificación. Verifica el código enviado a tu correo antes de continuar con ese registro.",
+                mensaje: "Este correo tiene un registro pendiente de verificación. Verifica el código enviado a tu correo antes de continuar con ese registro.",
             });
         }
 
         if (usuario) {
-            // No permitir vincular un Google ID diferente al ya registrado.
             if (usuario.googleId && usuario.googleId !== googleId) {
                 return res.status(409).json({
-                    mensaje:
-                        "Este correo ya está vinculado a otra cuenta de Google.",
+                    mensaje: "Este correo ya está vinculado a otra cuenta de Google.",
                 });
             }
 
-            // Si el usuario se registró con correo y contraseña,
-            // permitir vincular Google únicamente si su cuenta ya está verificada.
             if (!usuario.isVerified) {
                 return res.status(403).json({
-                    mensaje:
-                        "Esta cuenta todavía no está verificada. Verifica tu correo antes de iniciar sesión.",
+                    mensaje: "Esta cuenta todavía no está verificada. Verifica tu correo antes de iniciar sesión.",
                 });
             }
 
@@ -130,14 +113,18 @@ export const loginWithGoogle = async (req, res) => {
                 usuario.googleId = googleId;
             }
 
-            // Guardar foto si todavía no tiene.
             if (!usuario.avatar && picture) {
                 usuario.avatar = picture;
             }
 
+            if (!usuario.activo) {
+                return res.status(403).json({
+                    mensaje: "Esta cuenta se encuentra desactivada. Contacta al administrador.",
+                });
+            }
+
             await usuario.save();
         } else {
-            // Crear usuario nuevo con correo confirmado por Google.
             const nombreCompleto =
                 `${given_name || "USUARIO"} ${family_name || ""}`.trim();
 
@@ -154,56 +141,42 @@ export const loginWithGoogle = async (req, res) => {
             await usuario.save();
         }
 
-        if (!usuario.activo) {
-            return res.status(403).json({
-                mensaje: "Esta cuenta se encuentra desactivada. Contacta al administrador.",
-            });
-        }
-
         if (!process.env.JWT_SECRET) {
             console.error("JWT_SECRET no está configurado.");
+
             return res.status(500).json({
                 mensaje: "Error de configuración del servidor.",
             });
         }
 
-        // JWT PROPIO DE SANTA CRUZ.
-        const token = jwt.sign(
-            {
-                id: usuario._id,
-                email: usuario.email,
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: "1h",
-            }
-        );
+        const { token, refreshToken } =
+            await crearTokensSesion(usuario);
 
         return res.status(200).json({
             mensaje: "Inicio de sesión con Google exitoso",
             token,
+            refreshToken,
             usuario: {
                 _id: usuario._id,
                 email: usuario.email,
                 nombre: usuario.nombre,
                 rol: usuario.rol,
+                activo: usuario.activo,
+                isVerified: usuario.isVerified,
                 avatar: usuario.avatar,
+                createdAt: usuario.createdAt,
             },
         });
     } catch (error) {
-        console.error(
-            "Error al autenticar con Google:",
-            error
-        );
+        console.error("Error al autenticar con Google:", error);
 
         if (error.code === 11000) {
             return res.status(409).json({
-                mensaje:
-                    "La cuenta ya existe o está vinculada. Intenta iniciar sesión nuevamente.",
+                mensaje: "La cuenta ya existe o está vinculada. Intenta iniciar sesión nuevamente.",
             });
         }
 
-        return res.status(401).json({
+        return res.status(500).json({
             mensaje: "No fue posible autenticar con Google",
         });
     }

@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import '../core/config/api_config.dart';
 import '../core/network/api_client.dart';
@@ -6,11 +7,7 @@ import '../models/user_model.dart';
 import 'google_auth_service.dart';
 
 class AuthService {
-
-  // =========================================================
   // INICIAR SESIÓN NORMAL
-  // =========================================================
-
   static Future<Map<String, dynamic>> login(
     String email,
     String password,
@@ -27,9 +24,11 @@ class AuthService {
     final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      await SecureStorage.saveToken(
-        data["token"],
-      );
+      await SecureStorage.saveToken(data["token"]);
+
+      if (data["refreshToken"] is String) {
+        await SecureStorage.saveRefreshToken(data["refreshToken"]);
+      }
 
       await SecureStorage.saveUser(
         jsonEncode(data["usuario"]),
@@ -37,31 +36,23 @@ class AuthService {
 
       return {
         "success": true,
-        "user": UserModel.fromJson(
-          data["usuario"],
-        ),
-      };
-    } else {
-      return {
-        "success": false,
-        "message": data["mensaje"] ??
-            data["message"] ??
-            "Correo o contraseña incorrectos",
+        "user": UserModel.fromJson(data["usuario"]),
       };
     }
+
+    return {
+      "success": false,
+      "message": data["mensaje"] ??
+          data["message"] ??
+          "Correo o contraseña incorrectos",
+    };
   }
 
-  // =========================================================
   // INICIAR SESIÓN / REGISTRARSE CON GOOGLE
-  // =========================================================
-
   static Future<Map<String, dynamic>> loginConGoogle() async {
     try {
-      // 1. Abrir Google
-      final idToken =
-          await GoogleAuthService.iniciarSesion();
+      final idToken = await GoogleAuthService.iniciarSesion();
 
-      // Usuario canceló
       if (idToken == null) {
         return {
           "success": false,
@@ -70,22 +61,20 @@ class AuthService {
         };
       }
 
-      // 2. Enviar token al backend
       final response = await ApiClient.post(
         ApiConfig.loginGoogle,
-        {
-          "idToken": idToken,
-        },
+        {"idToken": idToken},
         auth: false,
       );
 
       final data = jsonDecode(response.body);
 
-      // 3. Login exitoso
       if (response.statusCode == 200) {
-        await SecureStorage.saveToken(
-          data["token"],
-        );
+        await SecureStorage.saveToken(data["token"]);
+
+        if (data["refreshToken"] is String) {
+          await SecureStorage.saveRefreshToken(data["refreshToken"]);
+        }
 
         await SecureStorage.saveUser(
           jsonEncode(data["usuario"]),
@@ -93,9 +82,7 @@ class AuthService {
 
         return {
           "success": true,
-          "user": UserModel.fromJson(
-            data["usuario"],
-          ),
+          "user": UserModel.fromJson(data["usuario"]),
         };
       }
 
@@ -115,10 +102,7 @@ class AuthService {
     }
   }
 
-  // =========================================================
   // REGISTRAR NUEVO USUARIO
-  // =========================================================
-
   static Future<Map<String, dynamic>> registrar(
     String nombre,
     String email,
@@ -139,23 +123,19 @@ class AuthService {
     if (response.statusCode == 201) {
       return {
         "success": true,
-        "message": data["mensaje"] ??
-            data["message"],
-      };
-    } else {
-      return {
-        "success": false,
-        "message": data["mensaje"] ??
-            data["message"] ??
-            "Error al registrar usuario",
+        "message": data["mensaje"] ?? data["message"],
       };
     }
+
+    return {
+      "success": false,
+      "message": data["mensaje"] ??
+          data["message"] ??
+          "Error al registrar usuario",
+    };
   }
 
-  // =========================================================
   // VERIFICAR CUENTA
-  // =========================================================
-
   static Future<Map<String, dynamic>> verificarCuenta(
     String email,
     String codigo,
@@ -179,18 +159,13 @@ class AuthService {
     };
   }
 
-  // =========================================================
   // REENVIAR CÓDIGO
-  // =========================================================
-
   static Future<Map<String, dynamic>> reenviarCodigo(
     String email,
   ) async {
     final response = await ApiClient.post(
       ApiConfig.reenviarCodigo,
-      {
-        "email": email,
-      },
+      {"email": email},
       auth: false,
     );
 
@@ -204,18 +179,13 @@ class AuthService {
     };
   }
 
-  // =========================================================
   // RECUPERAR CONTRASEÑA
-  // =========================================================
-
   static Future<Map<String, dynamic>> solicitarCodigo(
     String email,
   ) async {
     final response = await ApiClient.post(
       ApiConfig.recuperarSolicitar,
-      {
-        "email": email,
-      },
+      {"email": email},
       auth: false,
     );
 
@@ -227,10 +197,7 @@ class AuthService {
     };
   }
 
-  // =========================================================
   // CAMBIAR CONTRASEÑA
-  // =========================================================
-
   static Future<Map<String, dynamic>> cambiarPassword(
     String email,
     String codigo,
@@ -254,14 +221,26 @@ class AuthService {
     };
   }
 
-  // =========================================================
   // CERRAR SESIÓN
-  // =========================================================
-
   static Future<void> logout() async {
-    await GoogleAuthService.cerrarSesion();
+    final refreshToken = await SecureStorage.getRefreshToken();
 
-    await SecureStorage.deleteToken();
-    await SecureStorage.deleteUser();
+    try {
+      await GoogleAuthService.cerrarSesion();
+
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await ApiClient.post(
+          ApiConfig.cerrarSesion,
+          {"refreshToken": refreshToken},
+          auth: false,
+        );
+      }
+    } catch (_) {
+      // Aunque falle la petición, se borran las credenciales locales.
+    } finally {
+      await SecureStorage.deleteToken();
+      await SecureStorage.deleteRefreshToken();
+      await SecureStorage.deleteUser();
+    }
   }
 }
