@@ -1,5 +1,6 @@
 
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../core/config/api_config.dart';
@@ -7,130 +8,162 @@ import '../core/network/api_client.dart';
 import '../core/config/app_strings.dart';
 
 class TranslationService {
-  // Traduce todos los textos fijos de AppStrings.base
-  // al idioma seleccionado.
-  //
-  // Si el idioma es español, no llama al backend
-  // y devuelve directamente los textos originales.
+  // Caché en memoria para no volver a solicitar textos ya traducidos.
+  static final Map<String, String> _cache = {};
+
+  // Evita enviar demasiadas solicitudes simultáneamente.
+  static const int _tamanoLote = 4;
+
   static Future<Map<String, String>> traducirInterfaz(
     String idiomaDestino,
   ) async {
     if (idiomaDestino == 'es') {
-      return Map.from(AppStrings.base);
+      return Map<String, String>.from(AppStrings.base);
     }
 
     final entradas = AppStrings.base.entries.toList();
 
-    final resultados = await Future.wait(
-      entradas.map(
-        (entrada) => _traducirUno(
-          entrada.value,
-          idiomaDestino,
-        ),
-      ),
+    final traducciones = await traducirLista(
+      entradas.map((entrada) => entrada.value).toList(),
+      idiomaDestino,
     );
 
-    final Map<String, String> traducido = {};
+    final Map<String, String> resultado = {};
 
     for (int i = 0; i < entradas.length; i++) {
-      traducido[entradas[i].key] = resultados[i];
+      resultado[entradas[i].key] = traducciones[i];
     }
 
-    return traducido;
+    return resultado;
   }
 
-  // Traduce un solo texto.
-  //
-  // Se realizan hasta 2 intentos porque MyMemory
-  // puede tardar o fallar ocasionalmente.
   static Future<String> _traducirUno(
     String texto,
     String idiomaDestino, {
     int intentos = 2,
   }) async {
-    for (int i = 0; i < intentos; i++) {
+    final original = texto.trim();
+
+    if (original.isEmpty || idiomaDestino == 'es') {
+      return texto;
+    }
+
+    final clave = '$idiomaDestino|$original';
+
+    final guardado = _cache[clave];
+    if (guardado != null) {
+      return guardado;
+    }
+
+    for (int intento = 1; intento <= intentos; intento++) {
       try {
         final response = await ApiClient.post(
           ApiConfig.traducir,
           {
-            'texto': texto,
+            'texto': original,
             'idiomaDestino': idiomaDestino,
             'idiomaOrigen': 'es',
           },
           auth: false,
-        ).timeout(
-          const Duration(seconds: 8),
-        );
+        ).timeout(const Duration(seconds: 15));
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
 
-          final traducido =
-              data['textoTraducido'] as String? ?? texto;
+          if (data is Map<String, dynamic>) {
+            final valor = data['textoTraducido'];
 
-          return _limpiarTexto(traducido);
+            if (valor is String && valor.trim().isNotEmpty) {
+              final traducido = _limpiarTexto(valor);
+
+              if (traducido.isNotEmpty) {
+                _cache[clave] = traducido;
+                return traducido;
+              }
+            }
+          }
+
+          debugPrint(
+            'La API no devolvió una traducción válida para: $original',
+          );
+        } else {
+          debugPrint(
+            'Error HTTP ${response.statusCode} traduciendo: $original',
+          );
         }
-
-        debugPrint(
-          'Traducción falló '
-          '(${response.statusCode}) '
-          'intento ${i + 1} '
-          'para "$texto"',
-        );
       } catch (e) {
         debugPrint(
-          'Error traduciendo '
-          '"$texto" '
-          'intento ${i + 1}: $e',
+          'Error de traducción, intento $intento de $intentos: $e',
         );
       }
     }
 
-    // Si todos los intentos fallan,
-    // mostramos el texto original.
+    // Si falla la API, conserva el original sin interrumpir la aplicación.
     return texto;
   }
 
-  // Limpia entidades HTML y prefijos numéricos
-  // que ocasionalmente devuelve MyMemory.
   static String _limpiarTexto(String texto) {
-    var limpio = texto
+    return texto
         .replaceAll('&amp;', '&')
         .replaceAll('&quot;', '"')
         .replaceAll('&#39;', "'")
-        .trim();
-
-    limpio = limpio.replaceFirst(
-      RegExp(r'^\d+\.\s*'),
-      '',
-    );
-
-    return limpio;
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .trim()
+        .replaceFirst(RegExp(r'^\d+\.\s*'), '');
   }
 
-  // Traduce una lista completa de textos
-  // en paralelo.
-  //
-  // Útil para categorías, productos, etc.
   static Future<List<String>> traducirLista(
     List<String> textos,
     String idiomaDestino,
   ) async {
     if (idiomaDestino == 'es') {
-      return textos;
+      return List<String>.from(textos);
     }
 
-    return Future.wait(
-      textos.map(
-        (texto) => _traducirUno(
-          texto,
-          idiomaDestino,
-        ),
-      ),
-    );
+    final List<String> resultado = List.filled(textos.length, '');
+
+    // Conserva el orden original y evita solicitudes duplicadas.
+    final posiciones = <String, List<int>>{};
+
+    for (int i = 0; i < textos.length; i++) {
+      final texto = textos[i];
+
+      if (texto.trim().isEmpty) {
+        resultado[i] = texto;
+        continue;
+      }
+
+      posiciones.putIfAbsent(texto, () => []).add(i);
+    }
+
+    final textosUnicos = posiciones.keys.toList();
+
+    for (int inicio = 0;
+        inicio < textosUnicos.length;
+        inicio += _tamanoLote) {
+      final fin = (inicio + _tamanoLote < textosUnicos.length)
+          ? inicio + _tamanoLote
+          : textosUnicos.length;
+
+      final lote = textosUnicos.sublist(inicio, fin);
+
+      final traducciones = await Future.wait(
+        lote.map((texto) => _traducirUno(texto, idiomaDestino)),
+      );
+
+      for (int i = 0; i < lote.length; i++) {
+        final original = lote[i];
+
+        for (final posicion in posiciones[original]!) {
+          resultado[posicion] = traducciones[i];
+        }
+      }
+    }
+
+    return resultado;
   }
 
-  // Traduce directamente un texto dinámico.
   static Future<String> traducirTexto(
     String texto,
     String idiomaDestino,
@@ -139,9 +172,6 @@ class TranslationService {
       return Future.value(texto);
     }
 
-    return _traducirUno(
-      texto,
-      idiomaDestino,
-    );
+    return _traducirUno(texto, idiomaDestino);
   }
 }

@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/navigation/menu_navigation.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorito_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../widgets/global/bottom_menu.dart';
 import '../../widgets/menu/product_card.dart';
 
@@ -25,7 +25,6 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
   void initState() {
     super.initState();
 
-    // Cargar los favoritos al abrir la pantalla.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
@@ -41,16 +40,18 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final favoritos = context.watch<FavoritoProvider>();
+    final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis favoritos'),
+        title: Text(lang.t('mis_favoritos')),
         centerTitle: true,
       ),
       body: _buildBody(
         context,
         auth,
         favoritos,
+        lang,
       ),
       bottomNavigationBar: widget.showBottomBar
           ? BottomMenu(
@@ -67,6 +68,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     BuildContext context,
     AuthProvider auth,
     FavoritoProvider favoritos,
+    LanguageProvider lang,
   ) {
     // Usuario sin sesión.
     if (auth.usuario == null) {
@@ -82,17 +84,17 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                 color: Colors.grey,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Inicia sesión para ver tus favoritos',
+              Text(
+                lang.t('inicia_sesion_favoritos'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/login');
                 },
-                child: const Text('Iniciar sesión'),
+                child: Text(lang.t('iniciar_sesion')),
               ),
             ],
           ),
@@ -113,18 +115,18 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
         onRefresh: favoritos.cargarFavoritos,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 120),
-            Icon(
+          children: [
+            const SizedBox(height: 120),
+            const Icon(
               Icons.favorite_border,
               size: 64,
               color: Colors.grey,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'Aún no tienes favoritos',
+              lang.t('aun_sin_favoritos'),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
           ],
         ),
