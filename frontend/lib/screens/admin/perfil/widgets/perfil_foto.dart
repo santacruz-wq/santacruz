@@ -1,3 +1,4 @@
+
 part of '../../admin_perfil_screen.dart';
 
 mixin _PerfilFoto on State<AdminPerfilScreen>, _PerfilEstado, _PerfilUtils {
@@ -79,8 +80,23 @@ mixin _PerfilFoto on State<AdminPerfilScreen>, _PerfilEstado, _PerfilUtils {
   }
 
   String _urlAvatar(String avatar) {
-    final base = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
-    return '$base$avatar';
+    final valor = avatar.trim();
+
+    if (valor.isEmpty) return '';
+
+    // Las URL completas de Cloudinary se utilizan directamente.
+    if (valor.startsWith('https://') ||
+        valor.startsWith('http://')) {
+      return valor;
+    }
+
+    // Las rutas relativas se completan con el dominio del backend.
+    final base = ApiConfig.baseUrl.replaceFirst(
+      RegExp(r'/api/?$'),
+      '',
+    );
+
+    return '$base/${valor.startsWith('/') ? valor.substring(1) : valor}';
   }
 
   ImageProvider? _imagenPerfil() {
@@ -90,7 +106,7 @@ mixin _PerfilFoto on State<AdminPerfilScreen>, _PerfilEstado, _PerfilUtils {
 
     final avatar = _usuario?['avatar']?.toString() ?? '';
 
-    if (avatar.isEmpty) return null;
+    if (avatar.trim().isEmpty) return null;
 
     return NetworkImage(_urlAvatar(avatar));
   }

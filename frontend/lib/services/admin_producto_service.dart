@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -38,12 +39,31 @@ class AdminProductoService {
   }
 
   /// Crea el archivo multipart con su tipo MIME correspondiente.
-  /// Solo permite JPG, JPEG, PNG y WEBP.
+  /// Acepta JPG, JPEG, PNG y WEBP.
   static http.MultipartFile _crearArchivoImagen(
     XFile imagen,
     List<int> bytes,
   ) {
-    final extension = imagen.name.split('.').last.toLowerCase();
+    if (bytes.isEmpty) {
+      throw Exception('La imagen seleccionada está vacía.');
+    }
+
+    // Intenta obtener la extensión del nombre del archivo.
+    var nombreArchivo = imagen.name.trim();
+    var extension = '';
+
+    final nombreParaAnalizar = nombreArchivo.isNotEmpty
+        ? nombreArchivo
+        : imagen.path;
+
+    final ultimoPunto = nombreParaAnalizar.lastIndexOf('.');
+    final ultimaBarra = nombreParaAnalizar.lastIndexOf('/');
+
+    if (ultimoPunto > ultimaBarra &&
+        ultimoPunto < nombreParaAnalizar.length - 1) {
+      extension =
+          nombreParaAnalizar.substring(ultimoPunto + 1).toLowerCase();
+    }
 
     final tipos = <String, MediaType>{
       'jpg': MediaType('image', 'jpeg'),
@@ -52,22 +72,52 @@ class AdminProductoService {
       'webp': MediaType('image', 'webp'),
     };
 
-    final tipo = tipos[extension];
+    var tipo = tipos[extension];
+
+    // Si el nombre no identifica el formato, comprueba los bytes reales.
+    if (tipo == null) {
+      if (bytes.length >= 3 &&
+          bytes[0] == 0xFF &&
+          bytes[1] == 0xD8 &&
+          bytes[2] == 0xFF) {
+        tipo = MediaType('image', 'jpeg');
+        extension = 'jpg';
+      } else if (bytes.length >= 8 &&
+          bytes[0] == 0x89 &&
+          bytes[1] == 0x50 &&
+          bytes[2] == 0x4E &&
+          bytes[3] == 0x47 &&
+          bytes[4] == 0x0D &&
+          bytes[5] == 0x0A &&
+          bytes[6] == 0x1A &&
+          bytes[7] == 0x0A) {
+        tipo = MediaType('image', 'png');
+        extension = 'png';
+      } else if (bytes.length >= 12 &&
+          String.fromCharCodes(bytes.sublist(0, 4)) == 'RIFF' &&
+          String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP') {
+        tipo = MediaType('image', 'webp');
+        extension = 'webp';
+      }
+    }
 
     if (tipo == null) {
       throw Exception(
-        'Formato no permitido. Usa JPG, JPEG, PNG o WEBP.',
+        'No se reconoce el formato de la imagen. '
+        'Selecciona una foto JPG, JPEG, PNG o WEBP.',
       );
     }
 
-    if (bytes.isEmpty) {
-      throw Exception('La imagen seleccionada está vacía.');
+    // Garantiza que el archivo enviado tenga una extensión válida.
+    if (nombreArchivo.isEmpty ||
+        !nombreArchivo.toLowerCase().endsWith('.$extension')) {
+      nombreArchivo = 'imagen.$extension';
     }
 
     return http.MultipartFile.fromBytes(
       'imagen',
       bytes,
-      filename: imagen.name,
+      filename: nombreArchivo,
       contentType: tipo,
     );
   }
