@@ -19,6 +19,7 @@ class MeseroBottomMenu extends StatelessWidget {
       Icons.table_restaurant_rounded,
       Icons.receipt_long_rounded,
       Icons.history_rounded,
+      Icons.translate_rounded,
       Icons.person_rounded,
     ];
 
@@ -44,7 +45,7 @@ class MeseroBottomMenu extends StatelessWidget {
 
             return Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: Material(
                   color: seleccionado
                       ? AppColors.caramelo
@@ -58,7 +59,7 @@ class MeseroBottomMenu extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           items[index],
-                          size: 24,
+                          size: 23,
                           color: seleccionado
                               ? AppColors.blanco
                               : AppColors.cafeMedio,
