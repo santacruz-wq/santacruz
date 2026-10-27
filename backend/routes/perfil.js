@@ -1,8 +1,8 @@
 
 import express from "express";
 import multer from "multer";
-import fs from "fs";
-import path from "path";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
 import { verificarToken } from "../middlewares/auth.js";
 
@@ -15,36 +15,22 @@ import {
 
 const router = express.Router();
 
-const carpetaPerfiles = path.join(
-    process.cwd(),
-    "uploads",
-    "perfiles",
-);
-
-fs.mkdirSync(carpetaPerfiles, { recursive: true });
-
-const almacenamiento = multer.diskStorage({
-    destination: (_req, _file, callback) => {
-        callback(null, carpetaPerfiles);
-    },
-
-    filename: (_req, file, callback) => {
-        const extension = path.extname(file.originalname).toLowerCase();
-
-        callback(
-            null,
-            `${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`,
-        );
+const almacenamientoPerfiles = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: "santacruz-plazuela/perfiles",
+        allowed_formats: ["jpg", "jpeg", "png", "webp"],
+        transformation: [
+            { width: 600, height: 600, crop: "limit" },
+        ],
     },
 });
 
 const subirFoto = multer({
-    storage: almacenamiento,
-
+    storage: almacenamientoPerfiles,
     limits: {
         fileSize: 5 * 1024 * 1024,
     },
-
     fileFilter: (_req, file, callback) => {
         const tiposPermitidos = [
             "image/jpeg",
