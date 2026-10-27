@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../core/config/app_colors.dart';
@@ -57,47 +58,91 @@ class _AdminProductosScreenState extends State<AdminProductosScreen> {
     if (resultado == true && mounted) await _cargarProductos();
   }
 
-  Future<void> _cambiarDisponibilidad(ProductModel producto) async {
-    final activar = !producto.disponible;
-    final confirmar = await showDialog<bool>(
+  Future<void> _cambiarEstadoMenu(ProductModel producto) async {
+    final estadoActual = !producto.visibleMenu
+        ? 'oculto'
+        : producto.disponible
+            ? 'disponible'
+            : 'agotado';
+
+    final estadoSeleccionado = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(activar ? 'Activar producto' : 'Desactivar producto'),
-        content: Text(
-          activar
-              ? '¿Deseas volver a activar "${producto.nombre}"?'
-              : '¿Deseas desactivar "${producto.nombre}"? '
-                  'No se mostrará como disponible en el menú.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+      builder: (ctx) => SimpleDialog(
+        title: Text('Estado de ${producto.nombre}'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'disponible'),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green),
+                const SizedBox(width: 10),
+                const Text('Disponible'),
+                if (estadoActual == 'disponible') ...[
+                  const Spacer(),
+                  const Icon(Icons.check, size: 18),
+                ],
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(activar ? 'Activar' : 'Desactivar'),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'agotado'),
+            child: Row(
+              children: [
+                const Icon(Icons.remove_circle, color: Colors.orange),
+                const SizedBox(width: 10),
+                const Text('Agotado'),
+                if (estadoActual == 'agotado') ...[
+                  const Spacer(),
+                  const Icon(Icons.check, size: 18),
+                ],
+              ],
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'oculto'),
+            child: Row(
+              children: [
+                const Icon(Icons.visibility_off, color: Colors.grey),
+                const SizedBox(width: 10),
+                const Text('Oculto'),
+                if (estadoActual == 'oculto') ...[
+                  const Spacer(),
+                  const Icon(Icons.check, size: 18),
+                ],
+              ],
+            ),
           ),
         ],
       ),
     );
-    if (confirmar != true || !mounted) return;
+
+    if (estadoSeleccionado == null ||
+        estadoSeleccionado == estadoActual ||
+        !mounted) {
+      return;
+    }
 
     try {
-      await AdminProductoService.cambiarDisponibilidad(
+      await AdminProductoService.cambiarEstadoMenu(
         id: producto.id,
-        disponible: activar,
+        estado: estadoSeleccionado,
       );
+
       if (!mounted) return;
+
+      final nombreEstado = switch (estadoSeleccionado) {
+        'disponible' => 'Disponible',
+        'agotado' => 'Agotado',
+        'oculto' => 'Oculto',
+        _ => estadoSeleccionado,
+      };
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            activar
-                ? 'Producto activado correctamente'
-                : 'Producto desactivado correctamente',
-          ),
+          content: Text('Producto actualizado: $nombreEstado'),
         ),
       );
+
       await _cargarProductos();
     } catch (e) {
       if (!mounted) return;
@@ -164,7 +209,7 @@ class _AdminProductosScreenState extends State<AdminProductosScreen> {
               productos: filtrados,
               onActualizar: _cargarProductos,
               onEditar: _abrirFormulario,
-              onCambiarDisponibilidad: _cambiarDisponibilidad,
+              onCambiarDisponibilidad: _cambiarEstadoMenu,
             ),
           ],
         ),

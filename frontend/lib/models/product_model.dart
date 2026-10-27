@@ -1,3 +1,4 @@
+
 class ProductModel {
   final String id;
   final String productId;
@@ -7,6 +8,7 @@ class ProductModel {
   final String imagen;
   final String categoriaId;
   final bool disponible;
+  final bool visibleMenu;
 
   ProductModel({
     required this.id,
@@ -17,11 +19,10 @@ class ProductModel {
     required this.imagen,
     required this.categoriaId,
     required this.disponible,
+    this.visibleMenu = true,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    // La categoría puede venir poblada como objeto
-    // o solamente como ID (String)
     final categoriaRaw = json['categoria'];
 
     final categoriaId = categoriaRaw is Map
@@ -39,10 +40,10 @@ class ProductModel {
       imagen: (json['imagen'] ?? '').toString(),
       categoriaId: categoriaId,
       disponible: json['disponible'] ?? true,
+      visibleMenu: json['visibleMenu'] ?? true,
     );
   }
 
-  // Construye la URL completa de la imagen
   String get imagenUrl {
     if (imagen.isEmpty) {
       return '';

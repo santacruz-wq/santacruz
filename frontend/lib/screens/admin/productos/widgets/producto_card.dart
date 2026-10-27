@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_colors.dart';
@@ -18,6 +19,18 @@ class ProductoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String estado = !producto.visibleMenu
+        ? 'Oculto'
+        : producto.disponible
+            ? 'Disponible'
+            : 'Agotado';
+
+    final Color colorEstado = !producto.visibleMenu
+        ? Colors.grey.shade700
+        : producto.disponible
+            ? Colors.green.shade700
+            : Colors.orange.shade800;
+
     return Card(
       color: AppColors.cremaClaro,
       margin: const EdgeInsets.only(bottom: 12),
@@ -49,11 +62,9 @@ class ProductoCard extends StatelessWidget {
                 ),
               ),
               Text(
-                producto.disponible ? 'Activo' : 'Inactivo',
+                estado,
                 style: TextStyle(
-                  color: producto.disponible
-                      ? Colors.green.shade700
-                      : Colors.red,
+                  color: colorEstado,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -73,11 +84,9 @@ class ProductoCard extends StatelessWidget {
               value: 'editar',
               child: Text('Editar'),
             ),
-            PopupMenuItem(
+            const PopupMenuItem(
               value: 'estado',
-              child: Text(
-                producto.disponible ? 'Desactivar' : 'Activar',
-              ),
+              child: Text('Cambiar estado'),
             ),
           ],
         ),

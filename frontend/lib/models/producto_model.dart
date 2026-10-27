@@ -1,3 +1,4 @@
+
 class ProductoModel {
   final String id;
   final String productId;
@@ -8,6 +9,7 @@ class ProductoModel {
   final String categoriaId;
   final String categoriaNombre;
   final bool disponible;
+  final bool visibleMenu;
 
   ProductoModel({
     required this.id,
@@ -19,25 +21,29 @@ class ProductoModel {
     required this.categoriaId,
     required this.categoriaNombre,
     required this.disponible,
+    this.visibleMenu = true,
   });
 
   factory ProductoModel.fromJson(Map<String, dynamic> json) {
     final categoria = json['categoria'];
 
     return ProductoModel(
-      id: json['_id'] ?? '',
-      productId: json['productId'] ?? '',
-      nombre: json['nombre'] ?? '',
-      descripcion: json['descripcion'] ?? '',
-      precio: (json['precio'] ?? 0).toDouble(),
-      imagen: json['imagen'] ?? '',
+      id: (json['_id'] ?? '').toString(),
+      productId: (json['productId'] ?? '').toString(),
+      nombre: (json['nombre'] ?? '').toString(),
+      descripcion: (json['descripcion'] ?? '').toString(),
+      precio: json['precio'] is num
+          ? (json['precio'] as num).toDouble()
+          : 0.0,
+      imagen: (json['imagen'] ?? '').toString(),
       categoriaId: categoria is Map
-          ? (categoria['_id'] ?? '')
-          : (categoria ?? ''),
+          ? (categoria['_id'] ?? '').toString()
+          : (categoria ?? '').toString(),
       categoriaNombre: categoria is Map
-          ? (categoria['nombre'] ?? '')
+          ? (categoria['nombre'] ?? '').toString()
           : '',
       disponible: json['disponible'] ?? true,
+      visibleMenu: json['visibleMenu'] ?? true,
     );
   }
 }

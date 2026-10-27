@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 import product from "../models/product.js";
 import Categoria from "../models/categoria.js";
@@ -29,17 +30,17 @@ export const getProductos = async (req, res) => {
 // OBTENER PRODUCTO POR ID
 export const getProductoPorId = async (req, res) => {
   try {
-    const producto = await product
+    const productoEncontrado = await product
       .findById(req.params.id)
       .populate("categoria");
 
-    if (!producto) {
+    if (!productoEncontrado) {
       return res.status(404).json({
         message: "Producto no encontrado",
       });
     }
 
-    return res.status(200).json(producto);
+    return res.status(200).json(productoEncontrado);
   } catch (error) {
     if (error.name === "CastError") {
       return res.status(400).json({
@@ -129,6 +130,8 @@ export const crearProducto = async (req, res) => {
       precio: precioNumero,
       imagen: imagenSubida,
       categoria: categoriaExiste._id,
+      disponible: true,
+      visibleMenu: true,
     });
 
     await Inventario.create({
@@ -187,9 +190,9 @@ export const actualizarProducto = async (req, res) => {
   try {
     const { nombre, descripcion, precio, categoria } = req.body;
 
-    const producto = await product.findById(req.params.id);
+    const productoEncontrado = await product.findById(req.params.id);
 
-    if (!producto) {
+    if (!productoEncontrado) {
       return res.status(404).json({
         message: "Producto no encontrado",
       });
@@ -267,11 +270,10 @@ export const actualizarProducto = async (req, res) => {
       },
     ).populate("categoria");
 
-    // Si se guardó una imagen nueva, intentamos borrar la anterior.
-    // Un fallo de limpieza no debe invalidar el producto actualizado.
-    if (actualizarImagen && producto.imagen) {
+    // Borrar la imagen anterior solo después de actualizar correctamente.
+    if (actualizarImagen && productoEncontrado.imagen) {
       try {
-        await borrarImagenCloudinary(producto.imagen);
+        await borrarImagenCloudinary(productoEncontrado.imagen);
       } catch (errorImagen) {
         console.error(
           "El producto se actualizó, pero no se pudo borrar la imagen anterior:",
@@ -332,6 +334,7 @@ export const eliminarProducto = async (req, res) => {
 };
 
 // CAMBIAR DISPONIBILIDAD (ADMIN O COCINA)
+// Esta función conserva la visibilidad del producto en el menú.
 export const cambiarDisponibilidad = async (req, res) => {
   try {
     const { disponible } = req.body;
@@ -367,6 +370,60 @@ export const cambiarDisponibilidad = async (req, res) => {
 
     return res.status(500).json({
       message: "Error al cambiar la disponibilidad",
+      error: error.message,
+    });
+  }
+};
+
+// CAMBIAR ESTADO DEL MENÚ (SOLO ADMINISTRADOR)
+// disponible: visible y se puede pedir.
+// agotado: visible, pero no se puede pedir.
+// oculto: no aparece en el menú y no se puede pedir.
+export const cambiarEstadoMenu = async (req, res) => {
+  try {
+    const { estado } = req.body;
+
+    const estadosValidos = ["disponible", "agotado", "oculto"];
+
+    if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({
+        message: "Estado inválido. Usa disponible, agotado u oculto.",
+      });
+    }
+
+    const datosActualizar = {
+      disponible: estado === "disponible",
+      visibleMenu: estado !== "oculto",
+    };
+
+    const productoActualizado = await product.findByIdAndUpdate(
+      req.params.id,
+      datosActualizar,
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).populate("categoria");
+
+    if (!productoActualizado) {
+      return res.status(404).json({
+        message: "Producto no encontrado",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Estado del producto actualizado correctamente",
+      producto: productoActualizado,
+    });
+  } catch (error) {
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        message: "ID de producto inválido",
+      });
+    }
+
+    return res.status(500).json({
+      message: "Error al cambiar el estado del producto",
       error: error.message,
     });
   }

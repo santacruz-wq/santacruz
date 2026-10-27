@@ -256,4 +256,27 @@ class AdminProductoService {
       throw _crearError(response);
     }
   }
+
+  // NUEVO: cambiar entre disponible, agotado y oculto.
+  static Future<void> cambiarEstadoMenu({
+    required String id,
+    required String estado,
+  }) async {
+    final token = await _obtenerToken();
+
+    final response = await http.patch(
+      Uri.parse('${ApiConfig.productos}/$id/estado-menu'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'estado': estado,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw _crearError(response);
+    }
+  }
 }
