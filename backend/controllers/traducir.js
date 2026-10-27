@@ -1,60 +1,105 @@
+
 import Traduccion from '../models/traducir.js';
 
-//CONTROLLER PARA TRADUCIR TEXTO USANDO MYMEMORY (GRATIS, SIN API KEY)
-//CON CACHÉ EN MONGO PARA NO REPETIR LLAMADAS A LA API EXTERNA
+const IDIOMAS_PERMITIDOS = new Set(['es', 'en']);
 
 export const traducirTexto = async (req, res) => {
     try {
-        const { texto, idiomaDestino, idiomaOrigen } = req.body;
+        const { texto, idiomaDestino, idiomaOrigen } = req.body ?? {};
 
-        //VALIDAMOS LOS CAMPOS
+        if (typeof texto !== 'string' || !texto.trim()) {
+            return res.status(400).json({
+                message: 'Debes proporcionar un texto para traducir.',
+            });
+        }
 
-        if (!texto || !idiomaDestino) {
-            return res.status(400).json({ message: 'Se requiere el texto y el idioma destino' });
+        const textoLimpio = texto.trim();
+
+        if (textoLimpio.length > 500) {
+            return res.status(400).json({
+                message: 'El texto no puede superar los 500 caracteres.',
+            });
         }
 
         const origen = idiomaOrigen || 'es';
 
-        //BUSCAMOS SI YA EXISTE ESTA TRADUCCIÓN EN CACHÉ
+        if (
+            typeof origen !== 'string' ||
+            typeof idiomaDestino !== 'string' ||
+            !IDIOMAS_PERMITIDOS.has(origen) ||
+            !IDIOMAS_PERMITIDOS.has(idiomaDestino) ||
+            origen === idiomaDestino
+        ) {
+            return res.status(400).json({
+                message: 'Los idiomas deben ser es y en, y deben ser diferentes.',
+            });
+        }
 
         const existente = await Traduccion.findOne({
-            textoOriginal: texto,
+            textoOriginal: textoLimpio,
             idiomaOrigen: origen,
             idiomaDestino,
         });
 
         if (existente) {
             return res.status(200).json({
-                message: 'Texto traducido correctamente (caché)',
+                message: 'Traducción obtenida de la caché.',
                 textoTraducido: existente.textoTraducido,
             });
         }
 
-        //SI NO EXISTE, LLAMAMOS A LA API DE MYMEMORY
-
         const langpair = `${origen}|${idiomaDestino}`;
-        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=${langpair}`;
+        const url = new URL('https://api.mymemory.translated.net/get');
 
-        const respuesta = await fetch(url);
-        const data = await respuesta.json();
+        url.searchParams.set('q', textoLimpio);
+        url.searchParams.set('langpair', langpair);
 
-        if (data.responseStatus !== 200) {
-            return res.status(500).json({ message: 'Error al traducir el texto', error: data });
+        const respuesta = await fetch(url, {
+            signal: AbortSignal.timeout(10000),
+        });
+
+        if (!respuesta.ok) {
+            return res.status(502).json({
+                message: 'El servicio de traducción no está disponible.',
+            });
         }
 
-        const textoTraducido = data.responseData.translatedText;
+        const data = await respuesta.json();
 
-        //GUARDAMOS EN CACHÉ PARA LA PRÓXIMA VEZ
+        if (
+            data.responseStatus !== 200 ||
+            typeof data.responseData?.translatedText !== 'string' ||
+            !data.responseData.translatedText.trim()
+        ) {
+            return res.status(502).json({
+                message: 'No fue posible traducir el texto.',
+            });
+        }
+
+        const textoTraducido = data.responseData.translatedText.trim();
 
         await Traduccion.create({
-            textoOriginal: texto,
+            textoOriginal: textoLimpio,
             idiomaOrigen: origen,
             idiomaDestino,
             textoTraducido,
         });
 
-        res.status(200).json({ message: 'Texto traducido correctamente', textoTraducido });
+        return res.status(200).json({
+            message: 'Texto traducido correctamente.',
+            textoTraducido,
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error del servidor', error: error.message });
+        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+            return res.status(504).json({
+                message: 'El servicio de traducción tardó demasiado.',
+            });
+        }
+
+        console.error('Error al traducir:', error.message);
+
+        return res.status(500).json({
+            message: 'Error interno al traducir el texto.',
+        });
     }
 };
