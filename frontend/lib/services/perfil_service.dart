@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../core/config/api_config.dart';
 import '../core/storage/secure_storage.dart';
@@ -10,17 +11,14 @@ import '../core/storage/secure_storage.dart';
 class PerfilService {
   static String get _url => '${ApiConfig.baseUrl}/perfil/yo';
 
-  // Consultar los datos del administrador.
   static Future<Map<String, dynamic>> obtenerPerfil() async {
     final response = await http.get(
       Uri.parse(_url),
       headers: await _headers(),
     );
-
     return _procesarRespuesta(response);
   }
 
-  // Actualizar nombre y correo.
   static Future<Map<String, dynamic>> actualizarPerfil({
     required String nombre,
     required String email,
@@ -33,11 +31,9 @@ class PerfilService {
         'email': email.trim(),
       }),
     );
-
     return _procesarRespuesta(response);
   }
 
-  // Cambiar contraseña.
   static Future<Map<String, dynamic>> cambiarPassword({
     required String passwordActual,
     required String nuevaPassword,
@@ -52,18 +48,59 @@ class PerfilService {
         'confirmarPassword': confirmarPassword,
       }),
     );
-
     return _procesarRespuesta(response);
   }
 
-  // Subir o cambiar la foto de perfil.
   static Future<Map<String, dynamic>> actualizarAvatar(
     File imagen,
   ) async {
     final token = await SecureStorage.getToken();
 
     if (token == null || token.isEmpty) {
-      throw Exception('La sesión ha expirado. Inicia sesión nuevamente.');
+      throw Exception(
+        'La sesión ha expirado. Inicia sesión nuevamente.',
+      );
+    }
+
+    if (!await imagen.exists()) {
+      throw Exception('No se encontró la imagen seleccionada.');
+    }
+
+    final bytes = await imagen.readAsBytes();
+
+    if (bytes.isEmpty) {
+      throw Exception('La imagen seleccionada está vacía.');
+    }
+
+    late String extension;
+    late MediaType tipo;
+
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xFF &&
+        bytes[1] == 0xD8 &&
+        bytes[2] == 0xFF) {
+      extension = 'jpg';
+      tipo = MediaType('image', 'jpeg');
+    } else if (bytes.length >= 8 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47 &&
+        bytes[4] == 0x0D &&
+        bytes[5] == 0x0A &&
+        bytes[6] == 0x1A &&
+        bytes[7] == 0x0A) {
+      extension = 'png';
+      tipo = MediaType('image', 'png');
+    } else if (bytes.length >= 12 &&
+        String.fromCharCodes(bytes.sublist(0, 4)) == 'RIFF' &&
+        String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP') {
+      extension = 'webp';
+      tipo = MediaType('image', 'webp');
+    } else {
+      throw Exception(
+        'Formato de imagen no compatible. Usa JPG, PNG o WEBP.',
+      );
     }
 
     final request = http.MultipartRequest(
@@ -74,7 +111,12 @@ class PerfilService {
     request.headers['Authorization'] = 'Bearer $token';
 
     request.files.add(
-      await http.MultipartFile.fromPath('avatar', imagen.path),
+      http.MultipartFile.fromBytes(
+        'avatar',
+        bytes,
+        filename: 'avatar.$extension',
+        contentType: tipo,
+      ),
     );
 
     final streamedResponse = await request.send();
@@ -83,12 +125,13 @@ class PerfilService {
     return _procesarRespuesta(response);
   }
 
-  // Obtener las cabeceras para solicitudes autenticadas.
   static Future<Map<String, String>> _headers() async {
     final token = await SecureStorage.getToken();
 
     if (token == null || token.isEmpty) {
-      throw Exception('La sesión ha expirado. Inicia sesión nuevamente.');
+      throw Exception(
+        'La sesión ha expirado. Inicia sesión nuevamente.',
+      );
     }
 
     return {
@@ -97,7 +140,6 @@ class PerfilService {
     };
   }
 
-  // Procesar respuestas del backend.
   static Map<String, dynamic> _procesarRespuesta(
     http.Response response,
   ) {
@@ -109,7 +151,9 @@ class PerfilService {
       if (decoded is Map<String, dynamic>) {
         data = decoded;
       } else {
-        throw const FormatException('Respuesta inesperada del servidor');
+        throw const FormatException(
+          'Respuesta inesperada del servidor.',
+        );
       }
     } on FormatException {
       throw Exception(
@@ -118,7 +162,8 @@ class PerfilService {
       );
     }
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
       return data;
     }
 
