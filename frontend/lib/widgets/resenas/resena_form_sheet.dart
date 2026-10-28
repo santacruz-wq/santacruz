@@ -1,6 +1,10 @@
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/config/app_colors.dart';
+import '../../core/config/translation_resenas.dart';
+import '../../providers/language_provider.dart';
 import 'star_rating.dart';
 
 Future<void> mostrarResenaForm(
@@ -50,9 +54,20 @@ class _ResenaForm extends StatefulWidget {
 
 class _ResenaFormState extends State<_ResenaForm> {
   late int _rating = widget.ratingInicial;
+
   late final TextEditingController _controller =
       TextEditingController(text: widget.comentarioInicial);
+
   bool _enviando = false;
+
+  String _t(String clave) {
+    final idioma = context.read<LanguageProvider>().idiomaCodigo;
+
+    return TranslationResenas.obtenerTexto(
+      clave: clave,
+      idioma: idioma,
+    );
+  }
 
   @override
   void dispose() {
@@ -63,7 +78,7 @@ class _ResenaFormState extends State<_ResenaForm> {
   Future<void> _enviar() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona un puntaje')),
+        SnackBar(content: Text(_t('seleccionar_puntaje'))),
       );
       return;
     }
@@ -72,12 +87,14 @@ class _ResenaFormState extends State<_ResenaForm> {
 
     try {
       await widget.onEnviar(_rating, _controller.text.trim());
+
       if (mounted) Navigator.pop(context);
     } catch (_) {
       if (mounted) {
         setState(() => _enviando = false);
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo enviar la reseña')),
+          SnackBar(content: Text(_t('error_enviar'))),
         );
       }
     }
@@ -93,7 +110,7 @@ class _ResenaFormState extends State<_ResenaForm> {
           Text(
             widget.nombreProducto,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.textoCafe,
@@ -111,7 +128,7 @@ class _ResenaFormState extends State<_ResenaForm> {
             maxLength: 250,
             maxLines: 3,
             decoration: InputDecoration(
-              hintText: 'Cuéntanos qué te pareció (opcional)',
+              hintText: _t('comentario_opcional'),
               filled: true,
               fillColor: AppColors.tarjeta,
               border: OutlineInputBorder(
@@ -131,7 +148,7 @@ class _ResenaFormState extends State<_ResenaForm> {
                       width: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Enviar reseña'),
+                  : Text(_t('enviar_resena')),
             ),
           ),
         ],

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../core/storage/secure_storage.dart';
 import '../core/config/app_strings.dart';
-import '../services/translation_service.dart';
+import '../core/config/app_translations.dart';
 
 class LanguageProvider extends ChangeNotifier {
   String _idiomaCodigo = 'es';
@@ -11,11 +11,8 @@ class LanguageProvider extends ChangeNotifier {
   bool _idiomaElegido = false;
   bool _cargandoTraduccion = false;
 
-  Map<String, String> _textos = Map<String, String>.from(AppStrings.base);
-
-  // Evita que una traducción de interfaz bloquee la carga durante demasiado
-  // tiempo si el servidor externo no responde.
-  static const Duration _tiempoMaximoTraduccion = Duration(seconds: 10);
+  Map<String, String> _textos =
+      Map<String, String>.from(AppStrings.base);
 
   String get idiomaCodigo => _idiomaCodigo;
   String get idiomaNombre => _idiomaNombre;
@@ -24,72 +21,72 @@ class LanguageProvider extends ChangeNotifier {
 
   String t(String clave) => _textos[clave] ?? clave;
 
+  String _normalizarCodigo(String codigo) {
+    final normalizado = codigo.trim().toLowerCase();
+
+    if (normalizado == 'pt-br' || normalizado == 'pt_br') {
+      return 'pt';
+    }
+
+    if (normalizado == 'zh-cn' ||
+        normalizado == 'zh_cn' ||
+        normalizado == 'zh-hans') {
+      return 'zh';
+    }
+
+    return normalizado;
+  }
+
   Future<void> cargarIdiomaGuardado() async {
     try {
       final guardado = await SecureStorage.getIdioma();
 
       if (guardado == null) return;
 
-      _idiomaCodigo = guardado['codigo'] ?? 'es';
+      _idiomaCodigo = _normalizarCodigo(
+        guardado['codigo'] ?? 'es',
+      );
+
       _idiomaNombre = guardado['nombre'] ?? 'Español';
       _idiomaElegido = true;
 
-      await _actualizarTextos();
+      _actualizarTextos();
     } catch (e) {
       debugPrint('Error al cargar el idioma guardado: $e');
+
+      _idiomaCodigo = 'es';
+      _idiomaNombre = 'Español';
       _textos = Map<String, String>.from(AppStrings.base);
       _cargandoTraduccion = false;
+
       notifyListeners();
     }
   }
 
   Future<void> setIdioma(String codigo, String nombre) async {
-    // Actualiza el idioma seleccionado sin dejar la interfaz bloqueada.
-    _idiomaCodigo = codigo;
+    _idiomaCodigo = _normalizarCodigo(codigo);
     _idiomaNombre = nombre;
     _idiomaElegido = true;
 
-    // Muestra inmediatamente los textos originales mientras se traduce.
-    _textos = Map<String, String>.from(AppStrings.base);
-    notifyListeners();
+    _actualizarTextos();
 
     try {
-      await SecureStorage.saveIdioma(codigo, nombre);
+      await SecureStorage.saveIdioma(
+        _idiomaCodigo,
+        _idiomaNombre,
+      );
     } catch (e) {
       debugPrint('Error al guardar el idioma: $e');
     }
-
-    await _actualizarTextos();
   }
 
-  Future<void> _actualizarTextos() async {
-    if (_idiomaCodigo == 'es') {
-      _textos = Map<String, String>.from(AppStrings.base);
-      _cargandoTraduccion = false;
-      notifyListeners();
-      return;
-    }
+  void _actualizarTextos() {
+    _cargandoTraduccion = false;
 
-    _cargandoTraduccion = true;
+    _textos = Map<String, String>.from(
+      AppTranslations.idiomas[_idiomaCodigo] ?? AppStrings.base,
+    );
+
     notifyListeners();
-
-    try {
-      final traducciones = await TranslationService.traducirInterfaz(
-        _idiomaCodigo,
-      ).timeout(_tiempoMaximoTraduccion);
-
-      // Solo aplica el resultado si corresponde al idioma aún seleccionado.
-      if (traducciones.length == AppStrings.base.length) {
-        _textos = traducciones;
-      }
-    } catch (e) {
-      debugPrint('No se pudo traducir la interfaz: $e');
-
-      // Si falla la traducción, conserva los textos originales.
-      _textos = Map<String, String>.from(AppStrings.base);
-    } finally {
-      _cargandoTraduccion = false;
-      notifyListeners();
-    }
   }
 }

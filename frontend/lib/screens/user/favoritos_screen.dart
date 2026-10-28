@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../core/navigation/menu_navigation.dart';
+
+import '../../core/config/translation_postres.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorito_provider.dart';
 import '../../providers/language_provider.dart';
@@ -21,6 +23,22 @@ class FavoritosScreen extends StatefulWidget {
 }
 
 class _FavoritosScreenState extends State<FavoritosScreen> {
+  static const Map<String, String> _clavesPostres = {
+    'Salpicón con helado': 'postre_salpicon_helado',
+    'Merengón tropical': 'postre_merengon_tropical',
+    'Esponjado de frutos rojos': 'postre_esponjado_frutos_rojos',
+    'Esponjado de cholupa': 'postre_esponjado_cholupa',
+    'Esponjado de maracumango': 'postre_esponjado_maracumango',
+    'Esponjado de arequipe con coco': 'postre_esponjado_arequipe_coco',
+    'Postre de tres leches': 'postre_tres_leches',
+    'Postre de Milo': 'postre_milo',
+    'Flan de leche asada': 'postre_flan_leche_asada',
+    'Flan de café': 'postre_flan_cafe',
+    'Torta de chocolate': 'postre_torta_chocolate',
+    'Torta Red Velvet': 'postre_torta_red_velvet',
+    'Postre de limón': 'postre_limon',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +52,18 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
         context.read<FavoritoProvider>().cargarFavoritos();
       }
     });
+  }
+
+  String _nombreTraducido(String nombre, String idioma) {
+    final clave = _clavesPostres[nombre];
+
+    if (clave == null) return nombre;
+
+    return TranslationPostres.obtenerNombre(
+      clave: clave,
+      idioma: idioma,
+      nombreOriginal: nombre,
+    );
   }
 
   @override
@@ -152,7 +182,10 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
 
           return ProductCard(
             id: producto.id,
-            name: producto.nombre,
+            name: _nombreTraducido(
+              producto.nombre,
+              lang.idiomaCodigo,
+            ),
             price: '\$${producto.precio}',
             image: producto.imagen,
             margin: EdgeInsets.zero,
