@@ -5,14 +5,19 @@ import Categoria from "../models/categoria.js";
 import Inventario from "../models/inventario.js";
 import { borrarImagenCloudinary } from "../utils/cloudinary.js";
 
-// OBTENER TODOS LOS PRODUCTOS
+
+ // OBTENER TODOS LOS PRODUCTOS
 export const getProductos = async (req, res) => {
   try {
     const filtro = {};
 
+    // Mantener el filtro de disponibilidad existente.
     if (req.query.disponible !== undefined) {
       filtro.disponible = req.query.disponible === "true";
     }
+
+    // No mostrar productos ocultos en el menú público.
+    filtro.visibleMenu = { $ne: false };
 
     const productos = await product
       .find(filtro)
@@ -26,6 +31,7 @@ export const getProductos = async (req, res) => {
     });
   }
 };
+
 
 // OBTENER PRODUCTO POR ID
 export const getProductoPorId = async (req, res) => {
