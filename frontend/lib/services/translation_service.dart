@@ -1,4 +1,4 @@
-
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -8,11 +8,16 @@ import '../core/network/api_client.dart';
 import '../core/config/app_strings.dart';
 
 class TranslationService {
-  // Caché en memoria para no volver a solicitar textos ya traducidos.
   static final Map<String, String> _cache = {};
 
-  // Evita enviar demasiadas solicitudes simultáneamente.
+  // Evita repetir solicitudes para el mismo texto e idioma.
+  static final Map<String, Future<String>> _solicitudesActivas = {};
+
+  // Lotes pequeños para no saturar el backend.
   static const int _tamanoLote = 4;
+
+  // Tiempo máximo de espera por solicitud.
+  static const Duration _tiempoLimite = Duration(seconds: 6);
 
   static Future<Map<String, String>> traducirInterfaz(
     String idiomaDestino,
@@ -28,7 +33,7 @@ class TranslationService {
       idiomaDestino,
     );
 
-    final Map<String, String> resultado = {};
+    final resultado = <String, String>{};
 
     for (int i = 0; i < entradas.length; i++) {
       resultado[entradas[i].key] = traducciones[i];
@@ -39,9 +44,8 @@ class TranslationService {
 
   static Future<String> _traducirUno(
     String texto,
-    String idiomaDestino, {
-    int intentos = 2,
-  }) async {
+    String idiomaDestino,
+  ) async {
     final original = texto.trim();
 
     if (original.isEmpty || idiomaDestino == 'es') {
@@ -55,51 +59,77 @@ class TranslationService {
       return guardado;
     }
 
-    for (int intento = 1; intento <= intentos; intento++) {
-      try {
-        final response = await ApiClient.post(
-          ApiConfig.traducir,
-          {
-            'texto': original,
-            'idiomaDestino': idiomaDestino,
-            'idiomaOrigen': 'es',
-          },
-          auth: false,
-        ).timeout(const Duration(seconds: 15));
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-
-          if (data is Map<String, dynamic>) {
-            final valor = data['textoTraducido'];
-
-            if (valor is String && valor.trim().isNotEmpty) {
-              final traducido = _limpiarTexto(valor);
-
-              if (traducido.isNotEmpty) {
-                _cache[clave] = traducido;
-                return traducido;
-              }
-            }
-          }
-
-          debugPrint(
-            'La API no devolvió una traducción válida para: $original',
-          );
-        } else {
-          debugPrint(
-            'Error HTTP ${response.statusCode} traduciendo: $original',
-          );
-        }
-      } catch (e) {
-        debugPrint(
-          'Error de traducción, intento $intento de $intentos: $e',
-        );
-      }
+    // Si ya se está traduciendo el mismo texto, reutiliza la solicitud.
+    final solicitudExistente = _solicitudesActivas[clave];
+    if (solicitudExistente != null) {
+      return solicitudExistente;
     }
 
-    // Si falla la API, conserva el original sin interrumpir la aplicación.
-    return texto;
+    final solicitud = _solicitarTraduccion(
+      original,
+      idiomaDestino,
+      clave,
+    );
+
+    _solicitudesActivas[clave] = solicitud;
+
+    try {
+      return await solicitud;
+    } finally {
+      _solicitudesActivas.remove(clave);
+    }
+  }
+
+  static Future<String> _solicitarTraduccion(
+    String original,
+    String idiomaDestino,
+    String clave,
+  ) async {
+    try {
+      final response = await ApiClient.post(
+        ApiConfig.traducir,
+        {
+          'texto': original,
+          'idiomaDestino': idiomaDestino,
+          'idiomaOrigen': 'es',
+        },
+        auth: false,
+      ).timeout(_tiempoLimite);
+
+      if (response.statusCode != 200) {
+        debugPrint(
+          'Traducción HTTP ${response.statusCode}: $original',
+        );
+        return original;
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (data is! Map<String, dynamic>) {
+        return original;
+      }
+
+      final valor = data['textoTraducido'];
+
+      if (valor is! String || valor.trim().isEmpty) {
+        return original;
+      }
+
+      final traducido = _limpiarTexto(valor);
+
+      if (traducido.isEmpty) {
+        return original;
+      }
+
+      _cache[clave] = traducido;
+      return traducido;
+    } on TimeoutException {
+      debugPrint('Tiempo agotado al traducir: $original');
+      return original;
+    } catch (e) {
+      debugPrint('No se pudo traducir "$original": $e');
+      return original;
+    }
   }
 
   static String _limpiarTexto(String texto) {
@@ -121,16 +151,13 @@ class TranslationService {
       return List<String>.from(textos);
     }
 
-    final List<String> resultado = List.filled(textos.length, '');
-
-    // Conserva el orden original y evita solicitudes duplicadas.
+    final resultado = List<String>.from(textos);
     final posiciones = <String, List<int>>{};
 
     for (int i = 0; i < textos.length; i++) {
       final texto = textos[i];
 
       if (texto.trim().isEmpty) {
-        resultado[i] = texto;
         continue;
       }
 
@@ -139,9 +166,11 @@ class TranslationService {
 
     final textosUnicos = posiciones.keys.toList();
 
-    for (int inicio = 0;
-        inicio < textosUnicos.length;
-        inicio += _tamanoLote) {
+    for (
+      int inicio = 0;
+      inicio < textosUnicos.length;
+      inicio += _tamanoLote
+    ) {
       final fin = (inicio + _tamanoLote < textosUnicos.length)
           ? inicio + _tamanoLote
           : textosUnicos.length;

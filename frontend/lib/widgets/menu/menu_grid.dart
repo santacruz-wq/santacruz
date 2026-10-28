@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -49,12 +48,22 @@ class MenuGrid extends StatelessWidget {
 
     return FutureBuilder<List<String>>(
       key: ValueKey(lang.idiomaCodigo),
-      future: TranslationService.traducirLista(
-        textosOriginales,
-        lang.idiomaCodigo,
-      ),
+      future: lang.idiomaCodigo == 'es'
+          ? Future.value(textosOriginales)
+          : TranslationService.traducirLista(
+              textosOriginales,
+              lang.idiomaCodigo,
+            ).timeout(
+              const Duration(seconds: 8),
+              onTimeout: () => textosOriginales,
+            ),
       builder: (context, snapshot) {
-        final traducidos = snapshot.data ?? textosOriginales;
+        // Si la traducción tarda o falla, mostrar el menú original.
+        final traducidos =
+            snapshot.data != null &&
+                    snapshot.data!.length == textosOriginales.length
+                ? snapshot.data!
+                : textosOriginales;
 
         final nombresTraducidos = traducidos.sublist(
           0,
