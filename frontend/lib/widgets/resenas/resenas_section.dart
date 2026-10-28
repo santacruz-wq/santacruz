@@ -1,14 +1,15 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/config/app_colors.dart';
+import '../../core/config/translation_resenas.dart';
 import '../../models/resena.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../providers/resena_provider.dart';
 import 'star_rating.dart';
 
-/// Abre la hoja inferior con las reseñas del producto.
-/// Uso: mostrarResenasProducto(context, productoId: id, nombre: name);
 Future<void> mostrarResenasProducto(
   BuildContext context, {
   required String productoId,
@@ -59,6 +60,14 @@ class _ResenasSectionState extends State<ResenasSection> {
   String? _mensaje;
   bool _mensajeError = false;
 
+  String _t(String clave) {
+    final idioma = context.read<LanguageProvider>().idiomaCodigo;
+    return TranslationResenas.obtenerTexto(
+      clave: clave,
+      idioma: idioma,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +84,6 @@ class _ResenasSectionState extends State<ResenasSection> {
     super.dispose();
   }
 
-  /// Si el usuario ya tiene reseña, la carga en el formulario (una sola vez).
   void _sincronizar(Resena? mia) {
     if (mia != null && !_sincronizado) {
       _rating = mia.calificacion;
@@ -87,7 +95,7 @@ class _ResenasSectionState extends State<ResenasSection> {
   Future<void> _enviar(String? usuarioId) async {
     if (_rating == 0) {
       setState(() {
-        _mensaje = 'Selecciona un puntaje tocando las estrellas';
+        _mensaje = _t('seleccionar_estrellas');
         _mensajeError = true;
       });
       return;
@@ -114,8 +122,8 @@ class _ResenasSectionState extends State<ResenasSection> {
       _enviando = false;
       _mensajeError = !exito;
       _mensaje = exito
-          ? '¡Gracias por tu reseña!'
-          : 'No se pudo enviar la reseña. Intenta de nuevo.';
+          ? _t('gracias_resena')
+          : _t('error_enviar_reintentar');
     });
   }
 
@@ -125,16 +133,16 @@ class _ResenasSectionState extends State<ResenasSection> {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar reseña'),
-        content: const Text('¿Seguro que quieres eliminar tu reseña?'),
+        title: Text(_t('eliminar_resena')),
+        content: Text(_t('confirmar_eliminar')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(_t('cancelar')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
+            child: Text(_t('eliminar')),
           ),
         ],
       ),
@@ -151,10 +159,11 @@ class _ResenasSectionState extends State<ResenasSection> {
         _controller.clear();
         _sincronizado = false;
       }
+
       _mensajeError = !exito;
       _mensaje = exito
-          ? 'Reseña eliminada'
-          : 'No se pudo eliminar la reseña';
+          ? _t('resena_eliminada')
+          : _t('error_eliminar');
     });
   }
 
@@ -183,19 +192,16 @@ class _ResenasSectionState extends State<ResenasSection> {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + teclado),
       children: [
-        // TÍTULO
         Text(
           widget.nombreProducto,
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.textoCafe,
           ),
         ),
         const SizedBox(height: 16),
-
-        // PROMEDIO
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -203,7 +209,7 @@ class _ResenasSectionState extends State<ResenasSection> {
               resenaProvider.total == 0
                   ? '-'
                   : resenaProvider.promedio.toStringAsFixed(1),
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textoCafe,
@@ -216,27 +222,31 @@ class _ResenasSectionState extends State<ResenasSection> {
                 StarRating(rating: resenaProvider.promedio, size: 22),
                 const SizedBox(height: 4),
                 Text(
-                  '${resenaProvider.total} reseña${resenaProvider.total == 1 ? '' : 's'}',
-                  style: TextStyle(fontSize: 13, color: AppColors.cafeMedio),
+                  '${resenaProvider.total} ${resenaProvider.total == 1 ? _t('resena') : _t('resenas')}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.cafeMedio,
+                  ),
                 ),
               ],
             ),
           ],
         ),
         const SizedBox(height: 20),
-
-        // FORMULARIO / AVISOS SEGÚN QUIÉN ESTÉ MIRANDO
         if (usuario == null)
           Column(
             children: [
               Text(
-                'Inicia sesión para dejar tu reseña',
-                style: TextStyle(fontSize: 13, color: AppColors.textoCafe),
+                _t('iniciar_sesion_dejar'),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textoCafe,
+                ),
               ),
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () => Navigator.pushNamed(context, '/login'),
-                child: const Text('Iniciar sesión'),
+                child: Text(_t('iniciar_sesion')),
               ),
             ],
           )
@@ -250,8 +260,10 @@ class _ResenasSectionState extends State<ResenasSection> {
             child: Column(
               children: [
                 Text(
-                  miResena == null ? 'Tu calificación' : 'Tu reseña',
-                  style: TextStyle(
+                  miResena == null
+                      ? _t('tu_calificacion')
+                      : _t('tu_resena'),
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textoCafe,
                   ),
@@ -271,7 +283,7 @@ class _ResenasSectionState extends State<ResenasSection> {
                   maxLength: 250,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: 'Cuéntanos qué te pareció (opcional)',
+                    hintText: _t('comentario_opcional'),
                     filled: true,
                     fillColor: AppColors.cremaClaro,
                     border: OutlineInputBorder(
@@ -285,17 +297,20 @@ class _ResenasSectionState extends State<ResenasSection> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _enviando ? null : () => _enviar(usuarioId),
+                        onPressed:
+                            _enviando ? null : () => _enviar(usuarioId),
                         child: _enviando
                             ? const SizedBox(
                                 height: 18,
                                 width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(
                                 miResena == null
-                                    ? 'Enviar reseña'
-                                    : 'Guardar cambios',
+                                    ? _t('enviar_resena')
+                                    : _t('guardar_cambios'),
                               ),
                       ),
                     ),
@@ -303,7 +318,10 @@ class _ResenasSectionState extends State<ResenasSection> {
                       const SizedBox(width: 8),
                       IconButton(
                         onPressed: () => _eliminar(miResena),
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
                       ),
                     ],
                   ],
@@ -318,7 +336,7 @@ class _ResenasSectionState extends State<ResenasSection> {
                         fontSize: 13,
                         color: _mensajeError
                             ? Colors.red
-                            : Colors.green.shade700,
+                            : Colors.green,
                       ),
                     ),
                   ),
@@ -328,17 +346,17 @@ class _ResenasSectionState extends State<ResenasSection> {
         else
           Center(
             child: Text(
-              'Solo los clientes pueden dejar reseñas (tu rol: ${usuario.rol})',
+              '${_t('solo_clientes')} (tu rol: ${usuario.rol})',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: AppColors.cafeMedio),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.cafeMedio,
+              ),
             ),
           ),
-
         const SizedBox(height: 20),
         Divider(color: AppColors.cremaOscuro),
         const SizedBox(height: 8),
-
-        // LISTA DE RESEÑAS
         if (resenaProvider.cargando && resenaProvider.resenas.isEmpty)
           const Padding(
             padding: EdgeInsets.all(24),
@@ -349,8 +367,8 @@ class _ResenasSectionState extends State<ResenasSection> {
             padding: const EdgeInsets.all(24),
             child: Center(
               child: Text(
-                'Aún no hay reseñas para este producto',
-                style: TextStyle(color: AppColors.cafeMedio),
+                _t('sin_resenas'),
+                style: const TextStyle(color: AppColors.cafeMedio),
               ),
             ),
           )
@@ -380,6 +398,13 @@ class _ResenaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final idioma = context.watch<LanguageProvider>().idiomaCodigo;
+
+    String t(String clave) => TranslationResenas.obtenerTexto(
+          clave: clave,
+          idioma: idioma,
+        );
+
     final inicial = resena.usuarioNombre.isNotEmpty
         ? resena.usuarioNombre[0].toUpperCase()
         : '?';
@@ -401,7 +426,7 @@ class _ResenaCard extends StatelessWidget {
                 backgroundColor: AppColors.caramelo.withValues(alpha: 0.2),
                 child: Text(
                   inicial,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textoCafe,
                     fontWeight: FontWeight.bold,
                   ),
@@ -410,8 +435,10 @@ class _ResenaCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  esMia ? '${resena.usuarioNombre} (Tú)' : resena.usuarioNombre,
-                  style: TextStyle(
+                  esMia
+                      ? '${resena.usuarioNombre} (${t('tu')})'
+                      : resena.usuarioNombre,
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     color: AppColors.textoCafe,
                   ),
@@ -419,7 +446,10 @@ class _ResenaCard extends StatelessWidget {
               ),
               Text(
                 fecha,
-                style: TextStyle(fontSize: 12, color: AppColors.cafeMedio),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.cafeMedio,
+                ),
               ),
             ],
           ),
@@ -429,7 +459,7 @@ class _ResenaCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               resena.comentario,
-              style: TextStyle(color: AppColors.textoCafe),
+              style: const TextStyle(color: AppColors.textoCafe),
             ),
           ],
         ],

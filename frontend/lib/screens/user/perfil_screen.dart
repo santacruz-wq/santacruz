@@ -1,3 +1,4 @@
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/config/api_config.dart';
 import '../../core/config/app_colors.dart';
+import '../../core/config/translation_perfil.dart';
 import '../../core/navigation/menu_navigation.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/favorito_provider.dart';
@@ -41,17 +43,27 @@ class _PerfilScreenState extends State<PerfilScreen> {
     super.dispose();
   }
 
+  String _t(String clave, String idioma) {
+    return TranslationPerfil.obtenerTexto(
+      clave: clave,
+      idioma: idioma,
+    );
+  }
+
   String? _urlAvatar(String? avatar) {
     if (avatar == null || avatar.isEmpty) return null;
+
     if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
       return avatar;
     }
+
     final base = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
     return '$base${avatar.startsWith('/') ? avatar : '/$avatar'}';
   }
 
   void _mostrarMensaje(String mensaje, {bool esError = false}) {
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
@@ -122,6 +134,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         context.read<AuthProvider>().actualizarUsuarioDesdePerfil(
               usuarioActualizado,
             );
+
         setState(() => _imagenSeleccionada = null);
       }
 
@@ -132,6 +145,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+
       setState(() => _imagenSeleccionada = null);
       _mostrarMensaje(_limpiarError(e), esError: true);
     } finally {
@@ -160,6 +174,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     if (_guardando) return;
+
     setState(() => _guardando = true);
 
     try {
@@ -172,6 +187,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
       if (usuarioActualizado is Map<String, dynamic> && mounted) {
         auth.actualizarUsuarioDesdePerfil(usuarioActualizado);
+
         setState(() {
           _editandoNombre = false;
           _nombreController.clear();
@@ -184,7 +200,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
         );
       }
     } catch (e) {
-      if (mounted) _mostrarMensaje(_limpiarError(e), esError: true);
+      if (mounted) {
+        _mostrarMensaje(_limpiarError(e), esError: true);
+      }
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
@@ -206,9 +224,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
     return Scaffold(
       backgroundColor: AppColors.crema,
       appBar: AppBar(
-        title: const Text(
-          'Mi perfil',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          _t('mi_perfil', idioma.idiomaCodigo),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.crema,
         foregroundColor: AppColors.textoCafe,
@@ -244,7 +262,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ),
             PerfilSeguridad(email: usuario.email),
             PerfilBoton(
-              texto: 'Cerrar sesión',
+              texto: _t('cerrar_sesion', idioma.idiomaCodigo),
               icono: Icons.logout,
               accion: () => cerrarSesionPerfil(context),
               deshabilitado: _guardando,
