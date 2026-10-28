@@ -1,7 +1,7 @@
 
 import Traduccion from '../models/traducir.js';
 
-// Controlador de traducción con caché en MongoDB y MyMemory.
+// Traducción con MyMemory y caché en MongoDB.
 
 export const traducirTexto = async (req, res) => {
     try {
@@ -20,6 +20,7 @@ export const traducirTexto = async (req, res) => {
         }
 
         const textoOriginal = texto.trim();
+
         const origen = (
             typeof idiomaOrigen === 'string' && idiomaOrigen.trim()
                 ? idiomaOrigen
@@ -28,6 +29,7 @@ export const traducirTexto = async (req, res) => {
 
         const destino = idiomaDestino.trim().toLowerCase();
 
+        // Si ambos idiomas son iguales, no es necesario traducir.
         if (origen === destino) {
             return res.status(200).json({
                 message: 'El texto ya está en el idioma solicitado',
@@ -35,7 +37,7 @@ export const traducirTexto = async (req, res) => {
             });
         }
 
-        // Buscar primero en MongoDB.
+        // 1. Buscar la traducción en MongoDB.
         const existente = await Traduccion.findOne({
             textoOriginal,
             idiomaOrigen: origen,
@@ -49,16 +51,25 @@ export const traducirTexto = async (req, res) => {
             });
         }
 
-        // Consultar MyMemory.
-        const langpair = `${origen}|${destino}`;
+        // 2. Preparar la petición a MyMemory.
+        const parametros = new URLSearchParams({
+            q: textoOriginal,
+            langpair: `${origen}|${destino}`,
+        });
+
+        // El correo aumenta la cuota disponible de MyMemory.
+        if (process.env.MYMEMORY_EMAIL) {
+            parametros.set('de', process.env.MYMEMORY_EMAIL.trim());
+        }
+
         const url =
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textoOriginal)}` +
-            `&langpair=${encodeURIComponent(langpair)}`;
+            `https://api.mymemory.translated.net/get?${parametros.toString()}`;
 
         const respuesta = await fetch(url, {
             signal: AbortSignal.timeout(10000),
         });
 
+        // 3. Comprobar la respuesta HTTP.
         if (!respuesta.ok) {
             console.error(
                 'MyMemory respondió HTTP:',
@@ -67,6 +78,12 @@ export const traducirTexto = async (req, res) => {
                 textoOriginal
             );
 
+            if (respuesta.status === 429) {
+                return res.status(503).json({
+                    message: 'Se alcanzó el límite de traducciones. Intenta más tarde.',
+                });
+            }
+
             return res.status(502).json({
                 message: 'El servicio de traducción no está disponible',
             });
@@ -74,6 +91,7 @@ export const traducirTexto = async (req, res) => {
 
         const data = await respuesta.json();
 
+        // 4. Validar la traducción devuelta.
         if (
             data.responseStatus !== 200 ||
             typeof data.responseData?.translatedText !== 'string' ||
@@ -88,6 +106,12 @@ export const traducirTexto = async (req, res) => {
                 destino,
             });
 
+            if (data.responseStatus === 429 || data.quotaFinished === true) {
+                return res.status(503).json({
+                    message: 'Se alcanzó el límite de traducciones. Intenta más tarde.',
+                });
+            }
+
             return res.status(502).json({
                 message: 'MyMemory no pudo traducir el texto',
             });
@@ -95,8 +119,7 @@ export const traducirTexto = async (req, res) => {
 
         const textoTraducido = data.responseData.translatedText.trim();
 
-        // Guardar en caché. Si dos solicitudes intentan guardar
-        // la misma traducción, recuperar el registro existente.
+        // 5. Guardar la traducción para reutilizarla.
         let traduccion;
 
         try {
@@ -107,6 +130,7 @@ export const traducirTexto = async (req, res) => {
                 textoTraducido,
             });
         } catch (error) {
+            // Otra solicitud pudo guardar la misma traducción al mismo tiempo.
             if (error.code !== 11000) {
                 throw error;
             }
@@ -129,7 +153,10 @@ export const traducirTexto = async (req, res) => {
     } catch (error) {
         console.error('ERROR EN traducirTexto:', error);
 
-        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        if (
+            error.name === 'TimeoutError' ||
+            error.name === 'AbortError'
+        ) {
             return res.status(504).json({
                 message: 'Tiempo de espera agotado al traducir',
             });
