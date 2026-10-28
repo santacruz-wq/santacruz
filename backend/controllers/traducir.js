@@ -1,13 +1,27 @@
-
 import Traduccion from '../models/traducir.js';
 
-const IDIOMAS_PERMITIDOS = new Set(['es', 'en']);
+const IDIOMAS_PERMITIDOS = new Set([
+    'es', // Español
+    'en', // Inglés
+    'fr', // Francés
+    'pt', // Portugués
+    'it', // Italiano
+    'de', // Alemán
+    'ja', // Japonés
+    'ko', // Coreano
+    'zh', // Chino
+    'ru', // Ruso
+    'ar', // Árabe
+    'hi', // Hindi
+    'nl', // Neerlandés
+    'tr', // Turco
+]);
 
 export const traducirTexto = async (req, res) => {
     try {
         const { texto, idiomaDestino, idiomaOrigen } = req.body ?? {};
 
-        // Validar texto
+        // Validar texto.
         if (typeof texto !== 'string' || !texto.trim()) {
             return res.status(400).json({
                 message: 'Debes proporcionar un texto para traducir.',
@@ -22,7 +36,7 @@ export const traducirTexto = async (req, res) => {
             });
         }
 
-        // Validar idiomas
+        // Validar idiomas.
         const origen = idiomaOrigen || 'es';
 
         if (
@@ -33,11 +47,12 @@ export const traducirTexto = async (req, res) => {
             origen === idiomaDestino
         ) {
             return res.status(400).json({
-                message: 'Los idiomas deben ser es y en, y deben ser diferentes.',
+                message: 'Los idiomas seleccionados no son válidos o son iguales.',
+                idiomasPermitidos: [...IDIOMAS_PERMITIDOS],
             });
         }
 
-        // Consultar la caché de MongoDB
+        // Buscar primero en MongoDB para reutilizar la traducción guardada.
         const existente = await Traduccion.findOne({
             textoOriginal: textoLimpio,
             idiomaOrigen: origen,
@@ -46,19 +61,22 @@ export const traducirTexto = async (req, res) => {
 
         if (existente) {
             return res.status(200).json({
-                message: 'Traducción obtenida de la caché.',
+                message: 'Traducción obtenida de MongoDB.',
                 textoTraducido: existente.textoTraducido,
+                desdeCache: true,
             });
         }
 
-        // Preparar solicitud a MyMemory
-        const langpair = `${origen}|${idiomaDestino}`;
+        // Solo consultar MyMemory cuando no existe una traducción guardada.
         const url = new URL(
             'https://api.mymemory.translated.net/get'
         );
 
         url.searchParams.set('q', textoLimpio);
-        url.searchParams.set('langpair', langpair);
+        url.searchParams.set(
+            'langpair',
+            `${origen}|${idiomaDestino}`
+        );
 
         console.log('Solicitando traducción a MyMemory:', {
             idiomaOrigen: origen,
@@ -74,7 +92,6 @@ export const traducirTexto = async (req, res) => {
             },
         });
 
-        // Registrar el error HTTP del proveedor
         if (!respuesta.ok) {
             const detalle = await respuesta.text();
 
@@ -90,10 +107,8 @@ export const traducirTexto = async (req, res) => {
             });
         }
 
-        // Leer respuesta del proveedor
         const data = await respuesta.json();
 
-        // Registrar respuestas sin traducción válida
         if (
             Number(data.responseStatus) !== 200 ||
             typeof data.responseData?.translatedText !== 'string' ||
@@ -115,8 +130,7 @@ export const traducirTexto = async (req, res) => {
         const textoTraducido =
             data.responseData.translatedText.trim();
 
-        // Guardar traducción en MongoDB.
-        // Si falla la caché, devolver igualmente la traducción obtenida.
+        // Guardar la traducción para reutilizarla en próximas solicitudes.
         try {
             await Traduccion.create({
                 textoOriginal: textoLimpio,
@@ -125,6 +139,24 @@ export const traducirTexto = async (req, res) => {
                 textoTraducido,
             });
         } catch (errorBD) {
+            // Si ya existe por una solicitud simultánea, recuperar la guardada.
+            if (errorBD.code === 11000) {
+                const traduccionGuardada = await Traduccion.findOne({
+                    textoOriginal: textoLimpio,
+                    idiomaOrigen: origen,
+                    idiomaDestino,
+                });
+
+                if (traduccionGuardada) {
+                    return res.status(200).json({
+                        message: 'Traducción obtenida de MongoDB.',
+                        textoTraducido: traduccionGuardada.textoTraducido,
+                        desdeCache: true,
+                    });
+                }
+            }
+
+            // No se pierde la traducción obtenida si falla el guardado.
             console.error(
                 'No se pudo guardar la traducción en MongoDB:',
                 errorBD.message
@@ -134,6 +166,7 @@ export const traducirTexto = async (req, res) => {
         return res.status(200).json({
             message: 'Texto traducido correctamente.',
             textoTraducido,
+            desdeCache: false,
         });
     } catch (error) {
         console.error('ERROR AL TRADUCIR:', {
