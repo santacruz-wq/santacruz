@@ -17,6 +17,14 @@ const IDIOMAS_PERMITIDOS = new Set([
     'tr', // Turco
 ]);
 
+// MyMemory pide el chino como zh-CN.
+const aCodigoMyMemory = (codigo) => (codigo === 'zh' ? 'zh-CN' : codigo);
+
+// Detecta cuando MyMemory devuelve el aviso de cuota en lugar de una traducción.
+const esAvisoDeMyMemory = (texto) =>
+    typeof texto === 'string' &&
+    /MYMEMORY WARNING|YOU USED ALL AVAILABLE FREE TRANSLATIONS/i.test(texto);
+
 export const traducirTexto = async (req, res) => {
     try {
         const { texto, idiomaDestino, idiomaOrigen } = req.body ?? {};
@@ -60,11 +68,16 @@ export const traducirTexto = async (req, res) => {
         });
 
         if (existente) {
-            return res.status(200).json({
-                message: 'Traducción obtenida de MongoDB.',
-                textoTraducido: existente.textoTraducido,
-                desdeCache: true,
-            });
+            if (esAvisoDeMyMemory(existente.textoTraducido)) {
+                // Caché contaminada con un aviso de cuota: se borra y se vuelve a traducir.
+                await Traduccion.deleteOne({ _id: existente._id });
+            } else {
+                return res.status(200).json({
+                    message: 'Traducción obtenida de MongoDB.',
+                    textoTraducido: existente.textoTraducido,
+                    desdeCache: true,
+                });
+            }
         }
 
         // Solo consultar MyMemory cuando no existe una traducción guardada.
@@ -75,13 +88,19 @@ export const traducirTexto = async (req, res) => {
         url.searchParams.set('q', textoLimpio);
         url.searchParams.set(
             'langpair',
-            `${origen}|${idiomaDestino}`
+            `${aCodigoMyMemory(origen)}|${aCodigoMyMemory(idiomaDestino)}`
         );
+
+        // Con un correo la cuota diaria sube de ~5.000 a ~50.000 caracteres.
+        if (process.env.MYMEMORY_EMAIL) {
+            url.searchParams.set('de', process.env.MYMEMORY_EMAIL);
+        }
 
         console.log('Solicitando traducción a MyMemory:', {
             idiomaOrigen: origen,
             idiomaDestino,
             longitudTexto: textoLimpio.length,
+            conEmail: Boolean(process.env.MYMEMORY_EMAIL),
         });
 
         const respuesta = await fetch(url, {
@@ -108,11 +127,14 @@ export const traducirTexto = async (req, res) => {
         }
 
         const data = await respuesta.json();
+        const traducido = data.responseData?.translatedText;
 
         if (
             Number(data.responseStatus) !== 200 ||
-            typeof data.responseData?.translatedText !== 'string' ||
-            !data.responseData.translatedText.trim()
+            data.quotaFinished === true ||
+            typeof traducido !== 'string' ||
+            !traducido.trim() ||
+            esAvisoDeMyMemory(traducido)
         ) {
             console.error('RESPUESTA INVÁLIDA DE MYMEMORY:', {
                 responseStatus: data.responseStatus,
@@ -122,13 +144,20 @@ export const traducirTexto = async (req, res) => {
                 idiomaDestino,
             });
 
-            return res.status(502).json({
-                message: 'No fue posible traducir el texto.',
+            // Cuota agotada: se avisa con 429 para que la app pueda mostrar el texto original.
+            const cuotaAgotada =
+                Number(data.responseStatus) === 429 ||
+                data.quotaFinished === true ||
+                esAvisoDeMyMemory(traducido);
+
+            return res.status(cuotaAgotada ? 429 : 502).json({
+                message: cuotaAgotada
+                    ? 'Se alcanzó el límite diario de traducciones. Intenta más tarde.'
+                    : 'No fue posible traducir el texto.',
             });
         }
 
-        const textoTraducido =
-            data.responseData.translatedText.trim();
+        const textoTraducido = traducido.trim();
 
         // Guardar la traducción para reutilizarla en próximas solicitudes.
         try {
