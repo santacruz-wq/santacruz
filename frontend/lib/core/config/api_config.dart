@@ -32,4 +32,5 @@ class ApiConfig {
   static const String notificaciones = "$baseUrl/notificacion";
   static const String chat = "$baseUrl/chat";
   static const String loginGoogle = "$baseUrl/usuarios/login-google";
+  static const String interprete = '$baseUrl/interprete';
 }
