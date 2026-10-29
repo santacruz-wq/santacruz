@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -31,6 +30,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
   String? _rutaAudio;
   String _textoOriginal = '';
   String _textoTraducido = '';
+  String? _idiomaDetectado;
   String _mensajeEstado = 'Selecciona los idiomas y pulsa Hablar.';
   String? _error;
 
@@ -85,6 +85,37 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
 
   String _nombreIdioma(String codigo) {
     return _idiomas[codigo] ?? codigo;
+  }
+
+  String _nombreIdiomaDetectado(String? idioma) {
+    if (idioma == null || idioma.trim().isEmpty) {
+      return 'No identificado';
+    }
+
+    final valor = idioma.trim().toLowerCase();
+
+    const equivalencias = {
+      'spanish': 'es',
+      'english': 'en',
+      'portuguese': 'pt',
+      'french': 'fr',
+      'german': 'de',
+      'italian': 'it',
+      'chinese': 'zh',
+      'mandarin': 'zh',
+      'hindi': 'hi',
+      'arabic': 'ar',
+      'russian': 'ru',
+      'japanese': 'ja',
+      'korean': 'ko',
+      'indonesian': 'id',
+      'bengali': 'bn',
+      'turkish': 'tr',
+    };
+
+    final codigo = equivalencias[valor] ?? valor;
+
+    return _idiomas[codigo] ?? idioma;
   }
 
   Future<void> _iniciarGrabacion() async {
@@ -228,6 +259,10 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
       final traduccion =
           datos['textoTraducido']?.toString().trim() ?? '';
 
+      final idiomaDetectado = _nombreIdiomaDetectado(
+        datos['idiomaOrigenDetectado']?.toString(),
+      );
+
       if (original.isEmpty || traduccion.isEmpty) {
         throw Exception('No se recibió el texto reconocido o traducido.');
       }
@@ -237,6 +272,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
       setState(() {
         _textoOriginal = original;
         _textoTraducido = traduccion;
+        _idiomaDetectado = idiomaDetectado;
         _mensajeEstado = 'Traducción lista.';
       });
 
@@ -391,6 +427,54 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
                   _error = null;
                 });
               },
+            ),
+
+            const SizedBox(height: 14),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.tarjeta,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.cremaOscuro),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.language_rounded,
+                    color: AppColors.caramelo,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Idioma detectado por Groq',
+                          style: TextStyle(
+                            color: AppColors.cafeMedio,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _idiomaDetectado ?? 'Esperando detección...',
+                          style: const TextStyle(
+                            color: AppColors.textoCafe,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: AppColors.caramelo,
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 20),
