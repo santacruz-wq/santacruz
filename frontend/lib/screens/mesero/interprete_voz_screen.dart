@@ -1,14 +1,15 @@
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:record/record.dart';
 
 import '../../core/config/api_config.dart';
 import '../../core/config/app_colors.dart';
-import '../../core/network/api_client.dart';
 
 class InterpreteVozScreen extends StatefulWidget {
   const InterpreteVozScreen({super.key});
@@ -18,18 +19,57 @@ class InterpreteVozScreen extends StatefulWidget {
 }
 
 class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
-  final stt.SpeechToText _reconocimiento = stt.SpeechToText();
+  final AudioRecorder _grabadora = AudioRecorder();
   final FlutterTts _voz = FlutterTts();
 
-  bool _inicializado = false;
   bool _escuchando = false;
   bool _procesando = false;
-  bool _modoCliente = true;
 
+  String _idiomaOrigen = 'auto';
+  String _idiomaDestino = 'es';
+
+  String? _rutaAudio;
   String _textoOriginal = '';
   String _textoTraducido = '';
-  String _mensajeEstado = 'Selecciona quién va a hablar.';
+  String _mensajeEstado = 'Selecciona los idiomas y pulsa Hablar.';
   String? _error;
+
+  static const Map<String, String> _idiomas = {
+    'auto': 'Detectar automáticamente',
+    'es': 'Español',
+    'en': 'Inglés',
+    'pt': 'Portugués',
+    'fr': 'Francés',
+    'de': 'Alemán',
+    'it': 'Italiano',
+    'zh': 'Chino simplificado',
+    'hi': 'Hindi',
+    'ar': 'Árabe',
+    'ru': 'Ruso',
+    'ja': 'Japonés',
+    'ko': 'Coreano',
+    'id': 'Indonesio',
+    'bn': 'Bengalí',
+    'tr': 'Turco',
+  };
+
+  static const Map<String, String> _localesVoz = {
+    'es': 'es-CO',
+    'en': 'en-US',
+    'pt': 'pt-BR',
+    'fr': 'fr-FR',
+    'de': 'de-DE',
+    'it': 'it-IT',
+    'zh': 'zh-CN',
+    'hi': 'hi-IN',
+    'ar': 'ar-SA',
+    'ru': 'ru-RU',
+    'ja': 'ja-JP',
+    'ko': 'ko-KR',
+    'id': 'id-ID',
+    'bn': 'bn-IN',
+    'tr': 'tr-TR',
+  };
 
   @override
   void initState() {
@@ -43,33 +83,12 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
     await _voz.setPitch(1.0);
   }
 
-  Future<bool> _inicializarReconocimiento() async {
-    if (_inicializado) return true;
-
-    final disponible = await _reconocimiento.initialize(
-      onStatus: (estado) {
-        if (!mounted) return;
-
-        setState(() {
-          _escuchando = estado == 'listening';
-        });
-      },
-      onError: (error) {
-        if (!mounted) return;
-
-        setState(() {
-          _escuchando = false;
-          _error = 'No se pudo reconocer la voz: ${error.errorMsg}';
-        });
-      },
-    );
-
-    _inicializado = disponible;
-    return disponible;
+  String _nombreIdioma(String codigo) {
+    return _idiomas[codigo] ?? codigo;
   }
 
-  Future<void> _iniciarEscucha() async {
-    if (_procesando) return;
+  Future<void> _iniciarGrabacion() async {
+    if (_procesando || _escuchando) return;
 
     setState(() {
       _error = null;
@@ -78,125 +97,78 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
       _mensajeEstado = 'Preparando el micrófono...';
     });
 
-    final permiso = await Permission.microphone.request();
-
-    if (!permiso.isGranted) {
-      if (!mounted) return;
-
-      setState(() {
-        _error = 'Debes permitir el acceso al micrófono.';
-        _mensajeEstado = 'No se puede iniciar la escucha.';
-      });
-      return;
-    }
-
     try {
-      final disponible = await _inicializarReconocimiento();
+      final permiso = await Permission.microphone.request();
 
-      if (!disponible) {
-        if (!mounted) return;
-
-        setState(() {
-          _error = 'El reconocimiento de voz no está disponible.';
-          _mensajeEstado = 'Comprueba el micrófono y el idioma del dispositivo.';
-        });
-        return;
+      if (!permiso.isGranted) {
+        throw Exception('Debes permitir el acceso al micrófono.');
       }
 
+      final disponible = await _grabadora.hasPermission();
+
+      if (!disponible) {
+        throw Exception('No se pudo acceder al micrófono.');
+      }
+
+      final ruta =
+          '${Directory.systemTemp.path}'
+          '${Platform.pathSeparator}'
+          'interprete_${DateTime.now().millisecondsSinceEpoch}.wav';
+
+      await _grabadora.start(
+        const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+        path: ruta,
+      );
+
       if (!mounted) return;
 
       setState(() {
-        _mensajeEstado = _modoCliente
-            ? 'Habla en inglés cuando el micrófono esté activo.'
-            : 'Habla en español cuando el micrófono esté activo.';
+        _rutaAudio = ruta;
+        _escuchando = true;
+        _mensajeEstado =
+            'Grabando... habla y luego pulsa Detener y traducir.';
       });
-
-      await _reconocimiento.listen(
-        localeId: _modoCliente ? 'en_US' : 'es_CO',
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 4),
-        onResult: (resultado) {
-          if (!mounted) return;
-
-          setState(() {
-            _textoOriginal = resultado.recognizedWords;
-          });
-
-          if (resultado.finalResult &&
-              resultado.recognizedWords.trim().isNotEmpty) {
-            _procesarMensaje(resultado.recognizedWords);
-          }
-        },
-      );
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _error = 'No se pudo iniciar el micrófono: $e';
+        _error = 'No se pudo iniciar la grabación: $e';
         _mensajeEstado = 'Inténtalo de nuevo.';
       });
     }
   }
 
-  Future<void> _detenerEscucha() async {
-    await _reconocimiento.stop();
-
-    if (!mounted) return;
-
-    setState(() {
-      _escuchando = false;
-      _mensajeEstado = 'Escucha detenida.';
-    });
-  }
-
-  Future<void> _procesarMensaje(String texto) async {
-    if (_procesando) return;
-
-    setState(() {
-      _procesando = true;
-      _escuchando = false;
-      _mensajeEstado = 'Traduciendo mensaje...';
-      _error = null;
-    });
+  Future<void> _detenerYTraducir() async {
+    if (!_escuchando || _procesando) return;
 
     try {
-      final idiomaOrigen = _modoCliente ? 'en' : 'es';
-      final idiomaDestino = _modoCliente ? 'es' : 'en';
-
-      final respuesta = await ApiClient.post(
-        ApiConfig.traducir,
-        {
-          'texto': texto.trim(),
-          'idiomaOrigen': idiomaOrigen,
-          'idiomaDestino': idiomaDestino,
-        },
-        auth: false,
-      ).timeout(const Duration(seconds: 20));
-
-      if (respuesta.statusCode != 200) {
-        throw Exception('El servicio respondió con error ${respuesta.statusCode}.');
-      }
-
-      final datos = jsonDecode(respuesta.body);
-      final traduccion = datos['textoTraducido'] as String?;
-
-      if (traduccion == null || traduccion.trim().isEmpty) {
-        throw Exception('El servicio no devolvió una traducción.');
-      }
+      final rutaDetenida = await _grabadora.stop();
 
       if (!mounted) return;
 
       setState(() {
-        _textoTraducido = traduccion.trim();
-        _mensajeEstado = 'Traducción lista.';
+        _escuchando = false;
+        _procesando = true;
+        _mensajeEstado = 'Groq está reconociendo y traduciendo el audio...';
+        _error = null;
       });
 
-      await _reproducirTraduccion(traduccion.trim());
+      final ruta = rutaDetenida ?? _rutaAudio;
+
+      if (ruta == null || !await File(ruta).exists()) {
+        throw Exception('No se encontró el archivo de audio.');
+      }
+
+      await _enviarAudio(ruta);
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _error = 'No se pudo traducir el mensaje. Comprueba tu conexión e inténtalo otra vez.';
+        _error = 'No se pudo procesar el audio: $e';
         _mensajeEstado = 'Traducción no disponible.';
       });
     } finally {
@@ -208,51 +180,138 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
     }
   }
 
+  Future<void> _enviarAudio(String ruta) async {
+    try {
+      final solicitud = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiConfig.interprete),
+      );
+
+      solicitud.fields['idiomaOrigen'] = _idiomaOrigen;
+      solicitud.fields['idiomaDestino'] = _idiomaDestino;
+
+      solicitud.files.add(
+        await http.MultipartFile.fromPath(
+          'audio',
+          ruta,
+          filename: 'interprete.wav',
+        ),
+      );
+
+      final respuesta = await solicitud.send().timeout(
+        const Duration(seconds: 90),
+      );
+
+      final cuerpo = await respuesta.stream.bytesToString();
+
+      dynamic datos;
+      try {
+        datos = jsonDecode(cuerpo);
+      } catch (_) {
+        throw Exception('El servidor devolvió una respuesta inválida.');
+      }
+
+      if (respuesta.statusCode != 200) {
+        final mensaje =
+            datos is Map ? datos['mensaje']?.toString() : null;
+
+        throw Exception(
+          mensaje ?? 'Error del servidor (${respuesta.statusCode}).',
+        );
+      }
+
+      if (datos is! Map) {
+        throw Exception('La respuesta del servidor no es válida.');
+      }
+
+      final original = datos['textoOriginal']?.toString().trim() ?? '';
+      final traduccion =
+          datos['textoTraducido']?.toString().trim() ?? '';
+
+      if (original.isEmpty || traduccion.isEmpty) {
+        throw Exception('No se recibió el texto reconocido o traducido.');
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _textoOriginal = original;
+        _textoTraducido = traduccion;
+        _mensajeEstado = 'Traducción lista.';
+      });
+
+      await _reproducirTraduccion(traduccion);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _mensajeEstado = 'Traducción no disponible.';
+      });
+    } finally {
+      try {
+        await File(ruta).delete();
+      } catch (_) {}
+    }
+  }
+
   Future<void> _reproducirTraduccion(String texto) async {
     await _voz.stop();
 
-    // La traducción siempre se reproduce en el idioma de destino.
-    await _voz.setLanguage(_modoCliente ? 'es-CO' : 'en-US');
+    final locale = _localesVoz[_idiomaDestino];
+
+    if (locale == null) {
+      throw Exception('No se configuró la voz para este idioma.');
+    }
+
+    await _voz.setLanguage(locale);
     await _voz.speak(texto);
   }
 
   Future<void> _reproducirDeNuevo() async {
-    if (_textoTraducido.isEmpty || _procesando) return;
+    if (_textoTraducido.isEmpty || _procesando || _escuchando) return;
 
     try {
       await _reproducirTraduccion(_textoTraducido);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _error = 'No se pudo reproducir el audio.';
+        _error = 'No se pudo reproducir la traducción: $e';
       });
     }
   }
 
-  void _cambiarModo(bool modoCliente) {
+  void _intercambiarIdiomas() {
     if (_escuchando || _procesando) return;
 
     setState(() {
-      _modoCliente = modoCliente;
+      final anteriorOrigen = _idiomaOrigen;
+      final anteriorDestino = _idiomaDestino;
+
+      _idiomaOrigen = anteriorDestino;
+      _idiomaDestino = anteriorOrigen == 'auto' ? 'es' : anteriorOrigen;
+
       _textoOriginal = '';
       _textoTraducido = '';
       _error = null;
-      _mensajeEstado = modoCliente
-          ? 'Cliente: inglés → Mesero: español'
-          : 'Mesero: español → Cliente: inglés';
+      _mensajeEstado =
+          '${_nombreIdioma(_idiomaOrigen)} → '
+          '${_nombreIdioma(_idiomaDestino)}';
     });
   }
 
   @override
   void dispose() {
-    _reconocimiento.stop();
+    _grabadora.dispose();
     _voz.stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final bloqueado = _escuchando || _procesando;
+
     return Scaffold(
       backgroundColor: AppColors.crema,
       appBar: AppBar(
@@ -288,33 +347,52 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Escucha, traduce y reproduce la conversación en ambos idiomas.',
+              'Graba una frase, tradúcela con IA y escucha el resultado.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.cafeMedio),
             ),
             const SizedBox(height: 24),
 
-            Row(
-              children: [
-                Expanded(
-                  child: _botonModo(
-                    texto: 'Cliente habla inglés',
-                    icono: Icons.headphones_rounded,
-                    seleccionado: _modoCliente,
-                    onTap: () => _cambiarModo(true),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _botonModo(
-                    texto: 'Mesero habla español',
-                    icono: Icons.record_voice_over_rounded,
-                    seleccionado: !_modoCliente,
-                    onTap: () => _cambiarModo(false),
-                  ),
-                ),
-              ],
+            _selectorIdioma(
+              titulo: 'Idioma de quien habla',
+              valor: _idiomaOrigen,
+              permitirAuto: true,
+              onChanged: (valor) {
+                if (valor == null) return;
+
+                setState(() {
+                  _idiomaOrigen = valor;
+                  _error = null;
+                });
+              },
             ),
+
+            const SizedBox(height: 8),
+
+            Center(
+              child: IconButton(
+                onPressed: bloqueado ? null : _intercambiarIdiomas,
+                tooltip: 'Intercambiar idiomas',
+                icon: const Icon(Icons.swap_vert_rounded),
+                color: AppColors.caramelo,
+                iconSize: 30,
+              ),
+            ),
+
+            _selectorIdioma(
+              titulo: 'Traducir al idioma',
+              valor: _idiomaDestino,
+              permitirAuto: false,
+              onChanged: (valor) {
+                if (valor == null) return;
+
+                setState(() {
+                  _idiomaDestino = valor;
+                  _error = null;
+                });
+              },
+            ),
+
             const SizedBox(height: 20),
 
             Container(
@@ -328,9 +406,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _modoCliente
-                        ? 'Cliente · Inglés'
-                        : 'Mesero · Español',
+                    'Original · ${_nombreIdioma(_idiomaOrigen)}',
                     style: const TextStyle(
                       color: AppColors.cafeMedio,
                       fontWeight: FontWeight.w600,
@@ -339,7 +415,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _textoOriginal.isEmpty
-                        ? 'Aquí aparecerá lo que diga la persona.'
+                        ? 'Aquí aparecerá lo que se reconozca del audio.'
                         : _textoOriginal,
                     style: const TextStyle(
                       fontSize: 17,
@@ -348,9 +424,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
                   ),
                   const Divider(height: 28),
                   Text(
-                    _modoCliente
-                        ? 'Mesero · Español'
-                        : 'Cliente · Inglés',
+                    'Traducción · ${_nombreIdioma(_idiomaDestino)}',
                     style: const TextStyle(
                       color: AppColors.caramelo,
                       fontWeight: FontWeight.w600,
@@ -359,7 +433,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _textoTraducido.isEmpty
-                        ? 'Aquí aparecerá la traducción.'
+                        ? 'Aquí aparecerá la traducción de Groq.'
                         : _textoTraducido,
                     style: const TextStyle(
                       fontSize: 18,
@@ -370,6 +444,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
                 ],
               ),
             ),
+
             const SizedBox(height: 18),
 
             if (_error != null) ...[
@@ -386,6 +461,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.cafeMedio),
             ),
+
             const SizedBox(height: 16),
 
             SizedBox(
@@ -393,14 +469,22 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
               child: ElevatedButton.icon(
                 onPressed: _procesando
                     ? null
-                    : (_escuchando ? _detenerEscucha : _iniciarEscucha),
+                    : (_escuchando
+                        ? _detenerYTraducir
+                        : _iniciarGrabacion),
                 icon: Icon(
-                  _escuchando ? Icons.stop_rounded : Icons.mic_rounded,
+                  _escuchando
+                      ? Icons.stop_rounded
+                      : _procesando
+                          ? Icons.hourglass_top_rounded
+                          : Icons.mic_rounded,
                 ),
                 label: Text(
                   _procesando
                       ? 'Traduciendo...'
-                      : (_escuchando ? 'Detener escucha' : 'Hablar'),
+                      : _escuchando
+                          ? 'Detener y traducir'
+                          : 'Hablar',
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.caramelo,
@@ -415,7 +499,7 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
             const SizedBox(height: 12),
 
             OutlinedButton.icon(
-              onPressed: _textoTraducido.isEmpty || _procesando
+              onPressed: _textoTraducido.isEmpty || bloqueado
                   ? null
                   : _reproducirDeNuevo,
               icon: const Icon(Icons.volume_up_rounded),
@@ -428,8 +512,10 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
             ),
 
             const SizedBox(height: 16),
+
             const Text(
-              'Revisa lo que se reconoció antes de usar la información para atender al cliente. Esta función no registra pedidos.',
+              'El audio se envía al servidor para su procesamiento. '
+              'Esta función no registra pedidos.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
@@ -442,44 +528,43 @@ class _InterpreteVozScreenState extends State<InterpreteVozScreen> {
     );
   }
 
-  Widget _botonModo({
-    required String texto,
-    required IconData icono,
-    required bool seleccionado,
-    required VoidCallback onTap,
+  Widget _selectorIdioma({
+    required String titulo,
+    required String valor,
+    required ValueChanged<String?> onChanged,
+    required bool permitirAuto,
   }) {
-    return Material(
-      color: seleccionado ? AppColors.caramelo : AppColors.cremaClaro,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
+    final opciones = _idiomas.entries
+        .where((entrada) => permitirAuto || entrada.key != 'auto')
+        .toList();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.tarjeta,
         borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 14,
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icono,
-                color: seleccionado ? AppColors.blanco : AppColors.cafeMedio,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                texto,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: seleccionado
-                      ? AppColors.blanco
-                      : AppColors.textoCafe,
-                ),
-              ),
-            ],
-          ),
+        border: Border.all(color: AppColors.cremaOscuro),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: valor,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: titulo,
+          border: InputBorder.none,
+          labelStyle: const TextStyle(color: AppColors.cafeMedio),
         ),
+        dropdownColor: AppColors.cremaClaro,
+        style: const TextStyle(
+          color: AppColors.textoCafe,
+          fontSize: 15,
+        ),
+        items: opciones.map((entrada) {
+          return DropdownMenuItem<String>(
+            value: entrada.key,
+            child: Text(entrada.value),
+          );
+        }).toList(),
+        onChanged: _escuchando || _procesando ? null : onChanged,
       ),
     );
   }

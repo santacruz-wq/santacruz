@@ -25,6 +25,7 @@ import favoritosRoutes from "./routes/favoritos.js";
 import chatRoutes from "./routes/chatroutes.js";
 import adminUsuariosRoutes from "./routes/usuarios.js";
 import perfilRoutes from "./routes/perfil.js";
+import interpreteRoutes from "./routes/interprete.js";
 
 
 // ============================
@@ -168,6 +169,7 @@ app.use("/api/favoritos", favoritosRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/admin/usuarios", adminUsuariosRoutes);
 app.use("/api/perfil", perfilRoutes);
+app.use("/api/interprete", interpreteRoutes);
 
 
 // ============================
