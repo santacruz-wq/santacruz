@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../core/config/app_colors.dart';
@@ -10,6 +9,7 @@ class ProductGridCard extends StatelessWidget {
   final String name;
   final String price;
   final String image;
+  final bool disponible;
 
   const ProductGridCard({
     super.key,
@@ -17,6 +17,7 @@ class ProductGridCard extends StatelessWidget {
     required this.name,
     required this.price,
     required this.image,
+    this.disponible = true,
   });
 
   @override
@@ -65,6 +66,39 @@ class ProductGridCard extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                // Capa y etiqueta de producto agotado.
+                if (!disponible)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        alignment: Alignment.center,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade700,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'AGOTADO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
 
                 // Botón de reseñas.
                 Positioned(

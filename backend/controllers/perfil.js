@@ -1,7 +1,6 @@
 
-import fs from "fs";
-import path from "path";
 import User from "../models/user.js";
+import cloudinary from "../config/cloudinary.js";
 
 // Datos públicos del usuario autenticado.
 const datosPerfil = (usuario) => ({
@@ -32,6 +31,7 @@ export const obtenerMiPerfil = async (req, res) => {
         });
     } catch (error) {
         console.error("Error consultando perfil:", error);
+
         return res.status(500).json({
             success: false,
             message: "No se pudo consultar el perfil",
@@ -204,6 +204,7 @@ export const cambiarMiPassword = async (req, res) => {
         });
     } catch (error) {
         console.error("Error cambiando contraseña:", error);
+
         return res.status(500).json({
             success: false,
             message: "No se pudo cambiar la contraseña",
@@ -211,10 +212,8 @@ export const cambiarMiPassword = async (req, res) => {
     }
 };
 
-// GUARDAR LA FOTO DE PERFIL
+// GUARDAR LA FOTO DE PERFIL EN CLOUDINARY
 export const actualizarMiAvatar = async (req, res) => {
-    let archivoNuevo = req.file?.path;
-
     try {
         if (!req.file) {
             return res.status(400).json({
@@ -226,9 +225,15 @@ export const actualizarMiAvatar = async (req, res) => {
         const usuario = await User.findById(req.usuario._id);
 
         if (!usuario) {
-            if (archivoNuevo && fs.existsSync(archivoNuevo)) {
-                fs.unlinkSync(archivoNuevo);
-            }
+            // La imagen ya fue subida a Cloudinary.
+            await cloudinary.uploader.destroy(req.file.filename).catch(
+                (error) => {
+                    console.error(
+                        "No se pudo eliminar el avatar sin usuario:",
+                        error,
+                    );
+                },
+            );
 
             return res.status(404).json({
                 success: false,
@@ -237,39 +242,62 @@ export const actualizarMiAvatar = async (req, res) => {
         }
 
         const avatarAnterior = usuario.avatar;
-        const rutaPublica = `/uploads/perfiles/${req.file.filename}`;
 
-        usuario.avatar = rutaPublica;
+        // CloudinaryStorage proporciona la URL pública en req.file.path.
+        usuario.avatar = req.file.path;
+
         await usuario.save();
 
-        // Eliminar solamente fotos anteriores guardadas por este endpoint.
+        // Eliminar la foto anterior solo si es un recurso de Cloudinary
+        // de nuestra carpeta de perfiles.
         if (
             avatarAnterior &&
-            avatarAnterior.startsWith("/uploads/perfiles/")
+            /^https?:\/\/res\.cloudinary\.com\//i.test(avatarAnterior)
         ) {
-            const nombreArchivo = path.basename(avatarAnterior);
-            const rutaAnterior = path.join(
-                process.cwd(),
-                "uploads",
-                "perfiles",
-                nombreArchivo,
-            );
+            try {
+                const urlAnterior = new URL(avatarAnterior);
+                const partes = urlAnterior.pathname.split("/");
+                const indiceUpload = partes.indexOf("upload");
 
-            if (fs.existsSync(rutaAnterior)) {
-                fs.unlinkSync(rutaAnterior);
+                if (indiceUpload !== -1) {
+                    const partesPublicId = partes.slice(indiceUpload + 1);
+
+                    // Ignorar versiones v123456789/ y conservar carpetas/nombre.
+                    if (
+                        partesPublicId.length > 0 &&
+                        /^v\d+$/.test(partesPublicId[0])
+                    ) {
+                        partesPublicId.shift();
+                    }
+
+                    const ultimo = partesPublicId.length - 1;
+
+                    if (ultimo >= 0) {
+                        partesPublicId[ultimo] = partesPublicId[ultimo]
+                            .replace(/\.[^.]+$/, "");
+                    }
+
+                    const publicId = partesPublicId.join("/");
+
+                    if (publicId.startsWith("santacruz-plazuela/perfiles/")) {
+                        await cloudinary.uploader.destroy(publicId);
+                    }
+                }
+            } catch (error) {
+                // No se revierte la actualización si falla la limpieza.
+                console.error(
+                    "No se pudo eliminar el avatar anterior de Cloudinary:",
+                    error,
+                );
             }
         }
 
         return res.status(200).json({
             success: true,
-            message: "Foto de perfil actualizada",
+            message: "Foto de perfil actualizada correctamente",
             usuario: datosPerfil(usuario),
         });
     } catch (error) {
-        if (archivoNuevo && fs.existsSync(archivoNuevo)) {
-            fs.unlinkSync(archivoNuevo);
-        }
-
         console.error("Error actualizando foto:", error);
 
         return res.status(500).json({

@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import '../core/config/api_config.dart';
@@ -5,7 +6,7 @@ import '../core/network/api_client.dart';
 import '../models/producto_model.dart';
 
 class ProductoService {
-  // OBTENER TODOS LOS PRODUCTOS
+  // OBTENER LOS PRODUCTOS VISIBLES EN EL MENÚ
   static Future<List<ProductoModel>> getProductos() async {
     final response = await ApiClient.get(
       ApiConfig.productos,
@@ -22,7 +23,7 @@ class ProductoService {
             (item) => ProductoModel.fromJson(item),
           )
           .where(
-            (producto) => producto.disponible,
+            (producto) => producto.visibleMenu,
           )
           .toList();
     }
