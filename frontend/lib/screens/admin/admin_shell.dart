@@ -11,6 +11,7 @@ import 'resena/admin_resenas_screen.dart';
 import 'usuarios/admin_usuarios_screen.dart';
 import 'usuarios/admin_administradores_screen.dart';
 import 'admin_perfil_screen.dart';
+import 'mesas/admin_mesas_screen.dart';
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -63,6 +64,16 @@ class _AdminShellState extends State<AdminShell> {
       context,
       MaterialPageRoute(
         builder: (_) => const AdminCategoriasScreen(),
+      ),
+    );
+  }
+    Future<void> _abrirMesas() async {
+    setState(() => _menuAbierto = false);
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AdminMesasScreen(),
       ),
     );
   }
@@ -159,6 +170,12 @@ class _AdminShellState extends State<AdminShell> {
                       icono: Icons.category_outlined,
                       accion: _abrirCategorias,
                       heroTag: 'admin_burbuja_categorias',
+                    ),
+                                        _opcionBurbuja(
+                      texto: 'Mesas',
+                      icono: Icons.table_restaurant_outlined,
+                      accion: _abrirMesas,
+                      heroTag: 'admin_burbuja_mesas',
                     ),
                     _opcionBurbuja(
                       texto: 'Productos',
