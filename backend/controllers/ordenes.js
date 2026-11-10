@@ -1,7 +1,9 @@
+
 import Orden from '../models/ordenes.js';
 import OrdenDetalle from '../models/ordenDetalle.js';
 import Producto from '../models/product.js';
 import Mesa from '../models/mesa.js';
+import { enviarNotificacionPorRol } from './fcm.js';
 
 // ============================
 // CREAR UNA NUEVA ORDEN
@@ -90,6 +92,18 @@ export const crearOrden = async (req, res) => {
                 mensaje: 'Nuevo pedido creado'
             });
         }
+
+        // FCM: avisar a todos los dispositivos de cocina.
+        await enviarNotificacionPorRol({
+            roles: ['cocina'],
+            titulo: 'Nuevo pedido',
+            mensaje: `Se ha creado un nuevo pedido para ${existeMesa.nombre}`,
+            data: {
+                tipo: 'nuevo_pedido',
+                ordenId: nuevaOrden._id,
+                mesaId: existeMesa._id
+            }
+        });
 
         return res.status(201).json({
             message: 'Orden creada correctamente',
@@ -335,6 +349,20 @@ export const crearAdicion = async (req, res) => {
             io.to('meseros').emit('nuevaAdicion', datosAdicion);
         }
 
+        // FCM: avisar a cocina sobre la nueva adición.
+        const mesaAdicion = await Mesa.findById(orden.mesa);
+
+        await enviarNotificacionPorRol({
+            roles: ['cocina'],
+            titulo: 'Nueva adición',
+            mensaje: `Hay productos adicionales para ${mesaAdicion?.nombre || 'una mesa'}`,
+            data: {
+                tipo: 'nueva_adicion',
+                ordenId: orden._id,
+                mesaId: orden.mesa
+            }
+        });
+
         return res.status(201).json({
             message: 'Adición creada correctamente',
             orden,
@@ -383,6 +411,8 @@ export const cambiarEstadoOrden = async (req, res) => {
             });
         }
 
+        const estadoAnterior = orden.estado;
+
         orden.estado = estado;
         await orden.save();
 
@@ -425,6 +455,53 @@ export const cambiarEstadoOrden = async (req, res) => {
                 ordenId: orden._id,
                 mesa: orden.mesa,
                 mensaje: 'El pedido fue cancelado'
+            });
+        }
+
+        // FCM: notificar a los meseros cuando cocina o un mesero
+        // cambia el pedido a uno de estos estados.
+        // Solo se envía si realmente hubo un cambio de estado.
+        if (
+            estado !== estadoAnterior &&
+            ['listo', 'servido', 'pagado', 'cancelado'].includes(estado)
+        ) {
+            const mesaInfo = await Mesa.findById(orden.mesa);
+            const nombreMesa = mesaInfo?.nombre || 'una mesa';
+
+            const notificaciones = {
+                listo: {
+                    titulo: 'Pedido listo',
+                    mensaje: `El pedido de ${nombreMesa} está listo`,
+                    tipo: 'pedido_listo'
+                },
+                servido: {
+                    titulo: 'Pedido servido',
+                    mensaje: `El pedido de ${nombreMesa} fue servido`,
+                    tipo: 'pedido_servido'
+                },
+                pagado: {
+                    titulo: 'Pedido pagado',
+                    mensaje: `El pedido de ${nombreMesa} fue pagado`,
+                    tipo: 'pedido_pagado'
+                },
+                cancelado: {
+                    titulo: 'Pedido cancelado',
+                    mensaje: `El pedido de ${nombreMesa} fue cancelado`,
+                    tipo: 'pedido_cancelado'
+                }
+            };
+
+            const notificacion = notificaciones[estado];
+
+            await enviarNotificacionPorRol({
+                roles: ['mesero'],
+                titulo: notificacion.titulo,
+                mensaje: notificacion.mensaje,
+                data: {
+                    tipo: notificacion.tipo,
+                    ordenId: orden._id,
+                    mesaId: orden.mesa
+                }
             });
         }
 

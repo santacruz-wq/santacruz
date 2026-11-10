@@ -26,6 +26,7 @@ import chatRoutes from "./routes/chatroutes.js";
 import adminUsuariosRoutes from "./routes/usuarios.js";
 import perfilRoutes from "./routes/perfil.js";
 import interpreteRoutes from "./routes/interprete.js";
+import fcmRoutes from './routes/fcm.js';
 
 
 // ============================
@@ -165,6 +166,7 @@ app.use("/api/resenas", resenaRoutes);
 
 app.use("/api/inventario", inventarioRoutes);
 app.use("/api/notificacion", notificacionRoutes);
+app.use('/api/fcm', fcmRoutes);
 app.use("/api/favoritos", favoritosRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/admin/usuarios", adminUsuariosRoutes);

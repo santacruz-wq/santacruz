@@ -1,3 +1,5 @@
 node_modules 
 .env
 uploads/
+# Clave privada de Firebase
+config/firebase-service-account.json

@@ -33,4 +33,8 @@ class ApiConfig {
   static const String chat = "$baseUrl/chat";
   static const String loginGoogle = "$baseUrl/usuarios/login-google";
   static const String interprete = '$baseUrl/interprete';
+
+  // Firebase Cloud Messaging
+  static const String fcmToken = "$baseUrl/fcm/token";
+  static const String fcmTokenEliminar = "$baseUrl/fcm/token/eliminar";
 }
