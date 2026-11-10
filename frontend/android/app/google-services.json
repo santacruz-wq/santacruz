@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "125353014107",
+    "project_id": "santa-cruz-de-la-plazuela",
+    "storage_bucket": "santa-cruz-de-la-plazuela.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125353014107:android:de1c5b794fac68c522207e",
+        "android_client_info": {
+          "package_name": "com.santacruz.plazuela"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBR9ZWhIwF00fJZcrcIhqcvv0LIg5JMacM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

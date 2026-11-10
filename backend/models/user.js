@@ -77,7 +77,27 @@ const userSchema = new mongoose.Schema({
         default: ''
     },
 
-    // NUEVO: SESIONES PARA RENOVAR TOKENS
+    // DISPOSITIVOS REGISTRADOS PARA NOTIFICACIONES FCM
+    fcmTokens: {
+        type: [{
+            token: {
+                type: String,
+                required: true
+            },
+            platform: {
+                type: String,
+                enum: ['android'],
+                default: 'android'
+            },
+            updatedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }],
+        default: []
+    },
+
+    // SESIONES PARA RENOVAR TOKENS
     refreshSessions: {
         type: [{
             tokenHash: {

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/fcm_service.dart';
 import '../core/storage/secure_storage.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -46,6 +47,10 @@ class AuthProvider extends ChangeNotifier {
       if (resultado['success'] == true) {
         _usuario = resultado['user'] as UserModel?;
 
+        if (_usuario != null) {
+          await FCMService.registrarToken();
+        }
+
         notifyListeners();
 
         return _usuario != null;
@@ -84,11 +89,14 @@ class AuthProvider extends ChangeNotifier {
       if (resultado['success'] == true) {
         _usuario = resultado['user'] as UserModel?;
 
+        if (_usuario != null) {
+          await FCMService.registrarToken();
+        }
+
         notifyListeners();
 
         return _usuario != null;
       } else {
-        // Si el usuario cancela Google, no mostramos error.
         if (resultado['cancelado'] != true) {
           _error = resultado['message']?.toString();
         }
@@ -143,6 +151,9 @@ class AuthProvider extends ChangeNotifier {
   // =========================================================
 
   Future<void> logout() async {
+    // Primero desvincular el dispositivo de la cuenta.
+    await FCMService.eliminarToken();
+
     await AuthService.logout();
 
     await SecureStorage.deleteUser();
@@ -158,7 +169,6 @@ class AuthProvider extends ChangeNotifier {
   // RECUPERAR SESIÓN
   // =========================================================
 
-  
   Future<void> verificarSesion() async {
     try {
       final token = await SecureStorage.getToken();
@@ -190,6 +200,9 @@ class AuthProvider extends ChangeNotifier {
       }
 
       _usuario = usuario;
+
+      await FCMService.registrarToken();
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error al recuperar la sesión: $e');
@@ -197,5 +210,4 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
 }

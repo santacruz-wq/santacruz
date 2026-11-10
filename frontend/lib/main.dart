@@ -1,6 +1,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+import 'firebase_options.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
@@ -21,10 +25,64 @@ import 'screens/admin/admin_shell.dart';
 
 import 'core/config/app_theme.dart';
 import 'services/google_auth_service.dart';
+import 'services/notificaciones_locales_service.dart';
+
+// =========================================================
+// MANEJADOR DE NOTIFICACIONES EN SEGUNDO PLANO
+// =========================================================
+
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(
+  RemoteMessage message,
+) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  debugPrint('FCM: Notificación recibida en segundo plano.');
+  debugPrint('Datos: ${message.data}');
+}
+
+// =========================================================
+// CONFIGURACIÓN PRINCIPAL
+// =========================================================
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Inicializar Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Inicializar notificaciones locales
+  await NotificacionesLocalesService.inicializar();
+
+  // Registrar el manejador de notificaciones en segundo plano
+  FirebaseMessaging.onBackgroundMessage(
+    firebaseMessagingBackgroundHandler,
+  );
+
+  // Recibir notificaciones cuando la aplicación está abierta
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    debugPrint('FCM: Notificación recibida con la aplicación abierta.');
+    debugPrint('Datos: ${message.data}');
+
+    final titulo = message.notification?.title ??
+        message.data['titulo']?.toString() ??
+        'Santa Cruz de la Plazuela';
+
+    final mensaje = message.notification?.body ??
+        message.data['mensaje']?.toString() ??
+        'Tienes una nueva notificación.';
+
+    await NotificacionesLocalesService.mostrar(
+      titulo: titulo,
+      mensaje: mensaje,
+    );
+  });
+
+  // Inicializar autenticación de Google
   await GoogleAuthService.inicializar(
     serverClientId:
         '610032994651-dvbn9h7p0o10dj1k6isql0bi76i2vo35.apps.googleusercontent.com',
@@ -43,6 +101,10 @@ void main() async {
   );
 }
 
+// =========================================================
+// APLICACIÓN
+// =========================================================
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -51,12 +113,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Santa Cruz de la Plazuela',
       debugShowCheckedModeBanner: false,
-
-      // Tema global de Santa Cruz de la Plazuela.
       theme: AppTheme.light,
-
       home: const AppStarter(),
-
       routes: {
         '/inicio': (context) => InicioScreen(),
         '/registro': (context) => const RegistroScreen(),
@@ -82,6 +140,10 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+// =========================================================
+// INICIO Y RECUPERACIÓN DE SESIÓN
+// =========================================================
 
 class AppStarter extends StatefulWidget {
   const AppStarter({super.key});
