@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../models/mesa_model.dart';
@@ -16,7 +17,7 @@ Future<void> onMesaTap(
 ) async {
   // MESA LIBRE
   if (mesa.estaLibre) {
-    Navigator.push(
+    final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CrearOrdenScreen(
@@ -24,6 +25,20 @@ Future<void> onMesaTap(
         ),
       ),
     );
+
+    if (!context.mounted) return;
+
+    // Si se creó la orden, abrir directamente su tiquete.
+    if (resultado is OrdenModel) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrdenScreen(
+            ordenId: resultado.id,
+          ),
+        ),
+      );
+    }
 
     return;
   }
