@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 import '../../../../../models/categoria_model.dart';
 import '../../../../../models/product_model.dart';
@@ -26,7 +27,9 @@ class FormularioProductoController extends ChangeNotifier {
   final nombreController = TextEditingController();
   final descripcionController = TextEditingController();
   final precioController = TextEditingController();
+
   final ImagePicker _imagePicker = ImagePicker();
+  final ImageCropper _imageCropper = ImageCropper();
 
   List<Categoria> categorias = [];
   String? categoriaId;
@@ -60,26 +63,66 @@ class FormularioProductoController extends ChangeNotifier {
     }
   }
 
-  // Permite elegir entre la cámara y la galería.
+  // Seleccionar una imagen y abrir el editor de recorte.
   Future<void> seleccionarImagen({
     ImageSource origen = ImageSource.gallery,
   }) async {
     try {
       final seleccionada = await _imagePicker.pickImage(
         source: origen,
-        imageQuality: 85,
-        maxWidth: 1200,
       );
 
-      if (seleccionada != null) {
-        imagen = seleccionada;
-        error = null;
-        notifyListeners();
-      }
+      if (seleccionada == null) return;
+
+      // Abrir editor para centrar, ampliar y recortar.
+      final recortada = await _imageCropper.cropImage(
+        sourcePath: seleccionada.path,
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 90,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Ajustar imagen',
+            toolbarColor: Colors.brown,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: Colors.brown,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: false,
+            hideBottomControls: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Ajustar imagen',
+            aspectRatioLockEnabled: false,
+            resetAspectRatioEnabled: true,
+            aspectRatioPickerButtonHidden: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9,
+            ],
+          ),
+        ],
+      );
+
+      // Si cancela el recorte, conserva la imagen anterior.
+      if (recortada == null) return;
+
+      imagen = XFile(recortada.path);
+      error = null;
+      notifyListeners();
     } catch (e) {
       error = origen == ImageSource.camera
-          ? 'No se pudo tomar la foto: $e'
-          : 'No se pudo seleccionar la imagen: $e';
+          ? 'No se pudo tomar o ajustar la foto: $e'
+          : 'No se pudo seleccionar o ajustar la imagen: $e';
+
       notifyListeners();
     }
   }
@@ -89,7 +132,6 @@ class FormularioProductoController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Cambiar si el producto aparece en destacados.
   void cambiarDestacado(bool valor) {
     destacado = valor;
     notifyListeners();

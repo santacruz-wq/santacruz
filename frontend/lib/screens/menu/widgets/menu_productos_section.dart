@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -30,12 +31,9 @@ class MenuProductosSection extends StatelessWidget {
     return FutureBuilder<List<ProductModel>>(
       future: futureProductos,
       builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: 40,
-            ),
+            padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
               child: CircularProgressIndicator(
                 color: AppColors.caramelo,
@@ -46,51 +44,66 @@ class MenuProductosSection extends StatelessWidget {
 
         if (snapshot.hasError) {
           return Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 40,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 40),
             child: Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-              ),
+              child: Text('Error: ${snapshot.error}'),
             ),
           );
         }
 
         final todos = snapshot.data ?? [];
 
-        if (busqueda.isNotEmpty) {
-          return MenuGrid(
-            products: filtrarPorBusqueda(
-              todos,
-              busqueda,
-            ),
-          );
+        // Filtrar por categoría seleccionada.
+        List<ProductModel> productosCategoria = todos;
+
+        if (selectedCategory > 0 &&
+            selectedCategory <= categorias.length) {
+          final categoriaId = categorias[selectedCategory - 1].id;
+
+          productosCategoria = todos
+              .where(
+                (p) =>
+                    p.categoriaId == categoriaId &&
+                    p.visibleMenu,
+              )
+              .toList();
         }
 
+        // Aplicar búsqueda.
+        if (busqueda.isNotEmpty) {
+          final resultados = filtrarPorBusqueda(
+            productosCategoria,
+            busqueda,
+          );
+
+          return MenuGrid(products: resultados);
+        }
+
+        // Cuando se selecciona una categoría,
+        // mostrar todos sus productos, no solamente destacados.
+        if (selectedCategory > 0 &&
+            selectedCategory <= categorias.length) {
+          return MenuGrid(products: productosCategoria);
+        }
+
+        // Vista inicial: destacados y todo el menú.
         return Column(
           children: [
             MenuProducts(
               products: filtrarDestacados(
                 todos,
                 busqueda: busqueda,
-                selectedCategory: selectedCategory,
+                selectedCategory: 0,
                 categorias: categorias,
               ),
             ),
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  lang.t(
-                    'todo_el_menu',
-                  ),
+                  lang.t('todo_el_menu'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -99,12 +112,8 @@ class MenuProductosSection extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 12,
-            ),
-            MenuGrid(
-              products: todos,
-            ),
+            const SizedBox(height: 12),
+            MenuGrid(products: todos),
           ],
         );
       },
