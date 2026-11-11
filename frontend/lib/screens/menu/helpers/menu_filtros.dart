@@ -1,3 +1,4 @@
+
 import '../../../models/product_model.dart';
 import '../../../models/categoria_model.dart';
 
@@ -24,15 +25,22 @@ List<ProductModel> filtrarDestacados(
   required int selectedCategory,
   required List<Categoria> categorias,
 }) {
-  var lista = filtrarPorBusqueda(productos, busqueda);
+  // Mostrar únicamente productos marcados como destacados
+  // y que estén visibles en el menú.
+  var lista = productos
+      .where((p) => p.destacado && p.visibleMenu)
+      .toList();
 
-  if (selectedCategory != 0 && categorias.isNotEmpty) {
+  // Aplicar búsqueda.
+  lista = filtrarPorBusqueda(lista, busqueda);
+
+  // Aplicar categoría seleccionada.
+  if (selectedCategory > 0 &&
+      selectedCategory <= categorias.length) {
     final categoriaId = categorias[selectedCategory - 1].id;
 
     lista = lista
-        .where(
-          (p) => p.categoriaId == categoriaId,
-        )
+        .where((p) => p.categoriaId == categoriaId)
         .toList();
   }
 

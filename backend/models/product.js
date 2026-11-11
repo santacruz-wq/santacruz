@@ -38,6 +38,10 @@ const productSchema = new mongoose.Schema({
     visibleMenu: {
         type: Boolean,
         default: true
+    },
+    destacado: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

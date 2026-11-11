@@ -29,17 +29,13 @@ class AdminProductoService {
       if (datos is Map && datos['message'] != null) {
         return Exception(datos['message'].toString());
       }
-    } catch (_) {
-      // Si la respuesta no es JSON, mostramos el estado HTTP.
-    }
+    } catch (_) {}
 
     return Exception(
       'Error del servidor. Código: ${response.statusCode}',
     );
   }
 
-  /// Crea el archivo multipart con su tipo MIME correspondiente.
-  /// Acepta JPG, JPEG, PNG y WEBP.
   static http.MultipartFile _crearArchivoImagen(
     XFile imagen,
     List<int> bytes,
@@ -48,13 +44,11 @@ class AdminProductoService {
       throw Exception('La imagen seleccionada está vacía.');
     }
 
-    // Intenta obtener la extensión del nombre del archivo.
     var nombreArchivo = imagen.name.trim();
     var extension = '';
 
-    final nombreParaAnalizar = nombreArchivo.isNotEmpty
-        ? nombreArchivo
-        : imagen.path;
+    final nombreParaAnalizar =
+        nombreArchivo.isNotEmpty ? nombreArchivo : imagen.path;
 
     final ultimoPunto = nombreParaAnalizar.lastIndexOf('.');
     final ultimaBarra = nombreParaAnalizar.lastIndexOf('/');
@@ -74,7 +68,6 @@ class AdminProductoService {
 
     var tipo = tipos[extension];
 
-    // Si el nombre no identifica el formato, comprueba los bytes reales.
     if (tipo == null) {
       if (bytes.length >= 3 &&
           bytes[0] == 0xFF &&
@@ -108,7 +101,6 @@ class AdminProductoService {
       );
     }
 
-    // Garantiza que el archivo enviado tenga una extensión válida.
     if (nombreArchivo.isEmpty ||
         !nombreArchivo.toLowerCase().endsWith('.$extension')) {
       nombreArchivo = 'imagen.$extension';
@@ -164,6 +156,7 @@ class AdminProductoService {
     required String precio,
     required String categoriaId,
     required XFile imagen,
+    bool destacado = false,
   }) async {
     final token = await _obtenerToken();
 
@@ -182,6 +175,7 @@ class AdminProductoService {
     request.fields['descripcion'] = descripcion.trim();
     request.fields['precio'] = precio.trim().replaceAll(',', '.');
     request.fields['categoria'] = categoriaId;
+    request.fields['destacado'] = destacado.toString();
 
     final bytes = await imagen.readAsBytes();
 
@@ -204,6 +198,7 @@ class AdminProductoService {
     required String precio,
     required String categoriaId,
     XFile? imagen,
+    bool? destacado,
   }) async {
     final token = await _obtenerToken();
 
@@ -218,6 +213,10 @@ class AdminProductoService {
     request.fields['descripcion'] = descripcion.trim();
     request.fields['precio'] = precio.trim().replaceAll(',', '.');
     request.fields['categoria'] = categoriaId;
+
+    if (destacado != null) {
+      request.fields['destacado'] = destacado.toString();
+    }
 
     if (imagen != null) {
       final bytes = await imagen.readAsBytes();
@@ -257,7 +256,6 @@ class AdminProductoService {
     }
   }
 
-  // NUEVO: cambiar entre disponible, agotado y oculto.
   static Future<void> cambiarEstadoMenu({
     required String id,
     required String estado,

@@ -1,6 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/config/app_colors.dart';
+import '../../core/config/translation_postres.dart';
 import '../../services/categoria_service.dart';
 import '../../services/translation_service.dart';
 import '../../models/categoria_model.dart';
@@ -25,13 +28,71 @@ class MenuCategories extends StatefulWidget {
 class _MenuCategoriesState extends State<MenuCategories> {
   late Future<List<Categoria>> _futureCategorias;
 
+  static const Set<String> _categoriasEstaticas = {
+    'Esponjados',
+    'Frutas',
+    'Postres fríos',
+    'Flanes',
+    'Tortas',
+    'Cafés',
+    'Bebidas',
+  };
+
   @override
   void initState() {
     super.initState();
+
     _futureCategorias = CategoriaService.getCategorias();
+
     _futureCategorias.then((lista) {
-      widget.onCategoriasLoaded(lista);
+      if (mounted) {
+        widget.onCategoriasLoaded(lista);
+      }
     });
+  }
+
+  Future<List<String>> _obtenerCategoriasTraducidas(
+    List<String> nombresOriginales,
+    String idioma,
+  ) async {
+    final nombresTraducidos = List<String>.from(nombresOriginales);
+
+    final indicesGroq = <int>[];
+    final categoriasGroq = <String>[];
+
+    for (var i = 0; i < nombresOriginales.length; i++) {
+      final nombre = nombresOriginales[i].trim();
+
+      if (_categoriasEstaticas.contains(nombre)) {
+        nombresTraducidos[i] = TranslationPostres.obtenerCategoria(
+          nombre: nombre,
+          idioma: idioma,
+        );
+      } else if (idioma != 'es') {
+        // Las categorías nuevas se traducen mediante Groq.
+        indicesGroq.add(i);
+        categoriasGroq.add(nombre);
+      }
+    }
+
+    if (categoriasGroq.isNotEmpty) {
+      try {
+        final traducidas = await TranslationService.traducirLista(
+          categoriasGroq,
+          idioma,
+        );
+
+        for (var i = 0; i < indicesGroq.length; i++) {
+          if (i < traducidas.length) {
+            nombresTraducidos[indicesGroq[i]] = traducidas[i];
+          }
+        }
+      } catch (_) {
+        // Si Groq falla, se conservan los nombres originales.
+      }
+    }
+
+    return nombresTraducidos;
   }
 
   @override
@@ -65,7 +126,7 @@ class _MenuCategoriesState extends State<MenuCategories> {
 
           return FutureBuilder<List<String>>(
             key: ValueKey(lang.idiomaCodigo),
-            future: TranslationService.traducirLista(
+            future: _obtenerCategoriasTraducidas(
               nombresOriginales,
               lang.idiomaCodigo,
             ),
@@ -75,7 +136,7 @@ class _MenuCategoriesState extends State<MenuCategories> {
 
               final categorias = [
                 lang.t('destacados'),
-                ...nombresTraducidos
+                ...nombresTraducidos,
               ];
 
               return ListView.builder(

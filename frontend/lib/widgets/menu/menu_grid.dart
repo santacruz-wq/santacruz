@@ -19,6 +19,7 @@ class MenuGrid extends StatelessWidget {
   });
 
   static const Map<String, String> _clavesPostres = {
+    // POSTRES
     'Salpicón con helado': 'postre_salpicon_helado',
     'Merengón tropical': 'postre_merengon_tropical',
     'Esponjado de frutos rojos': 'postre_esponjado_frutos_rojos',
@@ -32,6 +33,14 @@ class MenuGrid extends StatelessWidget {
     'Torta de chocolate': 'postre_torta_chocolate',
     'Torta Red Velvet': 'postre_torta_red_velvet',
     'Postre de limón': 'postre_limon',
+
+    // BEBIDAS
+    'Michelada': 'bebida_michelada',
+    'Michelada de sandía': 'bebida_michelada_sandia',
+    'Michelada de Gatorade': 'bebida_michelada_gatorade',
+    'Aromática de frutos rojos': 'bebida_aromatica_rojos',
+    'Aromática de frutos amarillos': 'bebida_aromatica_amarillos',
+    'Café especial': 'bebida_cafe_especial',
   };
 
   @override
@@ -55,6 +64,7 @@ class MenuGrid extends StatelessWidget {
     }
 
     final nombresOriginales = products.map((p) => p.nombre).toList();
+
     final descripcionesOriginales =
         products.map((p) => p.descripcion ?? '').toList();
 
