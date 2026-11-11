@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,66 +29,77 @@ class PerfilPreferencias extends StatelessWidget {
       icono: Icons.tune,
       contenido: Column(
         children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(
-              Icons.favorite_border,
-              color: AppColors.caramelo,
-            ),
-            title: Text(
-              lang.t('mis_favoritos'),
-              style: const TextStyle(color: AppColors.textoCafe),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$totalFavoritos',
-                  style: const TextStyle(
-                    color: AppColors.caramelo,
-                    fontWeight: FontWeight.bold,
+          // FAVORITOS E IDIOMA: SOLO USUARIOS NORMALES
+          if (!esPersonal) ...[
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.favorite_border,
+                color: AppColors.caramelo,
+              ),
+              title: Text(
+                lang.t('mis_favoritos'),
+                style: const TextStyle(
+                  color: AppColors.textoCafe,
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$totalFavoritos',
+                    style: const TextStyle(
+                      color: AppColors.caramelo,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.cafeMedio,
-                ),
-              ],
-            ),
-            onTap: () => Navigator.pushNamed(context, '/favoritos'),
-          ),
-          const Divider(color: AppColors.cremaOscuro),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(
-              Icons.language,
-              color: AppColors.caramelo,
-            ),
-            title: Text(
-              lang.t('idioma'),
-              style: const TextStyle(color: AppColors.textoCafe),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  idioma,
-                  style: const TextStyle(
-                    color: AppColors.caramelo,
-                    fontWeight: FontWeight.bold,
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.cafeMedio,
                   ),
-                ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.cafeMedio,
-                ),
-              ],
+                ],
+              ),
+              onTap: () =>
+                  Navigator.pushNamed(context, '/favoritos'),
             ),
-            onTap: () =>
-                Navigator.pushNamed(context, '/language-selection'),
-          ),
-          if (esPersonal) ...[
             const Divider(color: AppColors.cremaOscuro),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.language,
+                color: AppColors.caramelo,
+              ),
+              title: Text(
+                lang.t('idioma'),
+                style: const TextStyle(
+                  color: AppColors.textoCafe,
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    idioma,
+                    style: const TextStyle(
+                      color: AppColors.caramelo,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.cafeMedio,
+                  ),
+                ],
+              ),
+              onTap: () => Navigator.pushNamed(
+                context,
+                '/language-selection',
+              ),
+            ),
+          ],
+
+          // INFORMACIÓN DEL ROL: PERSONAL
+          if (esPersonal) ...[
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(
@@ -96,7 +108,9 @@ class PerfilPreferencias extends StatelessWidget {
               ),
               title: Text(
                 lang.t('rol'),
-                style: const TextStyle(color: AppColors.textoCafe),
+                style: const TextStyle(
+                  color: AppColors.textoCafe,
+                ),
               ),
               trailing: Text(
                 rol,

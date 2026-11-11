@@ -1,7 +1,6 @@
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 class NotificacionesLocalesService {
   static final FlutterLocalNotificationsPlugin _plugin =
@@ -18,15 +17,13 @@ class NotificacionesLocalesService {
 
   static Future<void> inicializar() async {
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon');
 
     const InitializationSettings settings = InitializationSettings(
       android: androidSettings,
     );
 
-    await _plugin.initialize(
-  settings: settings,
-);
+    await _plugin.initialize(settings: settings);
 
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();

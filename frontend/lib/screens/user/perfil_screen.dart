@@ -18,9 +18,9 @@ import 'widgets/perfil_cabecera.dart';
 import 'widgets/perfil_cerrar_sesion.dart';
 import 'widgets/perfil_informacion.dart';
 import 'widgets/perfil_preferencias.dart';
-import 'widgets/perfil_seccion.dart';
 import 'widgets/perfil_seguridad.dart';
 import 'widgets/perfil_vista_invitado.dart';
+import 'widgets/perfil_seccion.dart';
 
 class PerfilScreen extends StatefulWidget {
   final bool showBottomBar;
@@ -254,12 +254,16 @@ class _PerfilScreenState extends State<PerfilScreen> {
               nombre: usuario.nombre,
               email: usuario.email,
             ),
-            PerfilPreferencias(
-              totalFavoritos: favoritos.total,
-              idioma: idioma.idiomaNombre,
-              rol: usuario.rol,
-              esPersonal: esPersonal,
-            ),
+
+            // Preferencias solo para usuarios normales.
+            if (!esPersonal)
+              PerfilPreferencias(
+                totalFavoritos: favoritos.total,
+                idioma: idioma.idiomaNombre,
+                rol: usuario.rol,
+                esPersonal: esPersonal,
+              ),
+
             PerfilSeguridad(email: usuario.email),
             PerfilBoton(
               texto: _t('cerrar_sesion', idioma.idiomaCodigo),

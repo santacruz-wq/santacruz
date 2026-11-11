@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../models/mesa_model.dart';
@@ -103,7 +104,13 @@ class _MesasScreenState extends State<MesasScreen> {
           return MesasGrid(
             mesas: mesas,
             onRefresh: _recargar,
-            onMesaTap: (mesa) => onMesaTap(context, mesa),
+            onMesaTap: (mesa) async {
+              await onMesaTap(context, mesa);
+
+              if (!mounted) return;
+
+              await _recargar();
+            },
           );
         },
       ),
