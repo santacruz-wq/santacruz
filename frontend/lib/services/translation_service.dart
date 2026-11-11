@@ -17,7 +17,7 @@ class TranslationService {
   static const int _tamanoLote = 4;
 
   // Tiempo máximo de espera por solicitud.
-  static const Duration _tiempoLimite = Duration(seconds: 6);
+  static const Duration _tiempoLimite = Duration(seconds: 25);
 
   static Future<Map<String, String>> traducirInterfaz(
     String idiomaDestino,

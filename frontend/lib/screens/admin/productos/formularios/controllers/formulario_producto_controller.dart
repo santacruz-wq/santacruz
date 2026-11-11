@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -14,6 +15,7 @@ class FormularioProductoController extends ChangeNotifier {
       descripcionController.text = producto!.descripcion ?? '';
       precioController.text = producto!.precio.toString();
       categoriaId = producto!.categoriaId;
+      destacado = producto!.destacado;
     }
   }
 
@@ -29,8 +31,11 @@ class FormularioProductoController extends ChangeNotifier {
   List<Categoria> categorias = [];
   String? categoriaId;
   XFile? imagen;
+
+  bool destacado = false;
   bool cargandoCategorias = true;
   bool guardando = false;
+
   String? error;
 
   bool get editando => producto != null;
@@ -84,6 +89,12 @@ class FormularioProductoController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Cambiar si el producto aparece en destacados.
+  void cambiarDestacado(bool valor) {
+    destacado = valor;
+    notifyListeners();
+  }
+
   Future<bool> guardar() async {
     if (categorias.isEmpty) {
       error = 'Primero debes crear o activar una categoría.';
@@ -119,6 +130,7 @@ class FormularioProductoController extends ChangeNotifier {
           precio: precioController.text,
           categoriaId: categoriaId!,
           imagen: imagen,
+          destacado: destacado,
         );
       } else {
         await AdminProductoService.crearProducto(
@@ -128,6 +140,7 @@ class FormularioProductoController extends ChangeNotifier {
           precio: precioController.text,
           categoriaId: categoriaId!,
           imagen: imagen!,
+          destacado: destacado,
         );
       }
 

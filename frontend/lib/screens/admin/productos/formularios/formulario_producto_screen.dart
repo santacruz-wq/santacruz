@@ -88,14 +88,16 @@ class _FormularioProductoScreenState
                 padding: const EdgeInsets.all(18),
                 children: [
                   FormularioProductoImagen(
-  producto: widget.producto,
-  imagen: _controller.imagen,
-  guardando: _controller.guardando,
-  onSeleccionarImagen: (origen) {
-    _controller.seleccionarImagen(origen: origen);
-  },
-),
+                    producto: widget.producto,
+                    imagen: _controller.imagen,
+                    guardando: _controller.guardando,
+                    onSeleccionarImagen: (origen) {
+                      _controller.seleccionarImagen(origen: origen);
+                    },
+                  ),
+
                   const SizedBox(height: 22),
+
                   FormularioProductoCampos(
                     categorias: _controller.categorias,
                     categoriaId: _controller.categoriaId,
@@ -109,7 +111,40 @@ class _FormularioProductoScreenState
                     precioController: _controller.precioController,
                     onCambiarCategoria: _controller.cambiarCategoria,
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Mostrar u ocultar el producto en destacados.
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.cremaClaro,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: SwitchListTile(
+                      value: _controller.destacado,
+                      onChanged: _controller.guardando
+                          ? null
+                          : _controller.cambiarDestacado,
+                      activeThumbColor: AppColors.caramelo,
+                      title: const Text(
+                        'Mostrar en destacados',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textoCafe,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Este producto aparecerá en la sección de destacados del menú.',
+                      ),
+                      secondary: const Icon(
+                        Icons.star,
+                        color: AppColors.caramelo,
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
+
                   SizedBox(
                     height: 50,
                     child: ElevatedButton.icon(

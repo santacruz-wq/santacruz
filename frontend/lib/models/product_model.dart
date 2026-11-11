@@ -9,6 +9,7 @@ class ProductModel {
   final String categoriaId;
   final bool disponible;
   final bool visibleMenu;
+  final bool destacado;
 
   ProductModel({
     required this.id,
@@ -20,6 +21,7 @@ class ProductModel {
     required this.categoriaId,
     required this.disponible,
     this.visibleMenu = true,
+    this.destacado = false,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class ProductModel {
       categoriaId: categoriaId,
       disponible: json['disponible'] ?? true,
       visibleMenu: json['visibleMenu'] ?? true,
+      destacado: json['destacado'] == true,
     );
   }
 

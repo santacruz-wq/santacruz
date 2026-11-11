@@ -13,6 +13,15 @@ class AppStrings {
     'no_hay_productos': 'No hay productos',
     'todo_el_menu': 'Todo el menú',
 
+    // Categorías del menú
+    'categoria_esponjados': 'Esponjados',
+    'categoria_frutas': 'Frutas',
+    'categoria_postres_frios': 'Postres fríos',
+    'categoria_flanes': 'Flanes',
+    'categoria_tortas': 'Tortas',
+    'categoria_cafes': 'Cafés',
+    'categoria_bebidas': 'Bebidas',
+
     // Navegación
     'menu': 'Menú',
     'favoritos': 'Favoritos',

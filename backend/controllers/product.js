@@ -5,13 +5,11 @@ import Categoria from "../models/categoria.js";
 import Inventario from "../models/inventario.js";
 import { borrarImagenCloudinary } from "../utils/cloudinary.js";
 
-
- // OBTENER TODOS LOS PRODUCTOS
+// OBTENER TODOS LOS PRODUCTOS
 export const getProductos = async (req, res) => {
   try {
     const filtro = {};
 
-    // Mantener el filtro de disponibilidad existente.
     if (req.query.disponible !== undefined) {
       filtro.disponible = req.query.disponible === "true";
     }
@@ -31,7 +29,6 @@ export const getProductos = async (req, res) => {
     });
   }
 };
-
 
 // OBTENER PRODUCTO POR ID
 export const getProductoPorId = async (req, res) => {
@@ -67,7 +64,14 @@ export const crearProducto = async (req, res) => {
   let imagenSubida = null;
 
   try {
-    const { productId, nombre, descripcion, precio, categoria } = req.body;
+    const {
+      productId,
+      nombre,
+      descripcion,
+      precio,
+      categoria,
+      destacado,
+    } = req.body;
 
     imagenSubida = req.file?.path ?? null;
 
@@ -116,6 +120,19 @@ export const crearProducto = async (req, res) => {
       });
     }
 
+    // Validar el campo destacado.
+    if (
+      destacado !== undefined &&
+      destacado !== true &&
+      destacado !== false &&
+      destacado !== "true" &&
+      destacado !== "false"
+    ) {
+      return res.status(400).json({
+        message: "El campo destacado debe ser verdadero o falso",
+      });
+    }
+
     const identificador =
       productId?.trim() || `PROD-${Date.now()}`;
 
@@ -138,6 +155,7 @@ export const crearProducto = async (req, res) => {
       categoria: categoriaExiste._id,
       disponible: true,
       visibleMenu: true,
+      destacado: destacado === true || destacado === "true",
     });
 
     await Inventario.create({
@@ -194,7 +212,13 @@ export const actualizarProducto = async (req, res) => {
   let actualizarImagen = false;
 
   try {
-    const { nombre, descripcion, precio, categoria } = req.body;
+    const {
+      nombre,
+      descripcion,
+      precio,
+      categoria,
+      destacado,
+    } = req.body;
 
     const productoEncontrado = await product.findById(req.params.id);
 
@@ -259,6 +283,23 @@ export const actualizarProducto = async (req, res) => {
       }
 
       datosActualizar.categoria = categoriaExiste._id;
+    }
+
+    // Actualizar el estado de destacado.
+    if (destacado !== undefined) {
+      if (
+        destacado !== true &&
+        destacado !== false &&
+        destacado !== "true" &&
+        destacado !== "false"
+      ) {
+        return res.status(400).json({
+          message: "El campo destacado debe ser verdadero o falso",
+        });
+      }
+
+      datosActualizar.destacado =
+        destacado === true || destacado === "true";
     }
 
     if (req.file) {
@@ -340,7 +381,6 @@ export const eliminarProducto = async (req, res) => {
 };
 
 // CAMBIAR DISPONIBILIDAD (ADMIN O COCINA)
-// Esta función conserva la visibilidad del producto en el menú.
 export const cambiarDisponibilidad = async (req, res) => {
   try {
     const { disponible } = req.body;
@@ -382,9 +422,6 @@ export const cambiarDisponibilidad = async (req, res) => {
 };
 
 // CAMBIAR ESTADO DEL MENÚ (SOLO ADMINISTRADOR)
-// disponible: visible y se puede pedir.
-// agotado: visible, pero no se puede pedir.
-// oculto: no aparece en el menú y no se puede pedir.
 export const cambiarEstadoMenu = async (req, res) => {
   try {
     const { estado } = req.body;
