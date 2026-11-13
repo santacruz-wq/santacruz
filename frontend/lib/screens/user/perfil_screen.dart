@@ -21,6 +21,7 @@ import 'widgets/perfil_preferencias.dart';
 import 'widgets/perfil_seguridad.dart';
 import 'widgets/perfil_vista_invitado.dart';
 import 'widgets/perfil_seccion.dart';
+import 'ayuda_soporte/ayuda_soporte.dart';
 
 class PerfilScreen extends StatefulWidget {
   final bool showBottomBar;
@@ -265,6 +266,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
               ),
 
             PerfilSeguridad(email: usuario.email),
+
+            // Ayuda y soporte para todos los usuarios autenticados.
+            const AyudaSoporte(),
+
             PerfilBoton(
               texto: _t('cerrar_sesion', idioma.idiomaCodigo),
               icono: Icons.logout,
