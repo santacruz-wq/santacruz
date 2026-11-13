@@ -1,3 +1,4 @@
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../../core/config/api_config.dart';
 import '../../core/config/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../services/perfil_service.dart';
+import '../user/ayuda_soporte/ayuda_soporte.dart';
 
 part 'perfil/widgets/perfil_estado.dart';
 part 'perfil/widgets/perfil_utils.dart';
@@ -103,6 +105,7 @@ class _AdminPerfilScreenState extends State<AdminPerfilScreen>
             ),
             _buildInfoPersonal(),
             _buildSeguridad(),
+            const AyudaSoporte(),
             _buildBotonCerrarSesion(),
             if (_guardando) ...[
               const SizedBox(height: 16),
