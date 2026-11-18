@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 import '../core/config/api_config.dart';
+import '../core/network/api_client.dart';
 import '../core/storage/secure_storage.dart';
 
 class PerfilService {
@@ -125,6 +125,23 @@ class PerfilService {
     return _procesarRespuesta(response);
   }
 
+  // ELIMINAR CUENTA PROPIA
+  // USA ApiClient PARA RENOVAR EL TOKEN AUTOMÁTICAMENTE SI YA EXPIRÓ
+  static Future<Map<String, dynamic>> eliminarCuenta({
+    String? passwordActual,
+    String? idToken,
+  }) async {
+    final response = await ApiClient.delete(
+      _url,
+      body: {
+        if (passwordActual != null) 'passwordActual': passwordActual,
+        if (idToken != null) 'idToken': idToken,
+      },
+    );
+
+    return _procesarRespuesta(response);
+  }
+
   static Future<Map<String, String>> _headers() async {
     final token = await SecureStorage.getToken();
 
@@ -140,26 +157,31 @@ class PerfilService {
     };
   }
 
+  // PROCESAR RESPUESTAS DEL SERVIDOR
   static Map<String, dynamic> _procesarRespuesta(
     http.Response response,
   ) {
-    Map<String, dynamic> data;
+    final body = response.body.trim();
 
-    try {
-      final decoded = jsonDecode(response.body);
+    Map<String, dynamic> data = {};
 
-      if (decoded is Map<String, dynamic>) {
-        data = decoded;
-      } else {
-        throw const FormatException(
-          'Respuesta inesperada del servidor.',
-        );
+    if (body.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(body);
+
+        if (decoded is Map) {
+          data = Map<String, dynamic>.from(decoded);
+        } else if (decoded is String) {
+          data = {'message': decoded};
+        } else {
+          data = {
+            'message': decoded.toString(),
+          };
+        }
+      } catch (_) {
+        // Si no es JSON, conservar el texto enviado por el servidor.
+        data = {'message': body};
       }
-    } on FormatException {
-      throw Exception(
-        'El servidor devolvió una respuesta inválida '
-        '(HTTP ${response.statusCode}).',
-      );
     }
 
     if (response.statusCode >= 200 &&
@@ -167,9 +189,11 @@ class PerfilService {
       return data;
     }
 
-    throw Exception(
-      data['message']?.toString() ??
-          'Error del servidor (HTTP ${response.statusCode}).',
-    );
+    final mensaje = data['message'] ??
+        data['error'] ??
+        data['msg'] ??
+        'Error del servidor (HTTP ${response.statusCode}).';
+
+    throw Exception(mensaje.toString());
   }
 }

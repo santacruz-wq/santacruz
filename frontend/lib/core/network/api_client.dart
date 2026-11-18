@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../storage/secure_storage.dart';
@@ -167,14 +166,17 @@ class ApiClient {
     );
   }
 
+  // EL BODY ES OPCIONAL: LAS LLAMADAS ANTERIORES delete(url) SIGUEN FUNCIONANDO
   static Future<http.Response> delete(
     String url, {
+    Map<String, dynamic>? body,
     bool auth = true,
   }) {
     return _request(
       (headers) => http.delete(
         Uri.parse(url),
         headers: headers,
+        body: body == null ? null : jsonEncode(body),
       ),
       auth: auth,
     );
