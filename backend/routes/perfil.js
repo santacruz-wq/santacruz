@@ -11,6 +11,7 @@ import {
     actualizarMiPerfil,
     cambiarMiPassword,
     actualizarMiAvatar,
+    eliminarMiCuenta,
 } from "../controllers/perfil.js";
 
 const router = express.Router();
@@ -48,19 +49,19 @@ const subirFoto = multer({
     },
 });
 
-// Todos los roles necesitan una sesión válida.
+// TODOS LOS ROLES NECESITAN UNA SESIÓN VÁLIDA
 router.use(verificarToken);
 
-// Consultar los datos del perfil propio.
+// CONSULTAR PERFIL PROPIO
 router.get("/yo", obtenerMiPerfil);
 
-// Actualizar nombre y correo del perfil propio.
+// ACTUALIZAR NOMBRE Y CORREO
 router.put("/yo", actualizarMiPerfil);
 
-// Cambiar la contraseña propia.
+// CAMBIAR CONTRASEÑA
 router.patch("/yo/password", cambiarMiPassword);
 
-// Subir o cambiar la foto de perfil propia.
+// SUBIR O CAMBIAR FOTO DE PERFIL
 router.post(
     "/yo/avatar",
     (req, res, next) => {
@@ -79,5 +80,8 @@ router.post(
     },
     actualizarMiAvatar,
 );
+
+// ELIMINAR CUENTA PROPIA
+router.delete("/yo", eliminarMiCuenta);
 
 export default router;

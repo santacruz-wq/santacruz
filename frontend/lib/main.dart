@@ -50,20 +50,16 @@ Future<void> firebaseMessagingBackgroundHandler(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Inicializar notificaciones locales
   await NotificacionesLocalesService.inicializar();
 
-  // Registrar el manejador de notificaciones en segundo plano
   FirebaseMessaging.onBackgroundMessage(
     firebaseMessagingBackgroundHandler,
   );
 
-  // Recibir notificaciones cuando la aplicación está abierta
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     debugPrint('FCM: Notificación recibida con la aplicación abierta.');
     debugPrint('Datos: ${message.data}');
@@ -82,7 +78,6 @@ void main() async {
     );
   });
 
-  // Inicializar autenticación de Google
   await GoogleAuthService.inicializar(
     serverClientId:
         '610032994651-dvbn9h7p0o10dj1k6isql0bi76i2vo35.apps.googleusercontent.com',
@@ -176,9 +171,7 @@ class _AppStarterState extends State<AppStarter> {
         await favoritoProvider.cargarFavoritos();
       }
     } catch (e) {
-      debugPrint(
-        'Error al recuperar los datos iniciales: $e',
-      );
+      debugPrint('Error al recuperar los datos iniciales: $e');
     }
 
     if (!mounted) return;
@@ -189,28 +182,44 @@ class _AppStarterState extends State<AppStarter> {
   }
 
   Widget _pantallaSegunRol(String rol) {
-    switch (rol.trim().toLowerCase()) {
+    final rolNormalizado = rol.trim().toLowerCase();
+
+    late final Widget pantalla;
+    late final String identificador;
+
+    switch (rolNormalizado) {
       case 'admin':
       case 'administrador':
-        return const AdminShell();
+        identificador = 'admin';
+        pantalla = const AdminShell();
+        break;
 
       case 'mesero':
-        return const MeseroShell();
+        identificador = 'mesero';
+        pantalla = const MeseroShell();
+        break;
 
       case 'cocina':
-        return const CocinaShell();
+        identificador = 'cocina';
+        pantalla = const CocinaShell();
+        break;
 
       case 'user':
       case 'usuario':
-        return const MainShell();
+        identificador = 'usuario';
+        pantalla = const MainShell();
+        break;
 
       default:
-        debugPrint(
-          'Rol no reconocido al restaurar sesión: $rol',
-        );
-
-        return InicioScreen();
+        debugPrint('Rol no reconocido al restaurar sesión: $rol');
+        identificador = 'publico';
+        pantalla = InicioScreen();
     }
+
+    return KeyedSubtree(
+      key: ValueKey('pantalla-$identificador'),
+      child: pantalla,
+    );
   }
 
   @override
@@ -225,10 +234,13 @@ class _AppStarterState extends State<AppStarter> {
 
     final usuario = context.watch<AuthProvider>().usuario;
 
-    if (usuario != null) {
-      return _pantallaSegunRol(usuario.rol);
+    if (usuario == null) {
+      return KeyedSubtree(
+        key: const ValueKey('pantalla-publica'),
+        child: InicioScreen(),
+      );
     }
 
-    return InicioScreen();
+    return _pantallaSegunRol(usuario.rol);
   }
 }

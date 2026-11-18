@@ -97,6 +97,13 @@ export const loginWithGoogle = async (req, res) => {
         }
 
         if (usuario) {
+            // BLOQUEAR CUENTAS ELIMINADAS
+            if (usuario.cuentaEliminada) {
+                return res.status(403).json({
+                    mensaje: "Esta cuenta fue eliminada. Puedes registrarte nuevamente.",
+                });
+            }
+
             if (usuario.googleId && usuario.googleId !== googleId) {
                 return res.status(409).json({
                     mensaje: "Este correo ya está vinculado a otra cuenta de Google.",
@@ -109,18 +116,18 @@ export const loginWithGoogle = async (req, res) => {
                 });
             }
 
+            if (!usuario.activo) {
+                return res.status(403).json({
+                    mensaje: "Esta cuenta se encuentra desactivada. Contacta al administrador.",
+                });
+            }
+
             if (!usuario.googleId) {
                 usuario.googleId = googleId;
             }
 
             if (!usuario.avatar && picture) {
                 usuario.avatar = picture;
-            }
-
-            if (!usuario.activo) {
-                return res.status(403).json({
-                    mensaje: "Esta cuenta se encuentra desactivada. Contacta al administrador.",
-                });
             }
 
             await usuario.save();

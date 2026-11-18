@@ -147,11 +147,10 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // =========================================================
-  // CERRAR SESIÓN
+  // CERRAR SESIÓN NORMAL
   // =========================================================
 
   Future<void> logout() async {
-    // Primero desvincular el dispositivo de la cuenta.
     await FCMService.eliminarToken();
 
     await AuthService.logout();
@@ -159,8 +158,23 @@ class AuthProvider extends ChangeNotifier {
     await SecureStorage.deleteUser();
 
     _usuario = null;
-
     _error = null;
+
+    notifyListeners();
+  }
+
+  // =========================================================
+  // LIMPIAR SESIÓN DESPUÉS DE ELIMINAR LA CUENTA
+  // =========================================================
+
+  Future<void> limpiarSesionTrasEliminarCuenta() async {
+    await SecureStorage.deleteToken();
+    await SecureStorage.deleteRefreshToken();
+    await SecureStorage.deleteUser();
+
+    _usuario = null;
+    _error = null;
+    _cargando = false;
 
     notifyListeners();
   }

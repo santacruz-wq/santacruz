@@ -13,11 +13,22 @@ export const loginUsers = async (req, res) => {
             });
         }
 
-        const existeUser = await user.findOne({ email });
+        const correoLimpio = email.trim().toLowerCase();
+
+        const existeUser = await user.findOne({
+            email: correoLimpio
+        });
 
         if (!existeUser) {
             return res.status(400).json({
                 message: 'Usuario no encontrado'
+            });
+        }
+
+        // BLOQUEAR CUENTAS ELIMINADAS
+        if (existeUser.cuentaEliminada) {
+            return res.status(403).json({
+                message: 'Esta cuenta fue eliminada. Puedes registrarte nuevamente.'
             });
         }
 
@@ -33,7 +44,16 @@ export const loginUsers = async (req, res) => {
             });
         }
 
-        const esvalida = await bcrypt.compare(password, existeUser.password);
+        if (!existeUser.password) {
+            return res.status(400).json({
+                message: 'Esta cuenta no tiene una contraseña local. Inicia sesión con Google.'
+            });
+        }
+
+        const esvalida = await bcrypt.compare(
+            password,
+            existeUser.password
+        );
 
         if (!esvalida) {
             return res.status(400).json({

@@ -13,6 +13,10 @@ export const crearTokensSesion = async (usuario) => {
         throw new Error('JWT_SECRET no está configurado');
     }
 
+    if (!usuario.activo || usuario.cuentaEliminada) {
+        throw new Error('No se pueden crear sesiones para esta cuenta');
+    }
+
     const ahora = new Date();
 
     usuario.refreshSessions = (usuario.refreshSessions || []).filter(
@@ -63,6 +67,17 @@ export const renovarSesion = async (req, res) => {
             });
         }
 
+        // BLOQUEAR CUENTAS ELIMINADAS O DESACTIVADAS
+        if (usuario.cuentaEliminada || !usuario.activo) {
+            usuario.refreshSessions = [];
+
+            await usuario.save();
+
+            return res.status(403).json({
+                message: 'Esta cuenta fue eliminada o está desactivada.'
+            });
+        }
+
         const ahora = new Date();
 
         const sesion = usuario.refreshSessions.find(
@@ -81,7 +96,7 @@ export const renovarSesion = async (req, res) => {
             });
         }
 
-        if (!usuario.activo || !usuario.isVerified) {
+        if (!usuario.isVerified) {
             usuario.refreshSessions = usuario.refreshSessions.filter(
                 (item) => item.tokenHash !== tokenHash
             );
@@ -89,11 +104,11 @@ export const renovarSesion = async (req, res) => {
             await usuario.save();
 
             return res.status(403).json({
-                message: 'La cuenta está desactivada o no está verificada.'
+                message: 'La cuenta no está verificada.'
             });
         }
 
-        // Rotar el refresh token: el anterior deja de ser válido.
+        // ROTAR EL REFRESH TOKEN
         usuario.refreshSessions = usuario.refreshSessions.filter(
             (item) => item.tokenHash !== tokenHash
         );
