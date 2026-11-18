@@ -1,4 +1,3 @@
-
 import jwt from 'jsonwebtoken';
 import users from '../models/user.js';
 
@@ -15,10 +14,10 @@ export const verificarToken = async (req, res, next) => {
 
         const token = authHeader.split(" ")[1];
 
-        // DECODIFICA Y VERIFICA EL TOKEN
+        // DECODIFICAR Y VERIFICAR TOKEN
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // CONSULTA EL USUARIO ACTUALIZADO EN LA BD
+        // CONSULTAR USUARIO ACTUALIZADO
         const usuario = await users.findById(decoded.id).select("-password");
 
         if (!usuario) {
@@ -27,8 +26,21 @@ export const verificarToken = async (req, res, next) => {
             });
         }
 
-        // GUARDAMOS EL USUARIO COMPLETO EN REQ
-        // PARA USARLO EN LOS CONTROLADORES
+        // BLOQUEAR CUENTAS ELIMINADAS
+        if (usuario.cuentaEliminada) {
+            return res.status(401).json({
+                message: "Esta cuenta fue eliminada. Debes iniciar sesión con otra cuenta."
+            });
+        }
+
+        // BLOQUEAR CUENTAS DESACTIVADAS
+        if (!usuario.activo) {
+            return res.status(403).json({
+                message: "Esta cuenta se encuentra desactivada. Contacta al administrador."
+            });
+        }
+
+        // GUARDAR USUARIO AUTENTICADO
         req.usuario = usuario;
 
         next();
@@ -65,18 +77,25 @@ export const soloAdmin = (req, res, next) => {
 
     next();
 };
+
+// SOLO USUARIOS
 export const soloUsuario = (req, res, next) => {
     const rolesPermitidos = ["user", "usuario"];
 
     if (!rolesPermitidos.includes(req.usuario?.rol)) {
-        return res.status(403).json({ message: "Solo los usuarios pueden dejar reseñas" });
+        return res.status(403).json({
+            message: "Solo los usuarios pueden dejar reseñas"
+        });
     }
+
     next();
 };
 
-// SOLO USUARIOS
+// SOLO USUARIOS (CLIENTES), ACEPTA "user" Y "usuario"
 export const soloUser = (req, res, next) => {
-    if (req.usuario?.rol !== "user") {
+    const rolesPermitidos = ["user", "usuario"];
+
+    if (!rolesPermitidos.includes(req.usuario?.rol)) {
         return res.status(403).json({
             message: "Acceso denegado. Solo usuarios."
         });
@@ -120,4 +139,3 @@ export const permitirRoles = (...rolesPermitidos) => {
         next();
     };
 };
-

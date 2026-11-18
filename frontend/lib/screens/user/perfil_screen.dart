@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -13,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/favorito_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/perfil_service.dart';
+import '../../services/google_auth_service.dart';
 import '../../widgets/global/bottom_menu.dart';
 import 'widgets/perfil_cabecera.dart';
 import 'widgets/perfil_cerrar_sesion.dart';
@@ -34,6 +34,7 @@ class PerfilScreen extends StatefulWidget {
 
 class _PerfilScreenState extends State<PerfilScreen> {
   final TextEditingController _nombreController = TextEditingController();
+
   File? _imagenSeleccionada;
   bool _guardando = false;
   bool _editandoNombre = false;
@@ -75,6 +76,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   String _limpiarError(Object error) =>
       error.toString().replaceFirst('Exception: ', '');
+
+  // =========================================================
+  // SELECCIONAR FOTO DE PERFIL
+  // =========================================================
 
   Future<void> _seleccionarFoto() async {
     if (_guardando) return;
@@ -154,6 +159,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
+  // =========================================================
+  // GUARDAR NOMBRE
+  // =========================================================
+
   Future<void> _guardarNombre() async {
     final auth = context.read<AuthProvider>();
     final usuario = auth.usuario;
@@ -209,6 +218,91 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
+  // =========================================================
+  // ELIMINAR CUENTA
+  // =========================================================
+
+  Future<void> _eliminarCuenta() async {
+    if (_guardando) return;
+
+    // Obtener proveedores y navegador ANTES de los await,
+    // porque después de eliminar esta pantalla pasa a la vista de invitado.
+    final auth = context.read<AuthProvider>();
+    final favoritos = context.read<FavoritoProvider>();
+    final navigator = Navigator.of(context, rootNavigator: true);
+
+    // El diálogo administra su propio controlador.
+    final confirmacion = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (_) => const _DialogoEliminarCuenta(),
+    );
+
+    if (confirmacion == null || !mounted) return;
+
+    setState(() => _guardando = true);
+
+    bool cuentaEliminada = false;
+
+    try {
+      final metodo = confirmacion['metodo'];
+      final password = confirmacion['password'];
+
+      // Verificar identidad y solicitar la eliminación al servidor.
+      if (metodo == 'google') {
+        final idToken = await GoogleAuthService.iniciarSesion();
+
+        if (idToken == null) {
+          if (mounted) {
+            _mostrarMensaje('Autenticación de Google cancelada.');
+          }
+          return;
+        }
+
+        await PerfilService.eliminarCuenta(idToken: idToken);
+      } else if (metodo == 'password') {
+        await PerfilService.eliminarCuenta(
+          passwordActual: password,
+        );
+      } else {
+        return;
+      }
+
+      // Solo llegamos aquí si el servidor confirmó la eliminación.
+      cuentaEliminada = true;
+
+      // Cerrar Google después de confirmar la eliminación.
+      try {
+        await GoogleAuthService.cerrarSesion();
+      } catch (e) {
+        debugPrint('Error al cerrar Google después de eliminar: $e');
+      }
+
+      // Limpiar la sesión local y los favoritos en memoria.
+      await auth.limpiarSesionTrasEliminarCuenta();
+      favoritos.limpiar();
+
+      // Volver al inicio y borrar el historial de pantallas,
+      // para que no se pueda regresar con el botón "atrás".
+      navigator.pushNamedAndRemoveUntil('/inicio', (route) => false);
+    } catch (e) {
+      // Si la contraseña es incorrecta, se conserva la sesión.
+      if (mounted) {
+        _mostrarMensaje(
+          _limpiarError(e),
+          esError: true,
+        );
+      }
+    } finally {
+      if (mounted && !cuentaEliminada) {
+        setState(() => _guardando = false);
+      }
+    }
+  }
+
+  // =========================================================
+  // INTERFAZ
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -255,8 +349,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
               nombre: usuario.nombre,
               email: usuario.email,
             ),
-
-            // Preferencias solo para usuarios normales.
             if (!esPersonal)
               PerfilPreferencias(
                 totalFavoritos: favoritos.total,
@@ -264,12 +356,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 rol: usuario.rol,
                 esPersonal: esPersonal,
               ),
-
             PerfilSeguridad(email: usuario.email),
-
-            // Ayuda y soporte para todos los usuarios autenticados.
             const AyudaSoporte(),
-
+            PerfilBoton(
+              texto: 'Eliminar mi cuenta',
+              icono: Icons.delete_forever_outlined,
+              accion: _eliminarCuenta,
+              deshabilitado: _guardando,
+            ),
             PerfilBoton(
               texto: _t('cerrar_sesion', idioma.idiomaCodigo),
               icono: Icons.logout,
@@ -285,6 +379,111 @@ class _PerfilScreenState extends State<PerfilScreen> {
               onItemSelected: (i) => navegarDesdeMenu(context, i, 2),
             )
           : null,
+    );
+  }
+}
+
+// =========================================================
+// DIÁLOGO DE CONFIRMACIÓN DE ELIMINACIÓN
+// =========================================================
+
+class _DialogoEliminarCuenta extends StatefulWidget {
+  const _DialogoEliminarCuenta();
+
+  @override
+  State<_DialogoEliminarCuenta> createState() =>
+      _DialogoEliminarCuentaState();
+}
+
+class _DialogoEliminarCuentaState
+    extends State<_DialogoEliminarCuenta> {
+  final TextEditingController _passwordController =
+      TextEditingController();
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _continuarConPassword() {
+    if (_passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingresa tu contraseña actual.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop({
+      'metodo': 'password',
+      'password': _passwordController.text,
+    });
+  }
+
+  void _continuarConGoogle() {
+    Navigator.of(context).pop({
+      'metodo': 'google',
+      'password': '',
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Eliminar mi cuenta'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '¿Estás seguro de que deseas eliminar tu cuenta? '
+              'Esta acción es permanente.',
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Tus datos personales y favoritos serán eliminados. '
+              'El historial de pedidos y las reseñas se conservarán '
+              'de forma anonimizada.',
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Confirma tu identidad: si creaste tu cuenta con '
+              'correo y contraseña, escribe tu contraseña actual. '
+              'Si entras con Google, usa "Continuar con Google".',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Contraseña actual',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        TextButton(
+          onPressed: _continuarConGoogle,
+          child: const Text('Continuar con Google'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: _continuarConPassword,
+          child: const Text('Eliminar cuenta'),
+        ),
+      ],
     );
   }
 }
