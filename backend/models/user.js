@@ -21,12 +21,11 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: function () {
-            return !this.googleId;
+            return !this.googleId && !this.cuentaEliminada;
         },
         minlength: 6
     },
 
-    // RECUPERACIÓN DE CONTRASEÑA
     codigoRecuperacion: {
         type: String,
         default: null
@@ -37,7 +36,6 @@ const userSchema = new mongoose.Schema({
         default: null
     },
 
-    // VERIFICACIÓN DE CUENTA
     isVerified: {
         type: Boolean,
         default: false
@@ -53,7 +51,6 @@ const userSchema = new mongoose.Schema({
         default: null
     },
 
-    // ROLES Y ESTADO
     rol: {
         type: String,
         enum: ['admin', 'mesero', 'cocina', 'usuario'],
@@ -65,7 +62,11 @@ const userSchema = new mongoose.Schema({
         default: true
     },
 
-    // INICIO DE SESIÓN CON GOOGLE
+    cuentaEliminada: {
+        type: Boolean,
+        default: false
+    },
+
     googleId: {
         type: String,
         unique: true,
@@ -77,7 +78,6 @@ const userSchema = new mongoose.Schema({
         default: ''
     },
 
-    // DISPOSITIVOS REGISTRADOS PARA NOTIFICACIONES FCM
     fcmTokens: {
         type: [{
             token: {
@@ -97,7 +97,6 @@ const userSchema = new mongoose.Schema({
         default: []
     },
 
-    // SESIONES PARA RENOVAR TOKENS
     refreshSessions: {
         type: [{
             tokenHash: {
@@ -135,7 +134,6 @@ userSchema.methods.compararPassword = async function (passwordIngresada) {
     return bcrypt.compare(passwordIngresada, this.password);
 };
 
-// CREAR MODELO
 const User =
     mongoose.models.BDusurios ||
     mongoose.model('BDusurios', userSchema, 'BDusurios');
